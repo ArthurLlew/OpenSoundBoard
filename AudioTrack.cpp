@@ -34,6 +34,7 @@ AudioTrack::AudioTrack(QString filepath, QRect *screean_rect, QWidget *parent) :
 
     // Grid layout
     QGridLayout *grid = new QGridLayout();
+    setLayout(grid);
     // Additional layouts
     QHBoxLayout *box_layout1 = new QHBoxLayout();
     QHBoxLayout *box_layout2 = new QHBoxLayout();
@@ -69,8 +70,6 @@ AudioTrack::AudioTrack(QString filepath, QRect *screean_rect, QWidget *parent) :
     volume_slider->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
     box_layout3->addWidget(volume_slider);
     box_layout3->addWidget(volume_label);
-    // Set layout
-    setLayout(grid);
 }
 
 

@@ -84,13 +84,11 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         devices->addTab(new DeviceTab(screean_rect, "Feed to ouput", false, OUTPUT, combobox_devices), "Output Device:");
         connect(combobox_devices, indexChangedSignal, this, &MainWindow::restart_players);
 
-        // Initialize threadpool
-        threadpool = new QThreadPool();
-        microphone_player = new MicrophonePlayer(devices);
-        connect(microphone_player, &MicrophonePlayer::cant_open_stream, this, &MainWindow::micplayer_stream_error);
-        mediafiles_player = new MediaFilesPlayer(devices, tracks);
-        connect(mediafiles_player, &MediaFilesPlayer::cant_open_stream, this, &MainWindow::mediaplayer_stream_error);
-        start_players();
+        // Init player managers
+        microphone_player_manager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
+        right_vertbox->addWidget(microphone_player_manager);
+        mediafiles_player_manager = new MediaFilesPlayerManager(devices, tracks, "Media Files Player");
+        right_vertbox->addWidget(mediafiles_player_manager);
     }
     catch(...)
     {
@@ -109,9 +107,8 @@ MainWindow::~MainWindow()
     Pa_Terminate();
 
     // Delete objects we own by reference (widgets are deleted automatically)
-    delete mediafiles_player;
-    delete microphone_player;
-    delete threadpool;
+    delete microphone_player_manager;
+    delete mediafiles_player_manager;
 }
 
 
@@ -138,13 +135,15 @@ void MainWindow::start_portaudio()
 
 void MainWindow::add_track()
 {
-    stop_players();
+    mediafiles_player_manager->stop();
+    mediafiles_player_manager->wait_player();
 
     // Ask to select media files
     QStringList filenames = open_file_dialog("Media (*.mp4 *.mp3 *.wav *.ogg)");
     
     // Iterate over files
-    for (const auto &filename : std::as_const(filenames)) {
+    for (const auto &filename : std::as_const(filenames))
+    {
         // Create sound widget
         AudioTrack *sound_item = new AudioTrack(filename, screean_rect);
         // Create list item
@@ -155,8 +154,6 @@ void MainWindow::add_track()
         tracks->addItem(lst_item);
         tracks->setItemWidget(lst_item, sound_item);
     }
-
-    start_players();
 }
 
 
@@ -195,7 +192,7 @@ void MainWindow::start_players()
     }
     else
     {
-        threadpool->start(microphone_player);
+        microphone_player_manager->start();
     }
 
     // Check if we can launch mediafiles player
@@ -209,17 +206,18 @@ void MainWindow::start_players()
     }
     else
     {
-        threadpool->start(mediafiles_player);
+        mediafiles_player_manager->start();
     }
 }
 
 
 void MainWindow::stop_players()
 {
-    // Tell players to stop and wait till they finnish
-    microphone_player->kill();
-    mediafiles_player->kill();
-    threadpool->waitForDone(-1);
+    // Tell players to stop and wait till they finish
+    microphone_player_manager->stop();
+    mediafiles_player_manager->stop();
+    microphone_player_manager->wait_player();
+    mediafiles_player_manager->wait_player();
 }
 
 
@@ -231,15 +229,15 @@ void MainWindow::restart_players(int unused)
 }
 
 
-void MainWindow::micplayer_stream_error()
+void MainWindow::micplayer_stream_error(QString message)
 {
-    show_warning("Microphone Player can't open stream!\nTry to refresh devices");
+    show_warning("Microphone Player error:\n" + message);
 }
 
 
-void MainWindow::mediaplayer_stream_error()
+void MainWindow::mediaplayer_stream_error(QString message)
 {
-    show_warning("Media Player can't open stream!\nTry to refresh devices");
+    show_warning("Media Player error:\n" + message);
 }
 
 

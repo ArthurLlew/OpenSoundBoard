@@ -23,8 +23,9 @@
 #include <portaudio.h>
 // Custom
 #include "WidgetMessages.hpp"
-#include "AudioTrack.hpp"
 #include "DeviceTab.hpp"
+#include "AudioTrack.hpp"
+#include "AudioPlayerManagers.hpp"
 #include "AudioPlayers.hpp"
 
 using namespace std;
@@ -41,13 +42,10 @@ class MainWindow: public QMainWindow, WidgetWarnings
     QListWidget *tracks;
     // Devices tab
     QTabWidget *devices;
-    
-    // Thread pool for multithreading
-    QThreadPool *threadpool;
-    // Microphone player thread
-    MicrophonePlayer *microphone_player;
-    // Media files player thread
-    MediaFilesPlayer *mediafiles_player;
+
+    // Media player managers
+    MicrophonePlayerManager *microphone_player_manager;
+    MediaFilesPlayerManager *mediafiles_player_manager;
 
     public:
 
@@ -73,9 +71,9 @@ class MainWindow: public QMainWindow, WidgetWarnings
     void stop_players();
     // Restarts players
     void restart_players(int unused);
-    // Shows warning when player is unable to open device stream
-    void micplayer_stream_error();
-    void mediaplayer_stream_error();
+    // Shows warning when player runs into some error
+    void micplayer_stream_error(QString message);
+    void mediaplayer_stream_error(QString message);
     // Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players)
     void refresh_devices();
 

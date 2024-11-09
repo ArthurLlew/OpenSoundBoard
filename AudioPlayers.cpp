@@ -44,7 +44,7 @@ PaStream* AudioPlayer::open_device_stream(DeviceTab* device_tab, int sample_rate
     // Check for arrors
     if (res != paNoError)
     {
-        emit cant_open_stream();
+        emit player_error("Unable to open stream");
         throw runtime_error("Unable to open stream");
     }
 

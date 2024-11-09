@@ -2,14 +2,14 @@
 
 // Qt5
 #include <QtCore/QObject>
+#include <QtCore/QThreadPool>
 #include <QtCore/QRunnable>
+#include <QtWidgets/QWidget>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QAbstractItemView>
 // PortAudio
 #include <portaudio.h>
-// Mutex for handling threads
-#include <mutex>
 // Custom
 #include "DeviceTab.hpp"
 #include "AudioTrack.hpp"
@@ -44,7 +44,7 @@ class AudioPlayer : public QObject, public QRunnable
 
     signals:
     // Signals that the player has stopped working
-    void cant_open_stream();
+    void player_error(QString message);
 };
 
 

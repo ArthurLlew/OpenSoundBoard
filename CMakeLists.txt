@@ -15,7 +15,7 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 project(SoundBoard)
 
 # Defines list of source files
-set(SOURCES main.cpp MainWindow.cpp DeviceTab.cpp AudioTrack.cpp AudioPlayers.cpp WidgetMessages.cpp)
+set(SOURCES main.cpp MainWindow.cpp DeviceTab.cpp AudioTrack.cpp AudioPlayerManagers.cpp AudioPlayers.cpp WidgetMessages.cpp)
 # Defines names of static libraries
 set(LIBS Qt5Core Qt5Widgets Qt5Gui portaudio avcodec avdevice avfilter avformat avutil postproc SvtAv1Enc swresample swscale)
 

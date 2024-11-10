@@ -2,6 +2,7 @@
 
 // Qt5
 #include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtCore/QThreadPool>
 #include <QtCore/QRunnable>
 #include <QtWidgets/QWidget>
@@ -12,7 +13,7 @@
 #include <portaudio.h>
 // Custom
 #include "DeviceTab.hpp"
-#include "AudioTrack.hpp"
+#include "AudioTrackContext.hpp"
 
 using namespace std;
 
@@ -23,8 +24,9 @@ class AudioPlayer : public QObject, public QRunnable
     Q_OBJECT
 
     protected:
+
     // Lists of devices
-    QTabWidget *devices;
+    QTabWidget const *devices;
 
     public:
 
@@ -32,13 +34,17 @@ class AudioPlayer : public QObject, public QRunnable
     bool is_alive = false;
 
     // Constructor
-    AudioPlayer(QTabWidget *devices);
+    AudioPlayer(QTabWidget const *devices);
+
+    protected:
+
+    // Opens stream for the provided device
+    PaStream* open_device_stream(DeviceTab const *device_tab, int sample_rate, PaSampleFormat sampleFormat);
+
+    public:
 
     // Stops the player if it is running
     void kill();
-    // Opens stream for the provided device
-    PaStream* open_device_stream(DeviceTab* device_tab, int sample_rate, PaSampleFormat sampleFormat);
-
     // Player cycle (pure virtual)
     virtual void run() = 0;
 
@@ -54,7 +60,7 @@ class MicrophonePlayer : public AudioPlayer
     public:
 
     // Constructor
-    MicrophonePlayer(QTabWidget *devices);
+    MicrophonePlayer(QTabWidget const *devices);
 
     // Player cycle
     void run();
@@ -64,14 +70,31 @@ class MicrophonePlayer : public AudioPlayer
 // Player that manages media files
 class  MediaFilesPlayer : public AudioPlayer
 {
-    // List of tracks (with mutex)
-    QListWidget *tracks;
+    Q_OBJECT
+
+    // Current track
+    AudioTrackContext *track = nullptr;
+    // Stores where to grab volume value
+    float const *volume_ptr;
+    // Tells track current state
+    TrackState next_track_state = STOPPED;
 
     public:
 
     // Constructor
-    MediaFilesPlayer(QTabWidget *devices, QListWidget *tracks);
+    MediaFilesPlayer(QTabWidget const *devices, float const *volume_ptr);
+    // Destructor
+    ~MediaFilesPlayer();
 
     // Player cycle
     void run();
+
+    // Sets new track to play
+    void new_track(QString filepath);
+    // Sets new track state
+    void new_track_state(TrackState track_state);
+
+    signals:
+    // Emitted when player track has ended
+    void track_endeded();
 };

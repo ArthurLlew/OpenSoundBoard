@@ -58,5 +58,5 @@ class DeviceTab: public QWidget
     // Refreshes devices list
     void refresh_devices();
     // Returns selected device info
-    PaDeviceInfo_ext get_selected_device();
+    PaDeviceInfo_ext get_selected_device() const;
 };

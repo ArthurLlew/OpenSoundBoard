@@ -9,6 +9,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QProgressbar>
 // Custom
 #include "WidgetMessages.hpp"
 #include "AudioPlayers.hpp"
@@ -27,12 +28,13 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     QVBoxLayout *layout;
     // Start/Stop button
     QPushButton *button_start_stop;
+
+    // Thread pool where player will run
+    QThreadPool *threadpool = new QThreadPool();
     // Player
     AudioPlayer *player;
     // Player state
     bool is_player_alive = false;
-    // Thread pool where player will run
-    QThreadPool *threadpool = new QThreadPool();
 
     public:
 
@@ -41,14 +43,14 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     // Destructor
     ~AudioPlayerManager();
 
-    // Start/Stop player cycle
-    void start_stop();
     // Start player
-    void start();
+    void run();
     // Stop player
-    void stop();
+    void kill();
     // Wait for player to stop
     void wait_player();
+    // Start/Stop player cycle
+    void run_kill();
 
     // Display player error
     void player_error(QString message);
@@ -68,13 +70,51 @@ class MicrophonePlayerManager : public AudioPlayerManager
 // Manages media files player
 class MediaFilesPlayerManager : public AudioPlayerManager
 {
+    Q_OBJECT
+
+    // Track name label
+    QLabel *track_name;
+    // Play button
+    QPushButton *button_play;
+    // Track progress bar
+    QProgressBar *progress;
+    // Volume label
+    QLabel *volume_label;
+
+    // Volume adjustments
+    float volume;
+    // Track duration info
+    int duration_cur = 0;
+    int duration_total = 0;
+    // Tells track current state
+    TrackState track_state = STOPPED;
+
     public:
 
     // Constructor
-    MediaFilesPlayerManager(QTabWidget *devices, QListWidget *tracks, QString name, QWidget *parent = nullptr);
+    MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screean_rect, QWidget *parent = nullptr);
 
-    // Start player
-    void media_play_pause();
-    // Stop player
-    void media_stop();
+    // Display player error and update track state
+    void player_error(QString message);
+    // Update track state to STOPPED
+    void player_track_ended();
+
+    // Sets track volume
+    void set_volume(int value);
+    // Updates track progress
+    void update_progress();
+
+    // Insert new track
+    void insert_track(QString filepath, QString name);
+
+    // Stops audio track
+    void stop();
+    // Audio track play-pause cycle
+    void play_pause();
+
+    signals:
+    // Ask player to set new track
+    void ask_new_track (QString filepath);
+    // Ask player to change track state
+    void ask_new_track_state(TrackState track_state);
 };

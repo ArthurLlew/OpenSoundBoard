@@ -53,7 +53,7 @@ DeviceTab::~DeviceTab()
 }
 
 
-PaDeviceInfo_ext DeviceTab::get_selected_device()
+PaDeviceInfo_ext DeviceTab::get_selected_device() const
 {
     // Search in devices list via index of combobox list
     int list_index = 0;

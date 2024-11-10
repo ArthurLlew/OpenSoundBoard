@@ -26,7 +26,6 @@
 #include "DeviceTab.hpp"
 #include "AudioTrack.hpp"
 #include "AudioPlayerManagers.hpp"
-#include "AudioPlayers.hpp"
 
 using namespace std;
 
@@ -54,9 +53,6 @@ class MainWindow: public QMainWindow, WidgetWarnings
     // Destructor
     ~MainWindow();
 
-    // Called when widget is asked to be closed
-    void closeEvent(QCloseEvent *event);
-
     // Safely starts portaudio (raises exception if unable to initialize)
     void start_portaudio();
 
@@ -71,14 +67,6 @@ class MainWindow: public QMainWindow, WidgetWarnings
     void stop_players();
     // Restarts players
     void restart_players(int unused);
-    // Shows warning when player runs into some error
-    void micplayer_stream_error(QString message);
-    void mediaplayer_stream_error(QString message);
     // Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players)
     void refresh_devices();
-
-    // Pauses all tracks
-    void pause_all();
-    // Stops all tracks
-    void stop_all();
 };

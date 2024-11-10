@@ -58,10 +58,10 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         left_vertbox->addWidget(tracks);
 
         /*
-        // Button to stop all tracks:
+        // Button placeholder:
         */
-        QPushButton *button = new QPushButton("Stop all");
-        connect(button, &QPushButton::pressed, this, &MainWindow::stop_all);
+        QPushButton *button = new QPushButton("Placeholder button");
+        //connect(button, &QPushButton::pressed, this, &MainWindow::stop_all);
         left_vertbox->addWidget(button);
 
         /*
@@ -87,7 +87,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         // Init player managers
         microphone_player_manager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
         right_vertbox->addWidget(microphone_player_manager);
-        mediafiles_player_manager = new MediaFilesPlayerManager(devices, tracks, "Media Files Player");
+        mediafiles_player_manager = new MediaFilesPlayerManager(devices, "Media Files Player", screean_rect);
         right_vertbox->addWidget(mediafiles_player_manager);
     }
     catch(...)
@@ -112,16 +112,6 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
-    // Stop songs (to deallocate their data)
-    stop_all();
-
-    // Accept close event (close widget)
-    event->accept();
-}
-
-
 void MainWindow::start_portaudio()
 {
     // Initialize portaudio while checking for any error
@@ -135,7 +125,7 @@ void MainWindow::start_portaudio()
 
 void MainWindow::add_track()
 {
-    mediafiles_player_manager->stop();
+    mediafiles_player_manager->kill();
     mediafiles_player_manager->wait_player();
 
     // Ask to select media files
@@ -145,7 +135,7 @@ void MainWindow::add_track()
     for (const auto &filename : std::as_const(filenames))
     {
         // Create sound widget
-        AudioTrack *sound_item = new AudioTrack(filename, screean_rect);
+        AudioTrack *sound_item = new AudioTrack(filename, mediafiles_player_manager);
         // Create list item
         QListWidgetItem *lst_item = new QListWidgetItem(tracks);
         // Set size hint
@@ -192,7 +182,7 @@ void MainWindow::start_players()
     }
     else
     {
-        microphone_player_manager->start();
+        microphone_player_manager->run();
     }
 
     // Check if we can launch mediafiles player
@@ -206,7 +196,7 @@ void MainWindow::start_players()
     }
     else
     {
-        mediafiles_player_manager->start();
+        mediafiles_player_manager->run();
     }
 }
 
@@ -214,8 +204,8 @@ void MainWindow::start_players()
 void MainWindow::stop_players()
 {
     // Tell players to stop and wait till they finish
-    microphone_player_manager->stop();
-    mediafiles_player_manager->stop();
+    microphone_player_manager->kill();
+    mediafiles_player_manager->kill();
     microphone_player_manager->wait_player();
     mediafiles_player_manager->wait_player();
 }
@@ -246,24 +236,4 @@ void MainWindow::refresh_devices()
 
     // Start players
     start_players();
-}
-
-
-void MainWindow::pause_all()
-{
-    // Pause all tracks via widgets of QList items
-    for (int i=0; i<tracks->count(); i++)
-    {
-        ((AudioTrack*)tracks->itemWidget(tracks->item(i)))->pause();
-    }
-}
-
-
-void MainWindow::stop_all()
-{
-    // Stop all tracks via widgets of QList items
-    for (int i=0; i<tracks->count(); i++)
-    {
-        ((AudioTrack*)tracks->itemWidget(tracks->item(i)))->stop();
-    }
 }

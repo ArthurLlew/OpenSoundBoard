@@ -1,7 +1,7 @@
 #include "AudioPlayers.hpp"
 
 
-AudioPlayer::AudioPlayer(QTabWidget *devices)
+AudioPlayer::AudioPlayer(QTabWidget const* devices)
 {
     this->devices = devices;
 
@@ -10,7 +10,7 @@ AudioPlayer::AudioPlayer(QTabWidget *devices)
 }
 
 
-PaStream* AudioPlayer::open_device_stream(DeviceTab* device_tab, int sample_rate, PaSampleFormat sampleFormat)
+PaStream* AudioPlayer::open_device_stream(DeviceTab const* device_tab, int sample_rate, PaSampleFormat sampleFormat)
 {
     // Get currently selected device
     PaDeviceInfo_ext selected_device = device_tab->get_selected_device();
@@ -60,7 +60,7 @@ void AudioPlayer::kill()
 }
 
 
-MicrophonePlayer::MicrophonePlayer(QTabWidget *devices) : AudioPlayer(devices){}
+MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devices){}
 
 
 void MicrophonePlayer::run()
@@ -83,6 +83,7 @@ void MicrophonePlayer::run()
         virtual_out_stream = open_device_stream((DeviceTab*)devices->widget(1), 48000, paInt16);
         out_stream = open_device_stream((DeviceTab*)devices->widget(2), 48000, paInt16);
 
+        // Player cycle
         while (is_alive && Pa_IsStreamActive(in_stream))
         {
             // Handle input stream (depending on checkbox and stream state)
@@ -129,9 +130,15 @@ void MicrophonePlayer::run()
 }
 
 
-MediaFilesPlayer::MediaFilesPlayer(QTabWidget *devices, QListWidget *tracks) : AudioPlayer(devices)
+MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices, float const *volume_ptr) : AudioPlayer(devices)
 {
-    this->tracks = tracks;
+    this->volume_ptr = volume_ptr;
+}
+
+
+MediaFilesPlayer::~MediaFilesPlayer()
+{
+    delete track;
 }
 
 
@@ -151,28 +158,33 @@ void MediaFilesPlayer::run()
         virtual_out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(1), 48000, paFloat32);
         out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(2), 48000, paFloat32);
 
+        // Player cycle
         while (is_alive)
         {
             // Check for the first playing file
-            for (int i=0; i<tracks->count(); i++)
+            if (track != nullptr)
             {
-                if (((AudioTrack*)tracks->itemWidget(tracks->item(i)))->track_state == PLAYING)
+                // Set next track state
+                if (track->state != next_track_state)
+                    track->set_state(next_track_state);
+
+                if (track->state == PLAYING)
                 {
-                    TrackFrame frame = ((AudioTrack*)tracks->itemWidget(tracks->item(i)))->read_samples();
+                    AudioTrackFrame frame = track->read_samples(*volume_ptr);
 
                     if (frame.nb_samples > 0)
                     {
                         switch (frame.sample_rate)
                         {
                             case 44100:
-                                // Write to virtual output stream (depending on checkbox and stream state)
+                                // Write to virtual output stream (depending on checkbox)
                                 if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
                                     Pa_WriteStream(virtual_out_stream_44100, frame.data, frame.nb_samples);
                                 // Write to output stream
                                 Pa_WriteStream(out_stream_44100, frame.data, frame.nb_samples);
                                 break;
                             case 48000:
-                                // Write to virtual output stream (depending on checkbox and stream state)
+                                // Write to virtual output stream (depending on checkbox)
                                 if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
                                     Pa_WriteStream(virtual_out_stream_48000, frame.data, frame.nb_samples);
                                 // Write to output stream
@@ -182,8 +194,12 @@ void MediaFilesPlayer::run()
                                 throw runtime_error("Unsupported samples rate");
                         }
                     }
-
-                    break;
+                    else
+                    {
+                        // Track has ended: update state and notify manager
+                        next_track_state = STOPPED;
+                        emit track_endeded();
+                    }
                 }
             }
         }
@@ -193,7 +209,6 @@ void MediaFilesPlayer::run()
         is_alive = false;
         emit player_error(e.what());
     }
-    
 
     // Free streams if allocated
     if (virtual_out_stream_44100)
@@ -215,4 +230,20 @@ void MediaFilesPlayer::run()
         Pa_AbortStream(out_stream_48000);
         Pa_CloseStream(out_stream_48000);
     }
+}
+
+
+void MediaFilesPlayer::new_track(QString filepath)
+{
+    // Manage old track
+    if (track != nullptr)
+        delete track;
+    // Create new track context
+    track = new AudioTrackContext(filepath);
+}
+
+
+void MediaFilesPlayer::new_track_state(TrackState track_state)
+{
+    next_track_state = track_state;
 }

@@ -44,7 +44,6 @@ PaStream* AudioPlayer::open_device_stream(DeviceTab* device_tab, int sample_rate
     // Check for arrors
     if (res != paNoError)
     {
-        emit player_error("Unable to open stream");
         throw runtime_error("Unable to open stream");
     }
 
@@ -102,9 +101,10 @@ void MicrophonePlayer::run()
             }
         }
     }
-    catch(...)
+    catch(const std::exception& e)
     {
         is_alive = false;
+        emit player_error(e.what());
     }
 
     // Free buffer if allocated
@@ -188,10 +188,12 @@ void MediaFilesPlayer::run()
             }
         }
     }
-    catch(...)
+    catch(const std::exception& e)
     {
         is_alive = false;
+        emit player_error(e.what());
     }
+    
 
     // Free streams if allocated
     if (virtual_out_stream_44100)

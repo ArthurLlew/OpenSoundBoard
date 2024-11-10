@@ -229,18 +229,6 @@ void MainWindow::restart_players(int unused)
 }
 
 
-void MainWindow::micplayer_stream_error(QString message)
-{
-    show_warning("Microphone Player error:\n" + message);
-}
-
-
-void MainWindow::mediaplayer_stream_error(QString message)
-{
-    show_warning("Media Player error:\n" + message);
-}
-
-
 void MainWindow::refresh_devices()
 {
     // Stop players

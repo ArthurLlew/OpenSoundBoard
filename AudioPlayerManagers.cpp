@@ -86,21 +86,25 @@ void AudioPlayerManager::wait_player()
 
 void AudioPlayerManager::player_error(QString message)
 {
-    show_warning(name + "error:\n" + message);
+    show_warning(name + " error:\n" + message);
+    // Update player state
+    stop();
 }
 
 
 MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget *devices, QString name, QWidget *parent)
 : AudioPlayerManager(name, parent)
 {
-    // Create microphone player
+    // Create microphone player and connect to signals
     this->player = new MicrophonePlayer(devices);
+    connect((MicrophonePlayer*)this->player, MicrophonePlayer::player_error, this, &MicrophonePlayerManager::player_error);
 }
 
 
 MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QListWidget *tracks, QString name, QWidget *parent)
 : AudioPlayerManager(name, parent)
 {
-    // Create media files player
+    // Create media files player and connect to signals
     this->player = new MediaFilesPlayer(devices, tracks);
+    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::player_error, this, &MediaFilesPlayerManager::player_error);
 }

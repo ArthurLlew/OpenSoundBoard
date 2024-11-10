@@ -43,7 +43,7 @@ class AudioPlayer : public QObject, public QRunnable
     virtual void run() = 0;
 
     signals:
-    // Signals that the player has stopped working
+    // Emitted when the player encounters any error
     void player_error(QString message);
 };
 

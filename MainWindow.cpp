@@ -125,9 +125,6 @@ void MainWindow::start_portaudio()
 
 void MainWindow::add_track()
 {
-    mediafiles_player_manager->kill();
-    mediafiles_player_manager->wait_player();
-
     // Ask to select media files
     QStringList filenames = open_file_dialog("Media (*.mp4 *.mp3 *.wav *.ogg)");
     

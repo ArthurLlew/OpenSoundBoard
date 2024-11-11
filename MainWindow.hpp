@@ -36,8 +36,6 @@ class MainWindow: public QMainWindow, WidgetWarnings
     /** Geometry of the computer's primary screen.*/
     QRect *screeanGeometry;
 
-    /** Central widjet of the main window.*/
-    QWidget *central_widget;
     /** List of tracks.*/
     QListWidget *tracks;
     /** Devices tab.*/

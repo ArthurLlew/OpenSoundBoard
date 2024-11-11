@@ -15,6 +15,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     // Main layout:
     */
     layout = new QVBoxLayout();
+    layout->setAlignment(Qt::AlignTop);
     setLayout(layout);
 
     /*

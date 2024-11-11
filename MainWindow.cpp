@@ -21,7 +21,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         /*
         // Central widget:
         */
-        central_widget = new QWidget();
+        QWidget *central_widget = new QWidget();
         setCentralWidget(central_widget);
         /* Grid layout for the central widget */
         QGridLayout *grid = new QGridLayout();
@@ -31,6 +31,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         /* Additional layouts inside grid */
         QVBoxLayout *left_vertbox = new QVBoxLayout();
         QVBoxLayout *right_vertbox = new QVBoxLayout();
+        right_vertbox->setAlignment(Qt::AlignTop);
         grid->addLayout(left_vertbox, 0, 0, 1, 1);
         grid->addLayout(right_vertbox, 0, 1, 1, 1);
 
@@ -66,6 +67,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         // Devices tabs on the right:
         */
         devices = new QTabWidget();
+        devices->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
         right_vertbox->addWidget(devices);
         /* Input device */
         QComboBox *combobox_devices = new QComboBox();
@@ -84,6 +86,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
 
         // Init player managers
         microphonePlayerManager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
+        microphonePlayerManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
         right_vertbox->addWidget(microphonePlayerManager);
         mediafilesPlayerManager = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
         right_vertbox->addWidget(mediafilesPlayerManager);

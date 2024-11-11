@@ -179,7 +179,7 @@ void MainWindow::start_players()
     }
     else
     {
-        microphone_player_manager->run();
+        microphone_player_manager->player_run();
     }
 
     // Check if we can launch mediafiles player
@@ -193,7 +193,7 @@ void MainWindow::start_players()
     }
     else
     {
-        mediafiles_player_manager->run();
+        mediafiles_player_manager->player_run();
     }
 }
 
@@ -201,10 +201,10 @@ void MainWindow::start_players()
 void MainWindow::stop_players()
 {
     // Tell players to stop and wait till they finish
-    microphone_player_manager->kill();
-    mediafiles_player_manager->kill();
-    microphone_player_manager->wait_player();
-    mediafiles_player_manager->wait_player();
+    microphone_player_manager->player_stop();
+    mediafiles_player_manager->player_stop();
+    microphone_player_manager->player_wait();
+    mediafiles_player_manager->player_wait();
 }
 
 

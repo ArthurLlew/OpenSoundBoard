@@ -22,5 +22,5 @@ AudioTrack::AudioTrack(QString filepath, MediaFilesPlayerManager *player, QWidge
 
 void AudioTrack::submit_to_player()
 {
-    emit player->insert_track(filepath, name);
+    emit player->track_insert(filepath, name);
 }

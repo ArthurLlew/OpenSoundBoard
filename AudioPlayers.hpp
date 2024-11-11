@@ -21,8 +21,6 @@ using namespace std;
 // Basic player class
 class AudioPlayer : public QObject, public QRunnable
 {
-    Q_OBJECT
-
     protected:
 
     // Lists of devices
@@ -39,15 +37,17 @@ class AudioPlayer : public QObject, public QRunnable
     protected:
 
     // Opens stream for the provided device
-    PaStream* open_device_stream(DeviceTab const *device_tab, int sample_rate, PaSampleFormat sampleFormat);
+    PaStream* open_device_stream(DeviceTab const *target_device, PaSampleFormat sampleFormat, double sample_rate = 0,
+                                 DeviceTab const *device_tab2 = nullptr);
 
     public:
 
     // Stops the player if it is running
-    void kill();
+    void stop();
     // Player cycle (pure virtual)
     virtual void run() = 0;
 
+    Q_OBJECT
     signals:
     // Emitted when the player encounters any error
     void player_error(QString message);
@@ -70,8 +70,6 @@ class MicrophonePlayer : public AudioPlayer
 // Player that manages media files
 class  MediaFilesPlayer : public AudioPlayer
 {
-    Q_OBJECT
-
     // Current track
     AudioTrackContext *track = nullptr;
     // Stores where to grab volume value
@@ -94,6 +92,7 @@ class  MediaFilesPlayer : public AudioPlayer
     // Sets new track state
     void new_track_state(TrackState track_state);
 
+    Q_OBJECT
     signals:
     // Emitted when player track has ended
     void track_endeded();

@@ -39,21 +39,31 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     public:
 
     // Constructor
-    AudioPlayerManager(QString name, QWidget *parent = nullptr);
+    AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent = nullptr);
     // Destructor
     ~AudioPlayerManager();
 
-    // Start player
-    void run();
-    // Stop player
-    void kill();
-    // Wait for player to stop
-    void wait_player();
-    // Start/Stop player cycle
-    void run_kill();
+    protected:
 
     // Display player error
     void player_error(QString message);
+
+    // Start/Stop player
+    void player_run_stop();
+
+    public:
+
+    // Start player
+    void player_run();
+    // Stop player
+    void player_stop();
+    // Wait for the player to stop
+    void player_wait();
+
+    Q_OBJECT
+    signals:
+    // Ask player to stop
+    void ask_player_stop();
 };
 
 
@@ -70,8 +80,6 @@ class MicrophonePlayerManager : public AudioPlayerManager
 // Manages media files player
 class MediaFilesPlayerManager : public AudioPlayerManager
 {
-    Q_OBJECT
-
     // Track name label
     QLabel *track_name;
     // Play button
@@ -94,24 +102,29 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     // Constructor
     MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screean_rect, QWidget *parent = nullptr);
 
+    private:
+
     // Display player error and update track state
     void player_error(QString message);
-    // Update track state to STOPPED
-    void player_track_ended();
 
     // Sets track volume
     void set_volume(int value);
     // Updates track progress
     void update_progress();
 
-    // Insert new track
-    void insert_track(QString filepath, QString name);
-
     // Stops audio track
-    void stop();
-    // Audio track play-pause cycle
-    void play_pause();
+    void track_stop();
+    // Audio track play-pause
+    void track_play_pause();
+    // Update track state to STOPPED
+    void player_track_ended();
 
+    public:
+
+    // Insert new track
+    void track_insert(QString filepath, QString name);
+
+    Q_OBJECT
     signals:
     // Ask player to set new track
     void ask_new_track (QString filepath);

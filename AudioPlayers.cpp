@@ -10,38 +10,50 @@ AudioPlayer::AudioPlayer(QTabWidget const* devices)
 }
 
 
-PaStream* AudioPlayer::open_device_stream(DeviceTab const* device_tab, int sample_rate, PaSampleFormat sampleFormat)
+PaStream* AudioPlayer::open_device_stream(DeviceTab const *target_device, PaSampleFormat sampleFormat, double sample_rate,
+                                          DeviceTab const *source_device)
 {
     // Get currently selected device
-    PaDeviceInfo_ext selected_device = device_tab->get_selected_device();
-    // Open stream (depends on the device type)
+    PaDeviceInfo_ext selected_target_device = target_device->get_selected_device();
+
+    // Init
     PaStream *device_stream = NULL;
     PaError res;
     PaStreamParameters stream_prams;
-    if (device_tab->device_type == INPUT)
+    // Parameters that depend soly on device
+    stream_prams.device = selected_target_device.index;
+    stream_prams.sampleFormat = sampleFormat;
+    stream_prams.suggestedLatency = selected_target_device.defaultHighInputLatency;
+    stream_prams.hostApiSpecificStreamInfo = NULL;
+    // Channel count and sample rate
+    double sampleRate = (sample_rate == 0) ? selected_target_device.defaultSampleRate : sample_rate;
+    int channelCount = (target_device->device_type == INPUT) ? selected_target_device.maxInputChannels : selected_target_device.maxOutputChannels;
+    if (source_device == nullptr)
     {
-        stream_prams.device = selected_device.index;
-        stream_prams.channelCount = selected_device.maxInputChannels;
-        stream_prams.sampleFormat = sampleFormat;
-        stream_prams.suggestedLatency = selected_device.defaultHighInputLatency;
-        stream_prams.hostApiSpecificStreamInfo = NULL;
+        stream_prams.channelCount = channelCount;
+    }
+    else
+    {
+        PaDeviceInfo_ext selected_source_device = source_device->get_selected_device();
+        stream_prams.channelCount = min(selected_source_device.maxInputChannels, channelCount);
+        sampleRate = min(selected_source_device.defaultSampleRate, sampleRate);
+    }
+
+    // Open stream (depends on device type)
+    if (target_device->device_type == INPUT)
+    {
         res = Pa_OpenStream(&device_stream, &stream_prams, NULL,
-                            sample_rate, 1024,
+                            sampleRate, 1024,
                             paClipOff, NULL, NULL);
     }
-    else if (device_tab->device_type == OUTPUT)
+    else if (target_device->device_type == OUTPUT)
     {
-        stream_prams.device = selected_device.index;
-        stream_prams.channelCount =selected_device.maxOutputChannels;
-        stream_prams.sampleFormat = sampleFormat;
-        stream_prams.suggestedLatency = selected_device.defaultHighOutputLatency;
-        stream_prams.hostApiSpecificStreamInfo = NULL;
         res = Pa_OpenStream(&device_stream, NULL, &stream_prams,
-                            sample_rate, 1024,
+                            sampleRate, 1024,
                             paClipOff, NULL, NULL);
     }
 
-    // Check for arrors
+    // Check for errors
     if (res != paNoError)
     {
         throw runtime_error("Unable to open stream");
@@ -54,7 +66,7 @@ PaStream* AudioPlayer::open_device_stream(DeviceTab const* device_tab, int sampl
 }
 
 
-void AudioPlayer::kill()
+void AudioPlayer::stop()
 {
     is_alive = false;
 }
@@ -79,9 +91,9 @@ void MicrophonePlayer::run()
         buff = malloc(sizeof(paInt16)*size);
 
         // Open relevant streams
-        in_stream = open_device_stream((DeviceTab*)devices->widget(0), 48000, paInt16);
-        virtual_out_stream = open_device_stream((DeviceTab*)devices->widget(1), 48000, paInt16);
-        out_stream = open_device_stream((DeviceTab*)devices->widget(2), 48000, paInt16);
+        in_stream = open_device_stream((DeviceTab*)devices->widget(0), paInt16);
+        virtual_out_stream = open_device_stream((DeviceTab*)devices->widget(1), paInt16, 0, (DeviceTab*)devices->widget(0));
+        out_stream = open_device_stream((DeviceTab*)devices->widget(2), paInt16, 0, (DeviceTab*)devices->widget(0));
 
         // Player cycle
         while (is_alive && Pa_IsStreamActive(in_stream))
@@ -153,10 +165,10 @@ void MediaFilesPlayer::run()
     try
     {
         // Open relevant streams
-        virtual_out_stream_44100 = open_device_stream((DeviceTab*)devices->widget(1), 44100, paFloat32);
-        out_stream_44100 = open_device_stream((DeviceTab*)devices->widget(2), 44100, paFloat32);
-        virtual_out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(1), 48000, paFloat32);
-        out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(2), 48000, paFloat32);
+        virtual_out_stream_44100 = open_device_stream((DeviceTab*)devices->widget(1), paFloat32, 44100);
+        out_stream_44100 = open_device_stream((DeviceTab*)devices->widget(2), paFloat32, 44100);
+        virtual_out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(1), paFloat32, 48000);
+        out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(2), paFloat32, 48000);
 
         // Player cycle
         while (is_alive)

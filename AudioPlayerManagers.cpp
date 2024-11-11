@@ -1,9 +1,15 @@
 #include "AudioPlayerManagers.hpp"
 
 
-AudioPlayerManager::AudioPlayerManager(QString name, QWidget *parent) : QWidget(parent)
+AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent)
+: QWidget(parent)
 {
+    this->player = player;
     this->name = name;
+
+    // Connect signals to player
+    connect(this, &AudioPlayerManager::ask_player_stop, this->player, AudioPlayer::stop);
+    connect(this->player, AudioPlayer::player_error, this, &AudioPlayerManager::player_error);
 
     /*
     // Main layout:
@@ -19,7 +25,7 @@ AudioPlayerManager::AudioPlayerManager(QString name, QWidget *parent) : QWidget(
     layout->addLayout(header_layout);
     // Start/Stop button
     button_start_stop = new QPushButton("Start");
-    connect(button_start_stop, &QPushButton::pressed, this, &AudioPlayerManager::run_kill);
+    connect(button_start_stop, &QPushButton::pressed, this, &AudioPlayerManager::player_run_stop);
     header_layout->addWidget(button_start_stop);
     // Label
     QLabel *label = new QLabel(name);
@@ -35,7 +41,7 @@ AudioPlayerManager::~AudioPlayerManager()
 }
 
 
-void AudioPlayerManager::run()
+void AudioPlayerManager::player_run()
 {
     // Start player only if he is not working
     if (!is_player_alive)
@@ -50,12 +56,12 @@ void AudioPlayerManager::run()
 }
 
 
-void AudioPlayerManager::kill()
+void AudioPlayerManager::player_stop()
 {
     // Kill player only if he is working
     if (is_player_alive)
     {
-        player->kill();
+        emit ask_player_stop();
         // Update button
         button_start_stop->setText("Start");
         // Update status
@@ -64,23 +70,23 @@ void AudioPlayerManager::kill()
 }
 
 
-void AudioPlayerManager::wait_player()
+void AudioPlayerManager::player_wait()
 {
     threadpool->waitForDone(-1);
 }
 
 
-void AudioPlayerManager::run_kill()
+void AudioPlayerManager::player_run_stop()
 {
     if (is_player_alive)
     {
         // Stop player and wait for it to finish
-        kill();
-        wait_player();
+        player_stop();
+        player_wait();
     }
     else
     {
-        run();
+        player_run();
     }
 }
 
@@ -89,25 +95,20 @@ void AudioPlayerManager::player_error(QString message)
 {
     show_warning(name + " error:\n" + message);
     // Update player state
-    kill();
+    player_stop();
 }
 
 
 MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget *devices, QString name, QWidget *parent)
-: AudioPlayerManager(name, parent)
-{
-    // Create microphone player and connect signals
-    this->player = new MicrophonePlayer(devices);
-    connect((MicrophonePlayer*)this->player, MicrophonePlayer::player_error, this, &MicrophonePlayerManager::player_error);
-}
+// Init of the player happens here
+: AudioPlayerManager(new MicrophonePlayer(devices), name, parent) {}
 
 
 MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screean_rect, QWidget *parent)
-: AudioPlayerManager(name, parent)
+// Init of the player happens here
+: AudioPlayerManager(new MediaFilesPlayer(devices, &volume), name, parent)
 {
-    // Create media files player and connect signals
-    this->player = new MediaFilesPlayer(devices, &volume);
-    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::player_error, this, &MediaFilesPlayerManager::player_error);
+    // Connect signals to player
     connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::track_endeded, this, &MediaFilesPlayerManager::player_track_ended);
     connect(this, &MediaFilesPlayerManager::ask_new_track, (MediaFilesPlayer*)this->player, MediaFilesPlayer::new_track);
     connect(this, &MediaFilesPlayerManager::ask_new_track_state, (MediaFilesPlayer*)this->player, MediaFilesPlayer::new_track_state);
@@ -135,11 +136,11 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString na
     box_layout2->addWidget(progress);
     // Play/Pause button
     button_play = new QPushButton("Play");
-    connect(button_play, &QPushButton::pressed, this, &MediaFilesPlayerManager::play_pause);
+    connect(button_play, &QPushButton::pressed, this, &MediaFilesPlayerManager::track_play_pause);
     box_layout3->addWidget(button_play);
     // Stop buttom
     QPushButton *button_stop = new QPushButton("Stop");
-    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::stop);
+    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::track_stop);
     box_layout3->addWidget(button_stop);
     // Volume slider and label
     QSlider *volume_slider = new QSlider(Qt::Orientation::Horizontal);
@@ -186,7 +187,7 @@ void MediaFilesPlayerManager::update_progress()
 }
 
 
-void MediaFilesPlayerManager::insert_track(QString filepath, QString name)
+void MediaFilesPlayerManager::track_insert(QString filepath, QString name)
 {
     // Ask player to change track
     emit ask_new_track(filepath);
@@ -195,7 +196,7 @@ void MediaFilesPlayerManager::insert_track(QString filepath, QString name)
 }
 
 
-void MediaFilesPlayerManager::stop()
+void MediaFilesPlayerManager::track_stop()
 {
     // New track state
     track_state = STOPPED;
@@ -205,9 +206,9 @@ void MediaFilesPlayerManager::stop()
 }
 
 
-void MediaFilesPlayerManager::play_pause()
+void MediaFilesPlayerManager::track_play_pause()
 {
-    // Play-pause cycle
+    // Play-pause track
     switch (track_state)
     {
         case STOPPED:

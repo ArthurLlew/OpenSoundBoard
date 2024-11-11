@@ -1,7 +1,7 @@
 #include "WidgetMessages.hpp"
 
 
-void WidgetWarnings::show_warning(QString message)
+void WidgetWarnings::displayWarning(QString message)
 {
     // Basic warning meesagebox
     QMessageBox msgBox;

@@ -4,10 +4,15 @@
 #include <QtWidgets/QMessageBox>
 
 
+/** Describes warning messageboxes that can be shown to user.
+*/
 class WidgetWarnings
 {
-    public:
+    protected:
 
-    // Shows warning message
-    void show_warning(QString message);
+    /** Displays warning messagebox.
+     * 
+     *  @param message A message to display.
+    */
+    void displayWarning(QString message);
 };

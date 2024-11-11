@@ -17,119 +17,157 @@
 using namespace std;
 
 
-// Abstract class: manager for audio player
+/** Audio player manager widget. Can run, stop and wait provided audio player.*/
 class AudioPlayerManager : public QWidget, WidgetWarnings
 {
     protected:
 
-    // Manager name
+    /** Manager name.*/
     QString name;
-    // Widget main layout
+    /** Widget main layout.*/
     QVBoxLayout *layout;
-    // Start/Stop button
-    QPushButton *button_start_stop;
+    /** Start/Stop button.*/
+    QPushButton *buttonStartStop;
 
-    // Thread pool where player will run
+    /** Thread pool where player will run.*/
     QThreadPool *threadpool = new QThreadPool();
-    // Player
+    /** Audio player.*/
     AudioPlayer *player;
-    // Player state
-    bool is_player_alive = false;
+    /** Audio player state.*/
+    bool isPlayerAlive = false;
 
     public:
 
-    // Constructor
+    /** Constructor.
+     * 
+     *  @param player Audio player.
+     * 
+     *  @param name player name.
+    */
     AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent = nullptr);
-    // Destructor
+    /** Destructor.*/
     ~AudioPlayerManager();
 
     protected:
 
-    // Display player error
-    void player_error(QString message);
+    /** Display player error.
+     * 
+     *  @param message error message.
+    */
+    void playerError(QString message);
 
-    // Start/Stop player
+    /** Start/Stop player.*/
     void player_run_stop();
 
     public:
 
-    // Returns player state
+    /** Returns player state.*/
     bool player_state();
-    // Start player
+    /** Start player.*/
     void player_run();
-    // Stop player
+    /** Stop player.*/
     void player_stop();
-    // Wait for the player to stop
+    /** Wait for the player to stop.*/
     void player_wait();
 
     Q_OBJECT
     signals:
-    // Ask player to stop
+    /** Ask player to stop.*/
     void ask_player_stop();
 };
 
 
-// Manages microphone player
+/** Microphone player manager.*/
 class MicrophonePlayerManager : public AudioPlayerManager
 {
     public:
 
-    // Constructor
+    /** Constructor.
+     * 
+     *  @param player Audio player.
+     * 
+     *  @param name player name.
+    */
     MicrophonePlayerManager(QTabWidget *devices, QString name, QWidget *parent = nullptr);
 };
 
 
-// Manages media files player
+/** Media files player manager.*/
 class MediaFilesPlayerManager : public AudioPlayerManager
 {
-    // Track name label
-    QLabel *track_name;
-    // Play button
-    QPushButton *button_play;
-    // Track progress bar
+    /** Track name label.*/
+    QLabel *trackName;
+    /** Play button.*/
+    QPushButton *buttonPlay;
+    /** Track progress bar.*/
     QProgressBar *progress;
-    // Volume label
-    QLabel *volume_label;
+    /** Volume label.*/
+    QLabel *volumeLabel;
 
-    // Volume adjustments
+    /** Track volume.*/
     float volume;
-    // Track duration info
+    /** Track current duration.*/
     int duration_cur = 0;
+    /** Track total duration.*/
     int duration_total = 0;
-    // Tells track current state
-    TrackState track_state = STOPPED;
+    /** Track current state.*/
+    TrackState trackState = STOPPED;
 
     public:
 
-    // Constructor
-    MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screean_rect, QWidget *parent = nullptr);
+    /** Constructor.
+     * 
+     *  @param player Audio player.
+     * 
+     *  @param name Player name.
+     * 
+     *  @param screeanGeometry Geometry of the computer's primary screen.
+    */
+    MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screeanGeometry, QWidget *parent = nullptr);
 
     private:
 
-    // Display player error and update track state
-    void player_error(QString message);
+    /** Display player error.
+     * 
+     *  @param message error message.
+    */
+    void playerError(QString message);
 
-    // Sets track volume
-    void set_volume(int value);
-    // Updates track progress
-    void update_progress();
+    /** Display player error.
+     * 
+     *  @param value volume value. int[0..100] is converted to float[0..1]
+    */
+    void setVolume(int value);
+    /** Updates track current duration.*/
+    void updateDuration();
 
-    // Stops audio track
-    void track_stop();
-    // Audio track play-pause
-    void track_play_pause();
-    // Update track state to STOPPED
-    void player_track_ended();
+    /** Stop audio track.*/
+    void trackStop();
+    /** Audio track play-pause.*/
+    void trackPlayPause();
+    /** React to player sending signalTrackEnd(). Update track state to STOPPED.*/
+    void playerTrackEnded();
 
     public:
 
-    // Insert new track
-    void track_insert(QString filepath, QString name);
+    /** Insert new track.
+     * 
+     *  @param filepath media file path.
+     * 
+     *  @param name track name.
+    */
+    void trackInsert(QString filepath, QString name);
 
     Q_OBJECT
     signals:
-    // Ask player to set new track
-    void ask_new_track (QString filepath);
-    // Ask player to change track state
-    void ask_new_track_state(TrackState track_state);
+    /** Ask player to set new track.
+     * 
+     *  @param filepath media file path.
+    */
+    void askNewTrack(QString filepath);
+    /** Ask player to change track state.
+     * 
+     *  @param state new track state.
+    */
+    void askNewTrackState(TrackState state);
 };

@@ -17,11 +17,11 @@ PaDeviceInfo_ext::PaDeviceInfo_ext(const PaDeviceInfo &other, int index)
 }
 
 
-DeviceTab::DeviceTab(QRect *screen_geometry, QString checkbox_label, bool checkbox_state, DeviceType device_type,
+DeviceTab::DeviceTab(QRect *screenGeometry, QString checkboxLabel, bool checkboxState, DeviceType type,
                      QComboBox *combobox_devices, QWidget *parent) : QWidget(parent)
 {
     // Save device type
-    this->device_type = device_type;
+    this->type = type;
 
     // Widget layout
     QVBoxLayout *layout = new QVBoxLayout();
@@ -30,16 +30,16 @@ DeviceTab::DeviceTab(QRect *screen_geometry, QString checkbox_label, bool checkb
     // Combobox
     this->combobox_devices = combobox_devices;
     this->combobox_devices->view()->setTextElideMode(Qt::ElideNone);
-    this->combobox_devices->setMinimumWidth(screen_geometry->width()/7);
-    this->combobox_devices->setMaximumWidth(screen_geometry->width()/7);
+    this->combobox_devices->setMinimumWidth(screenGeometry->width()/7);
+    this->combobox_devices->setMaximumWidth(screenGeometry->width()/7);
     layout->addWidget(this->combobox_devices);
     // Checkbox
-    checkbox = new QCheckBox(checkbox_label);
-    checkbox->setChecked(checkbox_state);
+    checkbox = new QCheckBox(checkboxLabel);
+    checkbox->setChecked(checkboxState);
     layout->addWidget(checkbox);
 
     // Load devices
-    refresh_devices();
+    refreshDevices();
 
     // Set layout
     setLayout(layout);
@@ -53,7 +53,7 @@ DeviceTab::~DeviceTab()
 }
 
 
-PaDeviceInfo_ext DeviceTab::get_selected_device() const
+PaDeviceInfo_ext DeviceTab::getDevice() const
 {
     // Search in devices list via index of combobox list
     int list_index = 0;
@@ -71,7 +71,7 @@ PaDeviceInfo_ext DeviceTab::get_selected_device() const
 }
 
 
-void DeviceTab::refresh_devices()
+void DeviceTab::refreshDevices()
 {
     // Block any signals from combobox since it is now being edited
     combobox_devices->blockSignals(true);
@@ -90,8 +90,8 @@ void DeviceTab::refresh_devices()
         // Get the device info
         device_info = Pa_GetDeviceInfo(i);
         // Select either input or output device (with hostApi==0 being the most OK host API type)
-        if (((device_type == INPUT)  && (device_info->maxInputChannels  > 0) && (!device_info->hostApi)) ||
-            ((device_type == OUTPUT) && (device_info->maxOutputChannels > 0) && (!device_info->hostApi)))
+        if (((type == INPUT)  && (device_info->maxInputChannels  > 0) && (!device_info->hostApi)) ||
+            ((type == OUTPUT) && (device_info->maxOutputChannels > 0) && (!device_info->hostApi)))
         {
             combobox_devices->addItem(device_info->name);
             devices.insert(devices.cend(), PaDeviceInfo_ext(*device_info, i));

@@ -12,7 +12,7 @@ AudioTrack::AudioTrack(QString filepath, MediaFilesPlayerManager *player, QWidge
     setLayout(layout);
     // Submit button
     QPushButton *button_submit = new QPushButton("Submit");
-    connect(button_submit, &QPushButton::pressed, this, &AudioTrack::submit_to_player);
+    connect(button_submit, &QPushButton::pressed, this, &AudioTrack::submitTrack);
     layout->addWidget(button_submit);
     // Name
     name = filepath.mid(filepath.lastIndexOf('/') + 1);
@@ -20,7 +20,7 @@ AudioTrack::AudioTrack(QString filepath, MediaFilesPlayerManager *player, QWidge
 }
 
 
-void AudioTrack::submit_to_player()
+void AudioTrack::submitTrack()
 {
-    emit player->track_insert(filepath, name);
+    emit player->trackInsert(filepath, name);
 }

@@ -10,46 +10,47 @@ AudioPlayer::AudioPlayer(QTabWidget const* devices)
 }
 
 
-PaStream* AudioPlayer::open_device_stream(DeviceTab const *target_device, PaSampleFormat sampleFormat, double sample_rate,
-                                          DeviceTab const *source_device)
+PaStream* AudioPlayer::openDeviceStream(DeviceTab const *targetDevice, PaSampleFormat sampleFormat, double sampleRate,
+                                          DeviceTab const *sourceDevice)
 {
     // Get currently selected device
-    PaDeviceInfo_ext selected_target_device = target_device->get_selected_device();
+    PaDeviceInfo_ext selectedTargetDevice = targetDevice->getDevice();
 
     // Init
     PaStream *device_stream = NULL;
     PaError res;
     PaStreamParameters stream_prams;
     // Parameters that depend soly on device
-    stream_prams.device = selected_target_device.index;
+    stream_prams.device = selectedTargetDevice.index;
     stream_prams.sampleFormat = sampleFormat;
-    stream_prams.suggestedLatency = selected_target_device.defaultHighInputLatency;
+    stream_prams.suggestedLatency = selectedTargetDevice.defaultHighInputLatency;
     stream_prams.hostApiSpecificStreamInfo = NULL;
     // Channel count and sample rate
-    double sampleRate = (sample_rate == 0) ? selected_target_device.defaultSampleRate : sample_rate;
-    int channelCount = (target_device->device_type == INPUT) ? selected_target_device.maxInputChannels : selected_target_device.maxOutputChannels;
-    if (source_device == nullptr)
+    double sample_rate = (sampleRate == 0) ? selectedTargetDevice.defaultSampleRate : sampleRate;
+    int channelCount = (targetDevice->type == INPUT) ? selectedTargetDevice.maxInputChannels : selectedTargetDevice.maxOutputChannels;
+    // Modify them if we have source device
+    if (sourceDevice == nullptr)
     {
         stream_prams.channelCount = channelCount;
     }
     else
     {
-        PaDeviceInfo_ext selected_source_device = source_device->get_selected_device();
-        stream_prams.channelCount = min(selected_source_device.maxInputChannels, channelCount);
-        sampleRate = min(selected_source_device.defaultSampleRate, sampleRate);
+        PaDeviceInfo_ext selectedSourceDevice = sourceDevice->getDevice();
+        stream_prams.channelCount = min(selectedSourceDevice.maxInputChannels, channelCount);
+        sample_rate = min(selectedSourceDevice.defaultSampleRate, sample_rate);
     }
 
     // Open stream (depends on device type)
-    if (target_device->device_type == INPUT)
+    if (targetDevice->type == INPUT)
     {
         res = Pa_OpenStream(&device_stream, &stream_prams, NULL,
-                            sampleRate, 1024,
+                            sample_rate, 1024,
                             paClipOff, NULL, NULL);
     }
-    else if (target_device->device_type == OUTPUT)
+    else if (targetDevice->type == OUTPUT)
     {
         res = Pa_OpenStream(&device_stream, NULL, &stream_prams,
-                            sampleRate, 1024,
+                            sample_rate, 1024,
                             paClipOff, NULL, NULL);
     }
 
@@ -91,9 +92,9 @@ void MicrophonePlayer::run()
         buff = malloc(sizeof(paInt16)*size);
 
         // Open relevant streams
-        in_stream = open_device_stream((DeviceTab*)devices->widget(0), paInt16);
-        virtual_out_stream = open_device_stream((DeviceTab*)devices->widget(1), paInt16, 0, (DeviceTab*)devices->widget(0));
-        out_stream = open_device_stream((DeviceTab*)devices->widget(2), paInt16, 0, (DeviceTab*)devices->widget(0));
+        in_stream = openDeviceStream((DeviceTab*)devices->widget(0), paInt16);
+        virtual_out_stream = openDeviceStream((DeviceTab*)devices->widget(1), paInt16, 0, (DeviceTab*)devices->widget(0));
+        out_stream = openDeviceStream((DeviceTab*)devices->widget(2), paInt16, 0, (DeviceTab*)devices->widget(0));
 
         // Player cycle
         while (is_alive && Pa_IsStreamActive(in_stream))
@@ -116,8 +117,7 @@ void MicrophonePlayer::run()
     }
     catch(const std::exception& e)
     {
-        is_alive = false;
-        emit player_error(e.what());
+        emit signalError(e.what());
     }
 
     // Free buffer if allocated
@@ -139,12 +139,14 @@ void MicrophonePlayer::run()
         Pa_AbortStream(out_stream);
         Pa_CloseStream(out_stream);
     }
+
+    is_alive = false;
 }
 
 
-MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices, float const *volume_ptr) : AudioPlayer(devices)
+MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices, float const *volume) : AudioPlayer(devices)
 {
-    this->volume_ptr = volume_ptr;
+    this->volume = volume;
 }
 
 
@@ -165,10 +167,10 @@ void MediaFilesPlayer::run()
     try
     {
         // Open relevant streams
-        virtual_out_stream_44100 = open_device_stream((DeviceTab*)devices->widget(1), paFloat32, 44100);
-        out_stream_44100 = open_device_stream((DeviceTab*)devices->widget(2), paFloat32, 44100);
-        virtual_out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(1), paFloat32, 48000);
-        out_stream_48000 = open_device_stream((DeviceTab*)devices->widget(2), paFloat32, 48000);
+        virtual_out_stream_44100 = openDeviceStream((DeviceTab*)devices->widget(1), paFloat32, 44100);
+        out_stream_44100 = openDeviceStream((DeviceTab*)devices->widget(2), paFloat32, 44100);
+        virtual_out_stream_48000 = openDeviceStream((DeviceTab*)devices->widget(1), paFloat32, 48000);
+        out_stream_48000 = openDeviceStream((DeviceTab*)devices->widget(2), paFloat32, 48000);
 
         // Player cycle
         while (is_alive)
@@ -177,16 +179,16 @@ void MediaFilesPlayer::run()
             if (track != nullptr)
             {
                 // Set next track state
-                if (track->state != next_track_state)
-                    track->set_state(next_track_state);
+                if (track->state != nextTrackState)
+                    track->setState(nextTrackState);
 
                 if (track->state == PLAYING)
                 {
-                    AudioTrackFrame frame = track->read_samples(*volume_ptr);
+                    AudioTrackFrame frame = track->readSamples(*volume);
 
                     if (frame.nb_samples > 0)
                     {
-                        switch (frame.sample_rate)
+                        switch (frame.sampleRate)
                         {
                             case 44100:
                                 // Write to virtual output stream (depending on checkbox)
@@ -209,8 +211,8 @@ void MediaFilesPlayer::run()
                     else
                     {
                         // Track has ended: update state and notify manager
-                        next_track_state = STOPPED;
-                        emit track_endeded();
+                        nextTrackState = STOPPED;
+                        emit signalTrackEnd();
                     }
                 }
             }
@@ -218,8 +220,7 @@ void MediaFilesPlayer::run()
     }
     catch(const std::exception& e)
     {
-        is_alive = false;
-        emit player_error(e.what());
+        emit signalError(e.what());
     }
 
     // Free streams if allocated
@@ -242,10 +243,12 @@ void MediaFilesPlayer::run()
         Pa_AbortStream(out_stream_48000);
         Pa_CloseStream(out_stream_48000);
     }
+
+    is_alive = false;
 }
 
 
-void MediaFilesPlayer::new_track(QString filepath)
+void MediaFilesPlayer::setNewTrack(QString filepath)
 {
     // Manage old track
     if (track != nullptr)
@@ -255,7 +258,7 @@ void MediaFilesPlayer::new_track(QString filepath)
 }
 
 
-void MediaFilesPlayer::new_track_state(TrackState track_state)
+void MediaFilesPlayer::setNewTrackState(TrackState state)
 {
-    next_track_state = track_state;
+    nextTrackState = state;
 }

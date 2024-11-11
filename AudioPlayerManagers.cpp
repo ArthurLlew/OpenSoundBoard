@@ -9,7 +9,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
 
     // Connect signals to player
     connect(this, &AudioPlayerManager::ask_player_stop, this->player, AudioPlayer::stop);
-    connect(this->player, AudioPlayer::player_error, this, &AudioPlayerManager::player_error);
+    connect(this->player, AudioPlayer::signalError, this, &AudioPlayerManager::playerError);
 
     /*
     // Main layout:
@@ -24,9 +24,9 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     header_layout->setAlignment(Qt::AlignLeft);
     layout->addLayout(header_layout);
     // Start/Stop button
-    button_start_stop = new QPushButton("Start");
-    connect(button_start_stop, &QPushButton::pressed, this, &AudioPlayerManager::player_run_stop);
-    header_layout->addWidget(button_start_stop);
+    buttonStartStop = new QPushButton("Start");
+    connect(buttonStartStop, &QPushButton::pressed, this, &AudioPlayerManager::player_run_stop);
+    header_layout->addWidget(buttonStartStop);
     // Label
     QLabel *label = new QLabel(name);
     header_layout->addWidget(label);
@@ -43,21 +43,21 @@ AudioPlayerManager::~AudioPlayerManager()
 
 bool AudioPlayerManager::player_state()
 {
-    return is_player_alive;
+    return isPlayerAlive;
 }
 
 
 void AudioPlayerManager::player_run()
 {
     // Start player only if he is not working
-    if (!is_player_alive)
+    if (!isPlayerAlive)
     {
         // Start player
         threadpool->start(player);
         // Update button
-        button_start_stop->setText("Stop");
+        buttonStartStop->setText("Stop");
         // Update status
-        is_player_alive = true;
+        isPlayerAlive = true;
     }
 }
 
@@ -65,13 +65,13 @@ void AudioPlayerManager::player_run()
 void AudioPlayerManager::player_stop()
 {
     // Kill player only if he is working
-    if (is_player_alive)
+    if (isPlayerAlive)
     {
         emit ask_player_stop();
         // Update button
-        button_start_stop->setText("Start");
+        buttonStartStop->setText("Start");
         // Update status
-        is_player_alive = false;
+        isPlayerAlive = false;
     }
 }
 
@@ -84,7 +84,7 @@ void AudioPlayerManager::player_wait()
 
 void AudioPlayerManager::player_run_stop()
 {
-    if (is_player_alive)
+    if (isPlayerAlive)
     {
         // Stop player and wait for it to finish
         player_stop();
@@ -97,9 +97,9 @@ void AudioPlayerManager::player_run_stop()
 }
 
 
-void AudioPlayerManager::player_error(QString message)
+void AudioPlayerManager::playerError(QString message)
 {
-    show_warning(name + " error:\n" + message);
+    displayWarning(name + " error:\n" + message);
     // Update player state
     player_stop();
 }
@@ -110,14 +110,14 @@ MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget *devices, QString na
 : AudioPlayerManager(new MicrophonePlayer(devices), name, parent) {}
 
 
-MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screean_rect, QWidget *parent)
+MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screeanGeometry, QWidget *parent)
 // Init of the player happens here
 : AudioPlayerManager(new MediaFilesPlayer(devices, &volume), name, parent)
 {
     // Connect signals to player
-    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::track_endeded, this, &MediaFilesPlayerManager::player_track_ended);
-    connect(this, &MediaFilesPlayerManager::ask_new_track, (MediaFilesPlayer*)this->player, MediaFilesPlayer::new_track);
-    connect(this, &MediaFilesPlayerManager::ask_new_track_state, (MediaFilesPlayer*)this->player, MediaFilesPlayer::new_track_state);
+    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalTrackEnd, this, &MediaFilesPlayerManager::playerTrackEnded);
+    connect(this, &MediaFilesPlayerManager::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrack);
+    connect(this, &MediaFilesPlayerManager::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackState);
 
     /*
     // Additional layouts:
@@ -133,104 +133,104 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString na
     // Other widgets:
     */
     // Name
-    track_name = new QLabel("<No track>");
-    box_layout1->addWidget(track_name);
+    trackName = new QLabel("<No track>");
+    box_layout1->addWidget(trackName);
     // Track progress
     progress = new QProgressBar();
     progress->setMinimum(0);
     progress->setMaximum(duration_total);
     box_layout2->addWidget(progress);
     // Play/Pause button
-    button_play = new QPushButton("Play");
-    connect(button_play, &QPushButton::pressed, this, &MediaFilesPlayerManager::track_play_pause);
-    box_layout3->addWidget(button_play);
+    buttonPlay = new QPushButton("Play");
+    connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerManager::trackPlayPause);
+    box_layout3->addWidget(buttonPlay);
     // Stop buttom
     QPushButton *button_stop = new QPushButton("Stop");
-    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::track_stop);
+    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::trackStop);
     box_layout3->addWidget(button_stop);
     // Volume slider and label
     QSlider *volume_slider = new QSlider(Qt::Orientation::Horizontal);
-    volume_label = new QLabel(QString::number(volume_slider->value()));
-    connect(volume_slider, &QSlider::valueChanged, this, &MediaFilesPlayerManager::set_volume);
+    volumeLabel = new QLabel(QString::number(volume_slider->value()));
+    connect(volume_slider, &QSlider::valueChanged, this, &MediaFilesPlayerManager::setVolume);
     volume_slider->setRange(0,100);
     volume_slider->setValue(30);
-    volume_slider->setMinimumWidth(screean_rect->width()/14);
+    volume_slider->setMinimumWidth(screeanGeometry->width()/14);
     volume_slider->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
     box_layout3->addWidget(volume_slider);
-    box_layout3->addWidget(volume_label);
+    box_layout3->addWidget(volumeLabel);
 }
 
 
-void MediaFilesPlayerManager::player_error(QString message)
+void MediaFilesPlayerManager::playerError(QString message)
 {
     // Update track state
-    player_track_ended();
+    playerTrackEnded();
     // Call parent method
-    AudioPlayerManager::player_error(message);
+    AudioPlayerManager::playerError(message);
 }
 
 
-void MediaFilesPlayerManager::set_volume(int value)
+void MediaFilesPlayerManager::setVolume(int value)
 {
     // Update volume var and label
     volume = ((float)value)/100;
-    volume_label->setText(QString::number(value));
+    volumeLabel->setText(QString::number(value));
 }
 
 
-void MediaFilesPlayerManager::update_progress()
+void MediaFilesPlayerManager::updateDuration()
 {
     progress->setValue(duration_cur);
 }
 
 
-void MediaFilesPlayerManager::track_insert(QString filepath, QString name)
+void MediaFilesPlayerManager::trackInsert(QString filepath, QString name)
 {
     // Ask player to change track
-    emit ask_new_track(filepath);
+    emit askNewTrack(filepath);
     // Update track name
-    track_name->setText(name);
+    trackName->setText(name);
 }
 
 
-void MediaFilesPlayerManager::track_stop()
+void MediaFilesPlayerManager::trackStop()
 {
     // New track state
-    track_state = STOPPED;
-    emit ask_new_track_state(STOPPED);
+    trackState = STOPPED;
+    emit askNewTrackState(STOPPED);
     // Update button
-    button_play->setText("Play");
+    buttonPlay->setText("Play");
 }
 
 
-void MediaFilesPlayerManager::track_play_pause()
+void MediaFilesPlayerManager::trackPlayPause()
 {
     // Play-pause track
-    switch (track_state)
+    switch (trackState)
     {
         case STOPPED:
         case PAUSED:
             // New track state
-            track_state = PLAYING;
-            emit ask_new_track_state(PLAYING);
+            trackState = PLAYING;
+            emit askNewTrackState(PLAYING);
             // Update button
-            button_play->setText("Pause");
+            buttonPlay->setText("Pause");
             break;
         case PLAYING:
             // New track state
-            track_state = PAUSED;
-            emit ask_new_track_state(PAUSED);
+            trackState = PAUSED;
+            emit askNewTrackState(PAUSED);
             // Update button
-            button_play->setText("Play");
+            buttonPlay->setText("Play");
             break;
     }
 }
 
 
-void MediaFilesPlayerManager::player_track_ended()
+void MediaFilesPlayerManager::playerTrackEnded()
 {
     // New track state
-    track_state = STOPPED;
+    trackState = STOPPED;
     // Update button
-    button_play->setText("Play");
+    buttonPlay->setText("Play");
 }

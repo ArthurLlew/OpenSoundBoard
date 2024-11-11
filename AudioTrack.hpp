@@ -12,19 +12,27 @@
 using namespace std;
 
 
+/** Describes audio track loaded by user.
+*/
 class AudioTrack: public QWidget
 {
-    // Media file path and name
+    /** Media file path.*/
     QString filepath;
+    /** Media file name.*/
     QString name;
-    // Media player manager
+    /** Media files player manager.*/
     MediaFilesPlayerManager *player;
 
     public:
 
-    // Constructor
+    /** Constructor.
+     * 
+     *  @param filepath Path to the media file.
+     * 
+     *  @param player Media files player manager.
+    */
     AudioTrack(QString filepath, MediaFilesPlayerManager *player, QWidget *parent = nullptr);
 
-    // Send this track to player
-    void submit_to_player();
+    /** Send this track to media files player manager*/
+    void submitTrack();
 };

@@ -7,7 +7,7 @@ AudioTrackFrame::AudioTrackFrame(int nb_samples)
 }
 
 
-AudioTrackFrame::AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sample_rate, float volume)
+AudioTrackFrame::AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate, float volume)
 {
     // Copy audio data
     int size = nb_channels * mem_size;
@@ -20,7 +20,7 @@ AudioTrackFrame::AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, 
 
     // Save other params
     this->nb_samples = nb_samples;
-    this->sample_rate = sample_rate;
+    this->sampleRate = sampleRate;
 }
 
 
@@ -169,32 +169,32 @@ void AudioTrackContext::play()
 }
 
 
-void AudioTrackContext::set_state(TrackState new_state)
+void AudioTrackContext::setState(TrackState state)
 {
     // Stop or play-pause cycle
-    if (new_state == STOPPED)
+    if (state == STOPPED)
     {
         stop();
     }
     else
     {
-        switch (state)
+        switch (this->state)
         {
             case STOPPED:
                 play();
                 break;
             case PLAYING:
-                state = PAUSED;
+                this->state = PAUSED;
                 break;
             case PAUSED:
-                state = PLAYING;
+                this->state = PLAYING;
                 break;
         }
     }
 }
 
 
-AudioTrackFrame AudioTrackContext::read_samples(float volume)
+AudioTrackFrame AudioTrackContext::readSamples(float volume)
 {
     // Try to find new frame
     while(1)

@@ -18,82 +18,106 @@
 using namespace std;
 
 
-// Basic player class
+/** Basic player class.*/
 class AudioPlayer : public QObject, public QRunnable
 {
     protected:
 
-    // Lists of devices
+    /** tab widget that describes avaliavle devices.*/
     QTabWidget const *devices;
+    /** Player state.*/
+    bool is_alive = false;
 
     public:
 
-    // Tells the player if he should continue with the cycle
-    bool is_alive = false;
-
-    // Constructor
+    /** Constructor.
+     * 
+     *  @param devices Tab widget that describes avaliavle devices.
+    */
     AudioPlayer(QTabWidget const *devices);
 
     protected:
 
-    // Opens stream for the provided device
-    PaStream* open_device_stream(DeviceTab const *target_device, PaSampleFormat sampleFormat, double sample_rate = 0,
-                                 DeviceTab const *device_tab2 = nullptr);
+    /** Opens stream for the provided device.
+     * 
+     *  @param targetDevice Device for which we are openning stream.
+     * 
+     *  @param sampleFormat Stream sample format.
+     * 
+     *  @param SampleRate Stream sample rate.
+     * 
+     *  @param sourceDevice Device where data from this stream will go (affects stream settings).
+     * 
+     *  @return Opened and active stream.
+    */
+    PaStream* openDeviceStream(DeviceTab const *targetDevice, PaSampleFormat sampleFormat, double SampleRate = 0,
+                                 DeviceTab const *sourceDevice = nullptr);
 
     public:
 
-    // Stops the player if it is running
+    /** Stops the player if it is running.*/
     void stop();
-    // Player cycle (pure virtual)
+    /** Player cycle (pure virtual).*/
     virtual void run() = 0;
 
     Q_OBJECT
     signals:
-    // Emitted when the player encounters any error
-    void player_error(QString message);
+    /** Emitted when the player encounters any error.
+     * 
+     *  @param message error message.
+    */
+    void signalError(QString message);
 };
 
 
-// Player that reroutes microphone input to outputs
+/** Player that reroutes microphone input to outputs.*/
 class MicrophonePlayer : public AudioPlayer
 {
     public:
 
-    // Constructor
+    /** Constructor.
+     * 
+     *  @param devices Tab widget that describes avaliavle devices.
+    */
     MicrophonePlayer(QTabWidget const *devices);
 
-    // Player cycle
+    /** Player cycle.*/
     void run();
 };
 
 
-// Player that manages media files
+/** Player that manages media files.*/
 class  MediaFilesPlayer : public AudioPlayer
 {
-    // Current track
+    /** Current track.*/
     AudioTrackContext *track = nullptr;
-    // Stores where to grab volume value
-    float const *volume_ptr;
-    // Tells track current state
-    TrackState next_track_state = STOPPED;
+    /** Pointer to volume.*/
+    float const *volume;
+    /** Track current state.*/
+    TrackState nextTrackState = STOPPED;
 
     public:
 
-    // Constructor
-    MediaFilesPlayer(QTabWidget const *devices, float const *volume_ptr);
-    // Destructor
+    /** Constructor.
+     * 
+     *  @param devices Tab widget that describes avaliavle devices.
+     * 
+     *  @param volume Pointer to volume.
+    */
+    MediaFilesPlayer(QTabWidget const *devices, float const *volume);
+    /** Destructor.*/
     ~MediaFilesPlayer();
 
-    // Player cycle
+    /** Player cycle.*/
     void run();
 
-    // Sets new track to play
-    void new_track(QString filepath);
-    // Sets new track state
-    void new_track_state(TrackState track_state);
+    /** Sets new track to play.*/
+    void setNewTrack(QString filepath);
+    /** Sets new track state.*/
+    void setNewTrackState(TrackState state);
 
     Q_OBJECT
     signals:
-    // Emitted when player track has ended
-    void track_endeded();
+    /** Emitted when player track has ended.*/
+    void signalTrackEnd();
 };

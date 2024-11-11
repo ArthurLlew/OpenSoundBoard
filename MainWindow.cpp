@@ -7,18 +7,16 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     try
     {
         // Initialize PortAudio
-        start_portaudio();
+        startPortaudio();
 
         // Get screen geometry
-        QScreen *screen = app->primaryScreen();
-        QRect rect = screen->availableGeometry();
-        screean_rect = new QRect(rect);
+        screeanGeometry = new QRect(app->primaryScreen()->availableGeometry());
 
         // Set title
         setWindowTitle("SoundBoard");
         // Set main window geomenty depending on screen resolution
-        setMinimumSize(screean_rect->width()/1.5, screean_rect->height()/1.5);
-        setGeometry(screean_rect->width()/10, screean_rect->height()/8, screean_rect->width()/1.5, screean_rect->height()/1.5);
+        setMinimumSize(screeanGeometry->width()/1.5, screeanGeometry->height()/1.5);
+        setGeometry(screeanGeometry->width()/10, screeanGeometry->height()/8, screeanGeometry->width()/1.5, screeanGeometry->height()/1.5);
 
         /*
         // Central widget:
@@ -43,11 +41,11 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         addToolBar(toolbar);
         /* Button to add tracks */
         QAction *button_add_track = new QAction("Add Track");
-        connect(button_add_track, &QAction::triggered, this, &MainWindow::add_track);
+        connect(button_add_track, &QAction::triggered, this, &MainWindow::addTrack);
         toolbar->addAction(button_add_track);
         /* Button to refresh devices */
         QAction *button_refresh_devices = new QAction("Refresh Devices");
-        connect(button_refresh_devices, &QAction::triggered, this, &MainWindow::refresh_devices);
+        connect(button_refresh_devices, &QAction::triggered, this, &MainWindow::refreshDevices);
         toolbar->addAction(button_refresh_devices);
 
         /*
@@ -72,23 +70,23 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         /* Input device */
         QComboBox *combobox_devices = new QComboBox();
         void (QComboBox:: *indexChangedSignal)(int) = &QComboBox::currentIndexChanged;
-        devices->addTab(new DeviceTab(screean_rect, "Listen to input", true, INPUT, combobox_devices), "Input Device:");
-        // Connect after device tab creation to ensure MainWindow::restart_players won't be called inside constructor (causing crash)
-        connect(combobox_devices, indexChangedSignal, this, &MainWindow::restart_players);
+        devices->addTab(new DeviceTab(screeanGeometry, "Listen to input", true, INPUT, combobox_devices), "Input Device:");
+        // Connect after device tab creation to ensure MainWindow::restartPlayers won't be called inside constructor (causing crash)
+        connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
         /* Virtual Output Cable */
         combobox_devices = new QComboBox();
-        devices->addTab(new DeviceTab(screean_rect, "Feed to virtual output", true, OUTPUT, combobox_devices), "Virtual Output Cable:");
-        connect(combobox_devices, indexChangedSignal, this, &MainWindow::restart_players);
+        devices->addTab(new DeviceTab(screeanGeometry, "Feed to virtual output", true, OUTPUT, combobox_devices), "Virtual Output Cable:");
+        connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
         /* Output Device */
         combobox_devices = new QComboBox();
-        devices->addTab(new DeviceTab(screean_rect, "Feed to ouput", false, OUTPUT, combobox_devices), "Output Device:");
-        connect(combobox_devices, indexChangedSignal, this, &MainWindow::restart_players);
+        devices->addTab(new DeviceTab(screeanGeometry, "Feed to ouput", false, OUTPUT, combobox_devices), "Output Device:");
+        connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
 
         // Init player managers
-        microphone_player_manager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
-        right_vertbox->addWidget(microphone_player_manager);
-        mediafiles_player_manager = new MediaFilesPlayerManager(devices, "Media Files Player", screean_rect);
-        right_vertbox->addWidget(mediafiles_player_manager);
+        microphonePlayerManager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
+        right_vertbox->addWidget(microphonePlayerManager);
+        mediafilesPlayerManager = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
+        right_vertbox->addWidget(mediafilesPlayerManager);
     }
     catch(...)
     {
@@ -101,41 +99,41 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
 // Destructor
 MainWindow::~MainWindow()
 {
-    microphone_player_manager->player_stop();
-    mediafiles_player_manager->player_stop();
-    microphone_player_manager->player_wait();
-    mediafiles_player_manager->player_wait();
+    microphonePlayerManager->player_stop();
+    mediafilesPlayerManager->player_stop();
+    microphonePlayerManager->player_wait();
+    mediafilesPlayerManager->player_wait();
 
     // Terminate PortAudio
     Pa_Terminate();
 
     // Delete objects we own by reference (widgets are deleted automatically)
-    delete microphone_player_manager;
-    delete mediafiles_player_manager;
+    delete microphonePlayerManager;
+    delete mediafilesPlayerManager;
 }
 
 
-void MainWindow::start_portaudio()
+void MainWindow::startPortaudio()
 {
     // Initialize portaudio while checking for any error
     if (paNoError != Pa_Initialize())
     {
-        show_warning("Can't init portaudio!\nApp will now close.");
+        displayWarning("Can't init portaudio!\nApp will now close.");
         close();
     }
 }
 
 
-void MainWindow::add_track()
+void MainWindow::addTrack()
 {
     // Ask to select media files
-    QStringList filenames = open_file_dialog("Media (*.mp4 *.mp3 *.wav *.ogg)");
+    QStringList filenames = openFilesDialog("Media (*.mp4 *.mp3 *.wav *.ogg)");
     
     // Iterate over files
     for (const auto &filename : std::as_const(filenames))
     {
         // Create sound widget
-        AudioTrack *sound_item = new AudioTrack(filename, mediafiles_player_manager);
+        AudioTrack *sound_item = new AudioTrack(filename, mediafilesPlayerManager);
         // Create list item
         QListWidgetItem *lst_item = new QListWidgetItem(tracks);
         // Set size hint
@@ -147,11 +145,11 @@ void MainWindow::add_track()
 }
 
 
-QStringList MainWindow::open_file_dialog(QString name_filter)
+QStringList MainWindow::openFilesDialog(QString filter)
 {
     // Open file selection dialog
     QFileDialog dialog(this);
-    dialog.setNameFilter(name_filter);
+    dialog.setNameFilter(filter);
     // Multiple files selection
     dialog.setFileMode(QFileDialog::FileMode::ExistingFiles);
 
@@ -165,79 +163,79 @@ QStringList MainWindow::open_file_dialog(QString name_filter)
 }
 
 
-void MainWindow::start_players(bool microphone_player, bool mediafiles_player)
+void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player)
 {
     // Check if we can launch microphone player
     if (((DeviceTab*)devices->widget(0))->combobox_devices->count() == 0)
     {
-        show_warning("No input devices found!\nTry to refresh devices");
+        displayWarning("No input devices found!\nTry to refresh devices");
     }
     else if (((DeviceTab*)devices->widget(1))->combobox_devices->count() == 0)
     {
-        show_warning("No virtual output cable found!\nTry to refresh devices");
+        displayWarning("No virtual output cable found!\nTry to refresh devices");
     }
     else if (((DeviceTab*)devices->widget(2))->combobox_devices->count() == 0)
     {
-        show_warning("No output devices found!\nTry to refresh devices");
+        displayWarning("No output devices found!\nTry to refresh devices");
     }
     else if (microphone_player)
     {
-        microphone_player_manager->player_run();
+        microphonePlayerManager->player_run();
     }
 
     // Check if we can launch mediafiles player
     if (((DeviceTab*)devices->widget(1))->combobox_devices->count() == 0)
     {
-        show_warning("No virtual output cable found!\nTry to refresh devices");
+        displayWarning("No virtual output cable found!\nTry to refresh devices");
     }
     else if (((DeviceTab*)devices->widget(2))->combobox_devices->count() == 0)
     {
-        show_warning("No output devices found!\nTry to refresh devices");
+        displayWarning("No output devices found!\nTry to refresh devices");
     }
     else if (mediafiles_player)
     {
-        mediafiles_player_manager->player_run();
+        mediafilesPlayerManager->player_run();
     }
 }
 
 
-void MainWindow::stop_players(bool *microphone_player, bool *mediafiles_player)
+void MainWindow::stopPlayers(bool *microphone_player, bool *mediafiles_player)
 {
     // Save players state, tell them to stop and wait till they finish
-    *microphone_player = microphone_player_manager->player_state();
-    *mediafiles_player = mediafiles_player_manager->player_state();
-    microphone_player_manager->player_stop();
-    mediafiles_player_manager->player_stop();
-    microphone_player_manager->player_wait();
-    mediafiles_player_manager->player_wait();
+    *microphone_player = microphonePlayerManager->player_state();
+    *mediafiles_player = mediafilesPlayerManager->player_state();
+    microphonePlayerManager->player_stop();
+    mediafilesPlayerManager->player_stop();
+    microphonePlayerManager->player_wait();
+    mediafilesPlayerManager->player_wait();
 }
 
 
-void MainWindow::restart_players(int unused)
+void MainWindow::restartPlayers(int unused)
 {
     // Restart players depending on their previous state
     bool microphone_player, mediafiles_player;
-    stop_players(&microphone_player, &mediafiles_player);
-    start_players(microphone_player, mediafiles_player);
+    stopPlayers(&microphone_player, &mediafiles_player);
+    startPlayers(microphone_player, mediafiles_player);
 }
 
 
-void MainWindow::refresh_devices()
+void MainWindow::refreshDevices()
 {
     // Stop players
     bool microphone_player, mediafiles_player;
-    stop_players(&microphone_player, &mediafiles_player);
+    stopPlayers(&microphone_player, &mediafiles_player);
 
     // Reboot PortAudio
     Pa_Terminate();
-    start_portaudio();
+    startPortaudio();
     
     // Refresh list of devices in each device tab
     for (int i=0; i<devices->count(); i++)
     {
-        ((DeviceTab*)devices->widget(i))->refresh_devices();
+        ((DeviceTab*)devices->widget(i))->refreshDevices();
     }
 
     // Start players
-    start_players(microphone_player, mediafiles_player);
+    startPlayers(microphone_player, mediafiles_player);
 }

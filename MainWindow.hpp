@@ -30,43 +30,65 @@
 using namespace std;
 
 
+/** Application main window.*/
 class MainWindow: public QMainWindow, WidgetWarnings
 {
-    // Geometry of the computer primary screen 
-    QRect *screean_rect;
+    /** Geometry of the computer's primary screen.*/
+    QRect *screeanGeometry;
 
-    // Central widjet of the main window
+    /** Central widjet of the main window.*/
     QWidget *central_widget;
-    // List of tracks (with mutex)
+    /** List of tracks.*/
     QListWidget *tracks;
-    // Devices tab
+    /** Devices tab.*/
     QTabWidget *devices;
 
-    // Media player managers
-    MicrophonePlayerManager *microphone_player_manager;
-    MediaFilesPlayerManager *mediafiles_player_manager;
+    /** Microphone player manager.*/
+    MicrophonePlayerManager *microphonePlayerManager;
+    /** Media files player manager.*/
+    MediaFilesPlayerManager *mediafilesPlayerManager;
 
     public:
 
-    // Constructor
+    /** Constructor.
+     * 
+     *  @param app QT application.
+    */
     MainWindow(const QApplication *app, QWidget *parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
-    // Destructor
+    /** Destructor.*/
     ~MainWindow();
 
-    // Safely starts portaudio (raises exception if unable to initialize)
-    void start_portaudio();
+    protected:
 
-    // Adds track to the list
-    void add_track();
-    // Opens up a dialog to select files
-    QStringList open_file_dialog(QString name_filter);
+    /** Safely starts portaudio (raises exception if unable to initialize).*/
+    void startPortaudio();
 
-    // Starts players
-    void start_players(bool microphone_player, bool mediafiles_player);
-    // Stops players
-    void stop_players(bool *microphone_player, bool *mediafiles_player);
-    // Restarts players
-    void restart_players(int unused);
-    // Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players)
-    void refresh_devices();
+    /** Adds track to the list.*/
+    void addTrack();
+    /** Opens up a dialog to select files.
+     * 
+     *  @param filter Files filter. Is used to limit avaliable files by extention.
+     * 
+     *  @return List of selected files as their system paths.
+    */
+    QStringList openFilesDialog(QString filter);
+
+    /** Starts players.
+     * 
+     *  @param microphone_player previous microphone player state.
+     * 
+     *  @param mediafiles_player previous mediafiles player state.
+    */
+    void startPlayers(bool microphone_player, bool mediafiles_player);
+    /** Stops players.
+     * 
+     *  @param microphone_player where to store current microphone player state.
+     * 
+     *  @param mediafiles_player where to store current mediafiles player state.
+    */
+    void stopPlayers(bool *microphone_player, bool *mediafiles_player);
+    /** Restarts players.*/
+    void restartPlayers(int unused);
+    /** Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players).*/
+    void refreshDevices();
 };

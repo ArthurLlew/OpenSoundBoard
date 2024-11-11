@@ -18,6 +18,7 @@
 using namespace std;
 
 
+/** Describes device type.*/
 enum DeviceType
 {
     INPUT,
@@ -25,6 +26,7 @@ enum DeviceType
 };
 
 
+/** Extention of PaDeviceInfo (holds device index too).*/
 typedef struct PaDeviceInfo_ext : PaDeviceInfo
 {
     // PortAudio device index
@@ -35,28 +37,44 @@ typedef struct PaDeviceInfo_ext : PaDeviceInfo
 } PaDeviceInfo_ext;
 
 
+/** Device tab that manages info about available input or output devices.*/
 class DeviceTab: public QWidget
 {
-    // Stores info about devices, available for this tab
+    /** Stores info about devices, available for this tab.*/
     list<PaDeviceInfo_ext> devices;
 
     public:
 
-    // Combobox with devices
+    /** Combobox with device names.*/
     QComboBox *combobox_devices;
-    // Checkbox that tells if the device should be used by the audio player
+    /** Checkbox that tells if the device can be used by the audio player.*/
     QCheckBox *checkbox;
-    // Tells if device is an input/output (true/false)
-    DeviceType device_type;
+    /** Device type (input/output).*/
+    DeviceType type;
 
-    // Constructor
-    DeviceTab(QRect *screen_geometry, QString checkbox_label, bool checkbox_state, DeviceType device_type, QComboBox *combobox_devices,
+    /** Constructor.
+     * 
+     *  @param screenGeometry Geometry of the computer's primary screen.
+     * 
+     *  @param checkboxLabel Tab checkbox label.
+     * 
+     *  @param checkboxState Tab checkbox state (true/false == checked/unchecked).
+     * 
+     *  @param type Device type (input/output).
+     * 
+     *  @param combobox_devices Combobox with devices.
+    */
+    DeviceTab(QRect *screenGeometry, QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,
               QWidget *parent = nullptr);
-    // Destructor
+    /** Destructor.*/
     ~DeviceTab();
 
-    // Refreshes devices list
-    void refresh_devices();
-    // Returns selected device info
-    PaDeviceInfo_ext get_selected_device() const;
+    /** Refresh devices list.*/
+    void refreshDevices();
+    
+    /** Get info about selected device.
+     * 
+     *  @return Device info.
+    */
+    PaDeviceInfo_ext getDevice() const;
 };

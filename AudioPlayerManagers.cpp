@@ -41,6 +41,12 @@ AudioPlayerManager::~AudioPlayerManager()
 }
 
 
+bool AudioPlayerManager::player_state()
+{
+    return is_player_alive;
+}
+
+
 void AudioPlayerManager::player_run()
 {
     // Start player only if he is not working
@@ -164,15 +170,6 @@ void MediaFilesPlayerManager::player_error(QString message)
 }
 
 
-void MediaFilesPlayerManager::player_track_ended()
-{
-    // New track state
-    track_state = STOPPED;
-    // Update button
-    button_play->setText("Play");
-}
-
-
 void MediaFilesPlayerManager::set_volume(int value)
 {
     // Update volume var and label
@@ -227,4 +224,13 @@ void MediaFilesPlayerManager::track_play_pause()
             button_play->setText("Play");
             break;
     }
+}
+
+
+void MediaFilesPlayerManager::player_track_ended()
+{
+    // New track state
+    track_state = STOPPED;
+    // Update button
+    button_play->setText("Play");
 }

@@ -101,7 +101,10 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
 // Destructor
 MainWindow::~MainWindow()
 {
-    stop_players();
+    microphone_player_manager->player_stop();
+    mediafiles_player_manager->player_stop();
+    microphone_player_manager->player_wait();
+    mediafiles_player_manager->player_wait();
 
     // Terminate PortAudio
     Pa_Terminate();
@@ -162,7 +165,7 @@ QStringList MainWindow::open_file_dialog(QString name_filter)
 }
 
 
-void MainWindow::start_players()
+void MainWindow::start_players(bool microphone_player, bool mediafiles_player)
 {
     // Check if we can launch microphone player
     if (((DeviceTab*)devices->widget(0))->combobox_devices->count() == 0)
@@ -177,7 +180,7 @@ void MainWindow::start_players()
     {
         show_warning("No output devices found!\nTry to refresh devices");
     }
-    else
+    else if (microphone_player)
     {
         microphone_player_manager->player_run();
     }
@@ -191,16 +194,18 @@ void MainWindow::start_players()
     {
         show_warning("No output devices found!\nTry to refresh devices");
     }
-    else
+    else if (mediafiles_player)
     {
         mediafiles_player_manager->player_run();
     }
 }
 
 
-void MainWindow::stop_players()
+void MainWindow::stop_players(bool *microphone_player, bool *mediafiles_player)
 {
-    // Tell players to stop and wait till they finish
+    // Save players state, tell them to stop and wait till they finish
+    *microphone_player = microphone_player_manager->player_state();
+    *mediafiles_player = mediafiles_player_manager->player_state();
     microphone_player_manager->player_stop();
     mediafiles_player_manager->player_stop();
     microphone_player_manager->player_wait();
@@ -210,16 +215,18 @@ void MainWindow::stop_players()
 
 void MainWindow::restart_players(int unused)
 {
-    // What else to expect from restart :)
-    stop_players();
-    start_players();
+    // Restart players depending on their previous state
+    bool microphone_player, mediafiles_player;
+    stop_players(&microphone_player, &mediafiles_player);
+    start_players(microphone_player, mediafiles_player);
 }
 
 
 void MainWindow::refresh_devices()
 {
     // Stop players
-    stop_players();
+    bool microphone_player, mediafiles_player;
+    stop_players(&microphone_player, &mediafiles_player);
 
     // Reboot PortAudio
     Pa_Terminate();
@@ -232,5 +239,5 @@ void MainWindow::refresh_devices()
     }
 
     // Start players
-    start_players();
+    start_players(microphone_player, mediafiles_player);
 }

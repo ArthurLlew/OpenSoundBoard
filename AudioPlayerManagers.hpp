@@ -53,6 +53,8 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
 
     public:
 
+    // Returns player state
+    bool player_state();
     // Start player
     void player_run();
     // Stop player

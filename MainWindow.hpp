@@ -62,9 +62,9 @@ class MainWindow: public QMainWindow, WidgetWarnings
     QStringList open_file_dialog(QString name_filter);
 
     // Starts players
-    void start_players();
+    void start_players(bool microphone_player, bool mediafiles_player);
     // Stops players
-    void stop_players();
+    void stop_players(bool *microphone_player, bool *mediafiles_player);
     // Restarts players
     void restart_players(int unused);
     // Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players)

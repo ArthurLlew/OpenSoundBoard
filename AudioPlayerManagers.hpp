@@ -30,7 +30,7 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     QPushButton *buttonStartStop;
 
     /** Thread pool where player will run.*/
-    QThreadPool *threadpool = new QThreadPool();
+    QThreadPool *threadpool;
     /** Audio player.*/
     AudioPlayer *player;
     /** Audio player state.*/

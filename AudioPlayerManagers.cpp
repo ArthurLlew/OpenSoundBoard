@@ -7,6 +7,10 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     this->player = player;
     this->name = name;
 
+    // create threadpool and disable thread expire (only we terminate threads explicitly)
+    threadpool = new QThreadPool();
+    threadpool->setExpiryTimeout(-1);
+
     // Connect signals to player
     connect(this, &AudioPlayerManager::ask_player_stop, this->player, AudioPlayer::stop);
     connect(this->player, AudioPlayer::signalError, this, &AudioPlayerManager::playerError);

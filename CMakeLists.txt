@@ -18,7 +18,7 @@ project(SoundBoard)
 set(SOURCES main.cpp MainWindow.cpp DeviceTab.cpp AudioTrack.cpp AudioPlayerManagers.cpp AudioPlayers.cpp AudioTrackContext.cpp
     WidgetMessages.cpp)
 # Defines names of static libraries
-set(LIBS Qt5Core Qt5Widgets Qt5Gui portaudio avcodec avdevice avfilter avformat avutil postproc SvtAv1Enc swresample swscale)
+set(LIBS Qt5Core Qt5Widgets Qt5Gui portaudio avutil avcodec avformat swresample)
 
 # Adds static libraries
 foreach(LIB IN LISTS ${LIBS})

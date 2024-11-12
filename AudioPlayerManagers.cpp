@@ -7,7 +7,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     this->player = player;
     this->name = name;
 
-    // create threadpool and disable thread expire (only we terminate threads explicitly)
+    // Create threadpool and disable thread expiry (only we terminate threads explicitly)
     threadpool = new QThreadPool();
     threadpool->setExpiryTimeout(-1);
 

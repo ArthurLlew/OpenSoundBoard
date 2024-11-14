@@ -2,6 +2,7 @@
 
 // Qt5
 #include <QtCore/QObject>
+#include <QtCore/QMimeData>
 #include <QtCore/QString>
 #include <QtCore/QThreadPool>
 #include <QtCore/QRunnable>
@@ -127,6 +128,11 @@ class MediaFilesPlayerManager : public AudioPlayerManager
 
     private:
 
+    /** Handles entering drag event.*/
+    void dragEnterEvent(QDragEnterEvent *event);
+    /** Handles items (with appropriate type) dropped on this widget.*/
+    void dropEvent(QDropEvent *event);
+
     /** Display player error.
      * 
      *  @param message error message.
@@ -147,16 +153,6 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     void trackPlayPause();
     /** React to player sending signalTrackEnd(). Update track state to STOPPED.*/
     void playerTrackEnded();
-
-    public:
-
-    /** Insert new track.
-     * 
-     *  @param filepath media file path.
-     * 
-     *  @param name track name.
-    */
-    void trackInsert(QString filepath, QString name);
 
     Q_OBJECT
     signals:

@@ -136,7 +136,7 @@ void MainWindow::addTrack()
     for (const auto &filename : std::as_const(filenames))
     {
         // Create sound widget
-        AudioTrack *sound_item = new AudioTrack(filename, mediafilesPlayerManager);
+        AudioTrack *sound_item = new AudioTrack(filename);
         // Create list item
         QListWidgetItem *lst_item = new QListWidgetItem(tracks);
         // Set size hint

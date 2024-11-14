@@ -15,6 +15,9 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     connect(this, &AudioPlayerManager::ask_player_stop, this->player, AudioPlayer::stop);
     connect(this->player, AudioPlayer::signalError, this, &AudioPlayerManager::playerError);
 
+    // Allow dropping of draggable widgets
+    setAcceptDrops(true);
+
     /*
     // Main layout:
     */
@@ -166,6 +169,28 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString na
 }
 
 
+void MediaFilesPlayerManager::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasFormat("filepath&name"))
+        event->acceptProposedAction();
+}
+
+
+void MediaFilesPlayerManager::dropEvent(QDropEvent *event)
+{
+    // Get file path and name
+    QStringList list = QString::fromUtf8(event->mimeData()->data("filepath&name")).split("?");
+    
+    // Ask player to change track
+    emit askNewTrack(list[0]);
+    // Update track name
+    trackName->setText(list[1]);
+
+    // Exit event
+    event->acceptProposedAction();
+}
+
+
 void MediaFilesPlayerManager::playerError(QString message)
 {
     // Update track state
@@ -186,15 +211,6 @@ void MediaFilesPlayerManager::setVolume(int value)
 void MediaFilesPlayerManager::updateDuration()
 {
     progress->setValue(duration_cur);
-}
-
-
-void MediaFilesPlayerManager::trackInsert(QString filepath, QString name)
-{
-    // Ask player to change track
-    emit askNewTrack(filepath);
-    // Update track name
-    trackName->setText(name);
 }
 
 

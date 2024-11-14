@@ -1,7 +1,11 @@
 #pragma once
 
 // Qt5
+#include <QtCore/QPoint>
+#include <QtCore/QMimeData>
 #include <QtCore/QString>
+#include <QtGui/QDrag>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -12,16 +16,15 @@
 using namespace std;
 
 
-/** Describes audio track loaded by user.
-*/
+/** Describes audio track loaded by user.*/
 class AudioTrack: public QWidget
 {
     /** Media file path.*/
     QString filepath;
     /** Media file name.*/
     QString name;
-    /** Media files player manager.*/
-    MediaFilesPlayerManager *player;
+    /** Saved value of mouse position when widget as clicked.*/
+    QPoint dragStartPosition;
 
     public:
 
@@ -31,8 +34,12 @@ class AudioTrack: public QWidget
      * 
      *  @param player Media files player manager.
     */
-    AudioTrack(QString filepath, MediaFilesPlayerManager *player, QWidget *parent = nullptr);
+    AudioTrack(QString filepath, QWidget *parent = nullptr);
 
-    /** Send this track to media files player manager*/
-    void submitTrack();
+    protected:
+
+    /** Invoked when mouse is pressed.*/
+    void mousePressEvent(QMouseEvent *event);
+    /** Invoked when mouse was moved.*/
+    void mouseMoveEvent(QMouseEvent *event);
 };

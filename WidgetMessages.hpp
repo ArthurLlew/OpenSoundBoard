@@ -4,8 +4,7 @@
 #include <QtWidgets/QMessageBox>
 
 
-/** Describes warning messageboxes that can be shown to user.
-*/
+/** Describes warning messageboxes that can be shown to user.*/
 class WidgetWarnings
 {
     protected:

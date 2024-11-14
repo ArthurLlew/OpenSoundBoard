@@ -14,8 +14,9 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QFileDialog>
-#include <QtWidgets/QListWidget>
+#include <QtWidgets/QTableWidget>
 #include <QtWidgets/QAbstractItemView>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTabWidget>
 // PortAudio
@@ -36,7 +37,7 @@ class MainWindow: public QMainWindow, WidgetWarnings
     QRect *screeanGeometry;
 
     /** List of tracks.*/
-    QListWidget *tracks;
+    QTableWidget *tracks;
     /** Devices tab.*/
     QTabWidget *devices;
 

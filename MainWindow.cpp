@@ -50,10 +50,17 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         toolbar->addAction(button_refresh_devices);
 
         /*
-        // Tracks list:
+        // Tracks table:
         */
-        tracks = new QListWidget();
-        tracks->setSelectionMode(QAbstractItemView::NoSelection);
+        tracks = new QTableWidget();
+        // Table header should streach to the and of table
+        tracks->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        // Disable horisontal scroll bar
+        tracks->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        // Table header
+        tracks->setColumnCount(1);
+        tracks->setHorizontalHeaderLabels(QStringList() << "Track Name");
+        // Add to layout
         left_vertbox->addWidget(tracks);
 
         /*
@@ -142,25 +149,25 @@ void MainWindow::selectDirectory()
     // Check if user discarded selection
     if (dir_or_none.count() != 0)
     {
-        // Clear previous list
-        tracks->clear();
+        // Clear previous table
+        tracks->clearContents();
 
-        // Get media files in that directory
+        // Get media files in that directory and prepair new table
         QDir directory(dir_or_none[0]);
         QStringList mediafiles = directory.entryList(QStringList() << "*.mp4" << "*.mp3" << "*.wav" << "*.ogg", QDir::Files);
+        tracks->setRowCount(mediafiles.count());
 
         // Add them to list
-        for (const auto &mediafile : std::as_const(mediafiles))
+        for (int i = 0; i < mediafiles.count(); i++)
         {
             // Create sound widget
-            AudioTrack *sound_item = new AudioTrack(directory.path() + "/" + mediafile);
-            // Create list item
-            QListWidgetItem *lst_item = new QListWidgetItem(tracks);
-            // Set size hint
-            lst_item->setSizeHint(sound_item->sizeHint());
-            // Add item into list
-            tracks->addItem(lst_item);
-            tracks->setItemWidget(lst_item, sound_item);
+            AudioTrack *sound_item = new AudioTrack(directory.path() + "/" + mediafiles[i]);
+            // Create table item and set its size
+            QTableWidgetItem *table_item = new QTableWidgetItem();
+            table_item->setSizeHint(sound_item->sizeHint());
+            // Add item into table
+            tracks->setItem(i, 0, table_item);
+            tracks->setCellWidget(i, 0, sound_item);
         }
     }
 }

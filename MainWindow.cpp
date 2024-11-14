@@ -41,9 +41,9 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         QToolBar *toolbar = new QToolBar("Toolbar");
         addToolBar(toolbar);
         /* Button to add tracks */
-        QAction *button_add_track = new QAction("Add Track");
-        connect(button_add_track, &QAction::triggered, this, &MainWindow::addTrack);
-        toolbar->addAction(button_add_track);
+        QAction *button_select_dir = new QAction("Select Directory");
+        connect(button_select_dir, &QAction::triggered, this, &MainWindow::selectDirectory);
+        toolbar->addAction(button_select_dir);
         /* Button to refresh devices */
         QAction *button_refresh_devices = new QAction("Refresh Devices");
         connect(button_refresh_devices, &QAction::triggered, this, &MainWindow::refreshDevices);
@@ -127,42 +127,42 @@ void MainWindow::startPortaudio()
 }
 
 
-void MainWindow::addTrack()
-{
-    // Ask to select media files
-    QStringList filenames = openFilesDialog("Media (*.mp4 *.mp3 *.wav *.ogg)");
-    
-    // Iterate over files
-    for (const auto &filename : std::as_const(filenames))
-    {
-        // Create sound widget
-        AudioTrack *sound_item = new AudioTrack(filename);
-        // Create list item
-        QListWidgetItem *lst_item = new QListWidgetItem(tracks);
-        // Set size hint
-        lst_item->setSizeHint(sound_item->sizeHint());
-        // Add item into list
-        tracks->addItem(lst_item);
-        tracks->setItemWidget(lst_item, sound_item);
-    }
-}
-
-
-QStringList MainWindow::openFilesDialog(QString filter)
+void MainWindow::selectDirectory()
 {
     // Open file selection dialog
     QFileDialog dialog(this);
-    dialog.setNameFilter(filter);
-    // Multiple files selection
-    dialog.setFileMode(QFileDialog::FileMode::ExistingFiles);
+    // Directory selection
+    dialog.setFileMode(QFileDialog::FileMode::Directory);
 
-    // Gather selected files
-    QStringList filenames;
+    // Ask to select directory and get result
+    QStringList dir_or_none;
     if (dialog.exec())
-        filenames = dialog.selectedFiles();
+        dir_or_none = dialog.selectedFiles();
+    
+    // Check if user discarded selection
+    if (dir_or_none.count() != 0)
+    {
+        // Clear previous list
+        tracks->clear();
 
-    // Return filenames
-    return filenames;
+        // Get media files in that directory
+        QDir directory(dir_or_none[0]);
+        QStringList mediafiles = directory.entryList(QStringList() << "*.mp4" << "*.mp3" << "*.wav" << "*.ogg", QDir::Files);
+
+        // Add them to list
+        for (const auto &mediafile : std::as_const(mediafiles))
+        {
+            // Create sound widget
+            AudioTrack *sound_item = new AudioTrack(mediafile);
+            // Create list item
+            QListWidgetItem *lst_item = new QListWidgetItem(tracks);
+            // Set size hint
+            lst_item->setSizeHint(sound_item->sizeHint());
+            // Add item into list
+            tracks->addItem(lst_item);
+            tracks->setItemWidget(lst_item, sound_item);
+        }
+    }
 }
 
 

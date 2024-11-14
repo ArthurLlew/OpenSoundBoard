@@ -60,15 +60,8 @@ class MainWindow: public QMainWindow, WidgetWarnings
     /** Safely starts portaudio (raises exception if unable to initialize).*/
     void startPortaudio();
 
-    /** Adds track to the list.*/
-    void addTrack();
-    /** Opens up a dialog to select files.
-     * 
-     *  @param filter Files filter. Is used to limit avaliable files by extention.
-     * 
-     *  @return List of selected files as their system paths.
-    */
-    QStringList openFilesDialog(QString filter);
+    /** Select directory with media files.*/
+    void selectDirectory();
 
     /** Starts players.
      * 

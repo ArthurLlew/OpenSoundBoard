@@ -43,7 +43,11 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
 
 AudioPlayerManager::~AudioPlayerManager()
 {
-    // Delete threadpool and player
+    // Stop and wait player
+    player_stop();
+    player_wait();
+
+    // Delete player and threadpool
     delete player;
     delete threadpool;
 }

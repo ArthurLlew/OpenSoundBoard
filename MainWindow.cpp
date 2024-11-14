@@ -88,8 +88,12 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         microphonePlayerManager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
         microphonePlayerManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
         right_vertbox->addWidget(microphonePlayerManager);
-        mediafilesPlayerManager = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
-        right_vertbox->addWidget(mediafilesPlayerManager);
+        mediafilesPlayerManager1 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
+        mediafilesPlayerManager1->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
+        right_vertbox->addWidget(mediafilesPlayerManager1);
+        mediafilesPlayerManager2 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
+        mediafilesPlayerManager2->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        right_vertbox->addWidget(mediafilesPlayerManager2);
     }
     catch(...)
     {
@@ -102,17 +106,13 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
 // Destructor
 MainWindow::~MainWindow()
 {
-    microphonePlayerManager->player_stop();
-    mediafilesPlayerManager->player_stop();
-    microphonePlayerManager->player_wait();
-    mediafilesPlayerManager->player_wait();
+    // Delete player managers (players are stopped and deleted automatically inside destructor)
+    delete microphonePlayerManager;
+    delete mediafilesPlayerManager1;
+    delete mediafilesPlayerManager2;
 
     // Terminate PortAudio
     Pa_Terminate();
-
-    // Delete objects we own by reference (widgets are deleted automatically)
-    delete microphonePlayerManager;
-    delete mediafilesPlayerManager;
 }
 
 
@@ -153,7 +153,7 @@ void MainWindow::selectDirectory()
         for (const auto &mediafile : std::as_const(mediafiles))
         {
             // Create sound widget
-            AudioTrack *sound_item = new AudioTrack(mediafile);
+            AudioTrack *sound_item = new AudioTrack(directory.path() + "/" + mediafile);
             // Create list item
             QListWidgetItem *lst_item = new QListWidgetItem(tracks);
             // Set size hint
@@ -166,7 +166,7 @@ void MainWindow::selectDirectory()
 }
 
 
-void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player)
+void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player1, bool mediafiles_player2)
 {
     // Check if we can launch microphone player
     if (((DeviceTab*)devices->widget(0))->combobox_devices->count() == 0)
@@ -195,39 +195,45 @@ void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player)
     {
         displayWarning("No output devices found!\nTry to refresh devices");
     }
-    else if (mediafiles_player)
+    else
     {
-        mediafilesPlayerManager->player_run();
+        if (mediafiles_player1)
+            mediafilesPlayerManager1->player_run();
+        if (mediafiles_player2)
+            mediafilesPlayerManager2->player_run();
     }
 }
 
 
-void MainWindow::stopPlayers(bool *microphone_player, bool *mediafiles_player)
+void MainWindow::stopPlayers(bool *microphone_player, bool *mediafiles_player1, bool *mediafiles_player2)
 {
     // Save players state, tell them to stop and wait till they finish
     *microphone_player = microphonePlayerManager->player_state();
-    *mediafiles_player = mediafilesPlayerManager->player_state();
+    *mediafiles_player1 = mediafilesPlayerManager1->player_state();
+    *mediafiles_player2 = mediafilesPlayerManager2->player_state();
     microphonePlayerManager->player_stop();
-    mediafilesPlayerManager->player_stop();
+    mediafilesPlayerManager1->player_stop();
+    mediafilesPlayerManager2->player_stop();
     microphonePlayerManager->player_wait();
-    mediafilesPlayerManager->player_wait();
+    mediafilesPlayerManager1->player_wait();
+    mediafilesPlayerManager2->player_wait();
 }
 
 
 void MainWindow::restartPlayers(int unused)
 {
     // Restart players depending on their previous state
-    bool microphone_player, mediafiles_player;
-    stopPlayers(&microphone_player, &mediafiles_player);
-    startPlayers(microphone_player, mediafiles_player);
+    bool microphone_player, mediafiles_player1, mediafiles_player2;
+    stopPlayers(&microphone_player, &mediafiles_player1, &mediafiles_player2);
+    startPlayers(microphone_player, mediafiles_player1, mediafiles_player2);
 }
 
 
 void MainWindow::refreshDevices()
 {
     // Stop players
-    bool microphone_player, mediafiles_player;
-    stopPlayers(&microphone_player, &mediafiles_player);
+    bool microphone_player, mediafiles_player1, mediafiles_player2;
+    stopPlayers(&microphone_player, &mediafiles_player1, &mediafiles_player2);
 
     // Reboot PortAudio
     Pa_Terminate();
@@ -240,5 +246,5 @@ void MainWindow::refreshDevices()
     }
 
     // Start players
-    startPlayers(microphone_player, mediafiles_player);
+    startPlayers(microphone_player, mediafiles_player1, mediafiles_player2);
 }

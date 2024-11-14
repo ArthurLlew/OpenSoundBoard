@@ -4,14 +4,13 @@
 #include <QtCore/QPoint>
 #include <QtCore/QMimeData>
 #include <QtCore/QString>
+#include <QtGui/QMouseEvent>
 #include <QtGui/QDrag>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-// Custom
-#include "AudioPlayerManagers.hpp"
 
 using namespace std;
 

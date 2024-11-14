@@ -6,14 +6,13 @@
 #include <QtCore/QString>
 #include <QtCore/QThreadPool>
 #include <QtGui/QScreen>
-#include <QtGui/QCloseEvent>
+#include <QtGui/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QToolBar>
-#include <QtWidgets/QAction>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QAbstractItemView>

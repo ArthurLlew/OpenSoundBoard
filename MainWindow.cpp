@@ -183,7 +183,7 @@ void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player1, b
     }
     else if (microphone_player)
     {
-        microphonePlayerManager->player_run();
+        microphonePlayerManager->playerRun();
     }
 
     // Check if we can launch mediafiles player
@@ -198,9 +198,9 @@ void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player1, b
     else
     {
         if (mediafiles_player1)
-            mediafilesPlayerManager1->player_run();
+            mediafilesPlayerManager1->playerRun();
         if (mediafiles_player2)
-            mediafilesPlayerManager2->player_run();
+            mediafilesPlayerManager2->playerRun();
     }
 }
 
@@ -208,15 +208,15 @@ void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player1, b
 void MainWindow::stopPlayers(bool *microphone_player, bool *mediafiles_player1, bool *mediafiles_player2)
 {
     // Save players state, tell them to stop and wait till they finish
-    *microphone_player = microphonePlayerManager->player_state();
-    *mediafiles_player1 = mediafilesPlayerManager1->player_state();
-    *mediafiles_player2 = mediafilesPlayerManager2->player_state();
-    microphonePlayerManager->player_stop();
-    mediafilesPlayerManager1->player_stop();
-    mediafilesPlayerManager2->player_stop();
-    microphonePlayerManager->player_wait();
-    mediafilesPlayerManager1->player_wait();
-    mediafilesPlayerManager2->player_wait();
+    *microphone_player = microphonePlayerManager->playerState();
+    *mediafiles_player1 = mediafilesPlayerManager1->playerState();
+    *mediafiles_player2 = mediafilesPlayerManager2->playerState();
+    microphonePlayerManager->playerStop();
+    mediafilesPlayerManager1->playerStop();
+    mediafilesPlayerManager2->playerStop();
+    microphonePlayerManager->playerWait();
+    mediafilesPlayerManager1->playerWait();
+    mediafilesPlayerManager2->playerWait();
 }
 
 

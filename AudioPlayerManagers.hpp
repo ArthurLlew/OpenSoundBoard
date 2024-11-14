@@ -58,23 +58,23 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     void playerError(QString message);
 
     /** Start/Stop player.*/
-    void player_run_stop();
+    void playerRunStop();
 
     public:
 
     /** Returns player state.*/
-    bool player_state();
+    bool playerState();
     /** Start player.*/
-    void player_run();
+    void playerRun();
     /** Stop player.*/
-    void player_stop();
+    void playerStop();
     /** Wait for the player to stop.*/
-    void player_wait();
+    void playerWait();
 
     Q_OBJECT
     signals:
     /** Ask player to stop.*/
-    void ask_player_stop();
+    void askPlayerStop();
 };
 
 

@@ -12,7 +12,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     threadpool->setExpiryTimeout(-1);
 
     // Connect signals to player
-    connect(this, &AudioPlayerManager::ask_player_stop, this->player, AudioPlayer::stop);
+    connect(this, &AudioPlayerManager::askPlayerStop, this->player, AudioPlayer::stop);
     connect(this->player, AudioPlayer::signalError, this, &AudioPlayerManager::playerError);
 
     // Allow dropping of draggable widgets
@@ -33,7 +33,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     layout->addLayout(header_layout);
     // Start/Stop button
     buttonStartStop = new QPushButton("Start");
-    connect(buttonStartStop, &QPushButton::pressed, this, &AudioPlayerManager::player_run_stop);
+    connect(buttonStartStop, &QPushButton::pressed, this, &AudioPlayerManager::playerRunStop);
     header_layout->addWidget(buttonStartStop);
     // Label
     QLabel *label = new QLabel(name);
@@ -44,8 +44,8 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
 AudioPlayerManager::~AudioPlayerManager()
 {
     // Stop and wait player
-    player_stop();
-    player_wait();
+    playerStop();
+    playerWait();
 
     // Delete player and threadpool
     delete player;
@@ -53,13 +53,13 @@ AudioPlayerManager::~AudioPlayerManager()
 }
 
 
-bool AudioPlayerManager::player_state()
+bool AudioPlayerManager::playerState()
 {
     return isPlayerAlive;
 }
 
 
-void AudioPlayerManager::player_run()
+void AudioPlayerManager::playerRun()
 {
     // Start player only if he is not working
     if (!isPlayerAlive)
@@ -74,12 +74,12 @@ void AudioPlayerManager::player_run()
 }
 
 
-void AudioPlayerManager::player_stop()
+void AudioPlayerManager::playerStop()
 {
     // Kill player only if he is working
     if (isPlayerAlive)
     {
-        emit ask_player_stop();
+        emit askPlayerStop();
         // Update button
         buttonStartStop->setText("Start");
         // Update status
@@ -88,23 +88,23 @@ void AudioPlayerManager::player_stop()
 }
 
 
-void AudioPlayerManager::player_wait()
+void AudioPlayerManager::playerWait()
 {
     threadpool->waitForDone(-1);
 }
 
 
-void AudioPlayerManager::player_run_stop()
+void AudioPlayerManager::playerRunStop()
 {
     if (isPlayerAlive)
     {
         // Stop player and wait for it to finish
-        player_stop();
-        player_wait();
+        playerStop();
+        playerWait();
     }
     else
     {
-        player_run();
+        playerRun();
     }
 }
 
@@ -113,7 +113,7 @@ void AudioPlayerManager::playerError(QString message)
 {
     displayWarning(name + " error:\n" + message);
     // Update player state
-    player_stop();
+    playerStop();
 }
 
 

@@ -64,13 +64,6 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         left_vertbox->addWidget(tracks);
 
         /*
-        // Button placeholder:
-        */
-        QPushButton *button = new QPushButton("Placeholder button");
-        //connect(button, &QPushButton::pressed, this, &MainWindow::stop_all);
-        left_vertbox->addWidget(button);
-
-        /*
         // Devices tabs on the right:
         */
         devices = new QTabWidget();

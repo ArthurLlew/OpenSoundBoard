@@ -4,7 +4,7 @@
 #include <QtCore/Qt>
 #include <QtCore/QRect>
 #include <QtCore/QString>
-#include <QtGui/QCloseEvent>
+#include <QtGui/QPainter>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QComboBox>
@@ -40,6 +40,9 @@ typedef struct PaDeviceInfo_ext : PaDeviceInfo
 /** Device tab that manages info about available input or output devices.*/
 class DeviceTab: public QWidget
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
     /** Stores info about devices, available for this tab.*/
     list<PaDeviceInfo_ext> devices;
 
@@ -68,6 +71,9 @@ class DeviceTab: public QWidget
               QWidget *parent = nullptr);
     /** Destructor.*/
     ~DeviceTab();
+
+    /** Handles paint event.*/
+    void paintEvent(QPaintEvent *);
 
     /** Refresh devices list.*/
     void refreshDevices();

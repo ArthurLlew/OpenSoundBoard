@@ -14,9 +14,22 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 # Project name
 project(OpenSoundBoard)
 
+# Create embedder
+add_executable(embedder embedder.cpp)
+# Command to embed all resources into one .h file
+set(RESOURCES_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/src/embedded.h)
+set(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/style.qss)
+add_custom_command(
+    OUTPUT ${RESOURCES_HEADER}
+    DEPENDS embedder
+    COMMAND embedder ${RESOURCES} ${RESOURCES_HEADER}
+    COMMENT "Embedding resources")
+# Add header file with all resources as a target for later use
+add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
+
 # Define list of source files
-set(SOURCES main.cpp MainWindow.cpp DeviceTab.cpp AudioTrack.cpp AudioPlayerManagers.cpp AudioPlayers.cpp AudioTrackContext.cpp
-    WidgetMessages.cpp)
+set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp src/AudioPlayers.cpp
+    src/AudioTrackContext.cpp src/WidgetMessages.cpp)
 # Define names of static libraries
 set(LIBS portaudio avutil avcodec avformat swresample)
 # Add static libraries
@@ -49,3 +62,6 @@ target_include_directories(OpenSoundBoard_debug PRIVATE ${CMAKE_CURRENT_SOURCE_D
 # Libraries linking
 target_link_libraries(OpenSoundBoard PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
 target_link_libraries(OpenSoundBoard_debug PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
+# Resulting executable should depend on header with resources (so header file is generated before them)
+add_dependencies(OpenSoundBoard resources)
+add_dependencies(OpenSoundBoard_debug resources)

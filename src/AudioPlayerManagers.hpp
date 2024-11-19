@@ -6,6 +6,9 @@
 #include <QtCore/QString>
 #include <QtCore/QThreadPool>
 #include <QtCore/QRunnable>
+#include <QtGui/QPainter>
+#include <QtGui/QDragEnterEvent>
+#include <QtGui/QDropEvent>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QHBoxLayout>
@@ -21,6 +24,9 @@ using namespace std;
 /** Audio player manager widget. Can run, stop and wait provided audio player.*/
 class AudioPlayerManager : public QWidget, WidgetWarnings
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
     protected:
 
     /** Manager name.*/
@@ -49,6 +55,9 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     /** Destructor.*/
     ~AudioPlayerManager();
 
+    /** Handles paint event.*/
+    void paintEvent(QPaintEvent *);
+
     protected:
 
     /** Display player error.
@@ -71,7 +80,6 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     /** Wait for the player to stop.*/
     void playerWait();
 
-    Q_OBJECT
     signals:
     /** Ask player to stop.*/
     void askPlayerStop();
@@ -81,6 +89,9 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
 /** Microphone player manager.*/
 class MicrophonePlayerManager : public AudioPlayerManager
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
     public:
 
     /** Constructor.
@@ -96,6 +107,9 @@ class MicrophonePlayerManager : public AudioPlayerManager
 /** Media files player manager.*/
 class MediaFilesPlayerManager : public AudioPlayerManager
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
     /** Track name label.*/
     QLabel *trackName;
     /** Play button.*/
@@ -107,10 +121,6 @@ class MediaFilesPlayerManager : public AudioPlayerManager
 
     /** Track volume.*/
     float volume;
-    /** Track current duration.*/
-    int duration_cur = 0;
-    /** Track total duration.*/
-    int duration_total = 0;
     /** Track current state.*/
     TrackState trackState = STOPPED;
 
@@ -144,8 +154,6 @@ class MediaFilesPlayerManager : public AudioPlayerManager
      *  @param value volume value. int[0..100] is converted to float[0..1]
     */
     void setVolume(int value);
-    /** Updates track current duration.*/
-    void updateDuration();
 
     /** Stop audio track.*/
     void trackStop();
@@ -154,7 +162,6 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     /** React to player sending signalTrackEnd(). Update track state to STOPPED.*/
     void playerTrackEnded();
 
-    Q_OBJECT
     signals:
     /** Ask player to set new track.
      * 

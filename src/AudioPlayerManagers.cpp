@@ -53,6 +53,15 @@ AudioPlayerManager::~AudioPlayerManager()
 }
 
 
+void AudioPlayerManager::paintEvent(QPaintEvent *)
+{
+    QStyleOption opt;
+    opt.initFrom(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+
 bool AudioPlayerManager::playerState()
 {
     return isPlayerAlive;
@@ -136,8 +145,8 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString na
     */
     QHBoxLayout *box_layout1 = new QHBoxLayout();
     layout->addLayout(box_layout1);
-    QHBoxLayout *box_layout2 = new QHBoxLayout();
-    layout->addLayout(box_layout2);
+    //QHBoxLayout *box_layout2 = new QHBoxLayout();
+    //layout->addLayout(box_layout2);
     QHBoxLayout *box_layout3 = new QHBoxLayout();
     box_layout3->setAlignment(Qt::AlignLeft);
     layout->addLayout(box_layout3);
@@ -147,11 +156,6 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString na
     // Name
     trackName = new QLabel("<No track>");
     box_layout1->addWidget(trackName);
-    // Track progress
-    progress = new QProgressBar();
-    progress->setMinimum(0);
-    progress->setMaximum(duration_total);
-    box_layout2->addWidget(progress);
     // Play/Pause button
     buttonPlay = new QPushButton("Play");
     connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerManager::trackPlayPause);
@@ -209,12 +213,6 @@ void MediaFilesPlayerManager::setVolume(int value)
     // Update volume var and label
     volume = ((float)value)/100;
     volumeLabel->setText(QString::number(value));
-}
-
-
-void MediaFilesPlayerManager::updateDuration()
-{
-    progress->setValue(duration_cur);
 }
 
 

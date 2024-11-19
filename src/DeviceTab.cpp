@@ -29,9 +29,6 @@ DeviceTab::DeviceTab(QRect *screenGeometry, QString checkboxLabel, bool checkbox
     // Layout contents:
     // Combobox
     this->combobox_devices = combobox_devices;
-    this->combobox_devices->view()->setTextElideMode(Qt::ElideNone);
-    this->combobox_devices->setMinimumWidth(screenGeometry->width()/7);
-    this->combobox_devices->setMaximumWidth(screenGeometry->width()/7);
     layout->addWidget(this->combobox_devices);
     // Checkbox
     checkbox = new QCheckBox(checkboxLabel);
@@ -50,6 +47,15 @@ DeviceTab::~DeviceTab()
 {
     // Clear devices list
     devices.clear();
+}
+
+
+void DeviceTab::paintEvent(QPaintEvent *)
+{
+    QStyleOption opt;
+    opt.initFrom(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
 

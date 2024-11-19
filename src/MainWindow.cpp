@@ -31,7 +31,6 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         /* Additional layouts inside grid */
         QVBoxLayout *left_vertbox = new QVBoxLayout();
         QVBoxLayout *right_vertbox = new QVBoxLayout();
-        right_vertbox->setAlignment(Qt::AlignTop);
         grid->addLayout(left_vertbox, 0, 0, 1, 1);
         grid->addLayout(right_vertbox, 0, 1, 1, 1);
 
@@ -39,6 +38,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         // Toolbar:
         */
         QToolBar *toolbar = new QToolBar("Toolbar");
+        toolbar->setMovable(false);
         addToolBar(toolbar);
         /* Button to add tracks */
         QAction *button_select_dir = new QAction("Select Directory");
@@ -57,9 +57,15 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         tracks->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
         // Disable horisontal scroll bar
         tracks->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        // Table header
+        // Table headers
         tracks->setColumnCount(1);
-        tracks->setHorizontalHeaderLabels(QStringList() << "Track Name");
+        tracks->setHorizontalHeaderLabels(QStringList() << "Tracks");
+        tracks->verticalHeader()->setVisible(false);
+        tracks->horizontalHeader()->setDisabled(true);
+        // Disable selection
+        tracks->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        tracks->setFocusPolicy(Qt::NoFocus);
+        tracks->setSelectionMode(QAbstractItemView::NoSelection);
         // Add to layout
         left_vertbox->addWidget(tracks);
 
@@ -67,33 +73,30 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         // Devices tabs on the right:
         */
         devices = new QTabWidget();
-        devices->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
         right_vertbox->addWidget(devices);
         /* Input device */
         QComboBox *combobox_devices = new QComboBox();
         void (QComboBox:: *indexChangedSignal)(int) = &QComboBox::currentIndexChanged;
-        devices->addTab(new DeviceTab(screeanGeometry, "Listen to input", true, INPUT, combobox_devices), "Input Device:");
+        devices->addTab(new DeviceTab(screeanGeometry, "Listen to input", true, INPUT, combobox_devices), "Input Device");
         // Connect after device tab creation to ensure MainWindow::restartPlayers won't be called inside constructor (causing crash)
         connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
         /* Virtual Output Cable */
         combobox_devices = new QComboBox();
-        devices->addTab(new DeviceTab(screeanGeometry, "Feed to virtual output", true, OUTPUT, combobox_devices), "Virtual Output Cable:");
+        devices->addTab(new DeviceTab(screeanGeometry, "Feed to virtual output", true, OUTPUT, combobox_devices), "Virtual Output Cable");
         connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
         /* Output Device */
         combobox_devices = new QComboBox();
-        devices->addTab(new DeviceTab(screeanGeometry, "Feed to ouput", false, OUTPUT, combobox_devices), "Output Device:");
+        devices->addTab(new DeviceTab(screeanGeometry, "Feed to ouput", false, OUTPUT, combobox_devices), "Output Device");
         connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
-
-        // Init player managers
+        /* player managers */
         microphonePlayerManager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
-        microphonePlayerManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
         right_vertbox->addWidget(microphonePlayerManager);
         mediafilesPlayerManager1 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
-        mediafilesPlayerManager1->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
         right_vertbox->addWidget(mediafilesPlayerManager1);
         mediafilesPlayerManager2 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
-        mediafilesPlayerManager2->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         right_vertbox->addWidget(mediafilesPlayerManager2);
+        // Add streatch to stick widgets to the top
+        right_vertbox->addStretch();
     }
     catch(...)
     {

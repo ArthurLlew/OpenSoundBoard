@@ -1,16 +1,15 @@
 #include "MainWindow.hpp"
+#include "embedded.h"
 
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     // Create application instance
     QApplication app(argc, argv);
 
     // Load style sheet
-    //QFile file("style.qss");
-    //file.open(QFile::ReadOnly);
-    //QString styleSheet = QLatin1String(file.readAll());
-    //app.setStyleSheet(styleSheet);
+    QString styleSheet = QLatin1String(QByteArray((char*)style_qss));
+    app.setStyleSheet(styleSheet);
 
     // Create and show main window
     MainWindow window(&app);

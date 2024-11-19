@@ -2,3 +2,4 @@
 build/
 exmpls/
 test_tracks/
+src/embedded.h

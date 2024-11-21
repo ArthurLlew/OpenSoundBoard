@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // Load style sheet
-    QString styleSheet = QLatin1String(QByteArray((char*)style_qss));
+    QString styleSheet = QLatin1String(QByteArray::fromRawData((char*)style_qss, sizeof(style_qss)));
     app.setStyleSheet(styleSheet);
 
     // Create and show main window

@@ -17,8 +17,8 @@ PaDeviceInfo_ext::PaDeviceInfo_ext(const PaDeviceInfo &other, int index)
 }
 
 
-DeviceTab::DeviceTab(QRect *screenGeometry, QString checkboxLabel, bool checkboxState, DeviceType type,
-                     QComboBox *combobox_devices, QWidget *parent) : QWidget(parent)
+DeviceTab::DeviceTab(QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,
+                     QWidget *parent) : QWidget(parent)
 {
     // Save device type
     this->type = type;

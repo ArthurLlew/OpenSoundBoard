@@ -17,16 +17,18 @@ AudioTrack::AudioTrack(QString filepath, QWidget *parent) : QWidget(parent)
 
 void AudioTrack::mousePressEvent(QMouseEvent *event)
 {
-    // We react to left mouse button only
-    if (event->button() == Qt::LeftButton)
+    // Handle left mouse button
+    if (event->buttons() == Qt::LeftButton)
+    {
         // Save click position
         dragStartPosition = event->pos();
+    }
 }
 
 
 void AudioTrack::mouseMoveEvent(QMouseEvent *event)
 {
-    // We only handle movement
+    // Do nothing if left mouse button is not pressed
     if (!(event->buttons() & Qt::LeftButton))
         return;
     // We only handle sufficient movement

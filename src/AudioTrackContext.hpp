@@ -9,7 +9,7 @@ extern "C"
 #include <libswresample/swresample.h>
 #define __STDC_CONSTANT_MACROS
 }
-// Qt5
+// Qt
 #include <QtCore/QString>
 // Exceptions
 #include <stdexcept>
@@ -42,18 +42,13 @@ struct AudioTrackFrame {
     /** Constructor.
      * 
      *  @param data Pointer to audio samples.
-     * 
      *  @param nb_channels Number of channels.
-     * 
      *  @param mem_size Data memory size in bytes.
-     * 
      *  @param nb_samples Number of samples.
-     * 
      *  @param sampleRate Sample rate.
-     * 
      *  @param volume What volume should be applied to samples.
     */
-    AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate, float volume);
+    explicit AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate, float volume);
     /** Destructor.*/
     ~AudioTrackFrame();
 };
@@ -85,7 +80,7 @@ class AudioTrackContext
     /** Next data sample to play.*/
     uint8_t **swr_data = NULL;
 
-    public:
+public:
 
     /** Track current state.*/
     TrackState state = STOPPED;
@@ -94,7 +89,7 @@ class AudioTrackContext
      * 
      *  @param filepath Media file path.
     */
-    AudioTrackContext(QString filepath);
+    explicit AudioTrackContext(QString filepath);
     /** Destructor.*/
     ~AudioTrackContext();
 

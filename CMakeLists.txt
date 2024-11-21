@@ -21,17 +21,17 @@ set(RESOURCES_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/src/embedded.h)
 set(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/style.qss)
 add_custom_command(
     OUTPUT ${RESOURCES_HEADER}
-    DEPENDS embedder
+    DEPENDS embedder ${RESOURCES}
     COMMAND embedder ${RESOURCES} ${RESOURCES_HEADER}
     COMMENT "Embedding resources")
 # Add header file with all resources as a target for later use
 add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 
 # Define list of source files
-set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp src/AudioPlayers.cpp
-    src/AudioTrackContext.cpp src/WidgetMessages.cpp)
+set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp
+    src/AudioPlayers.cpp src/AudioTrackContext.cpp src/WidgetMessages.cpp)
 # Define names of static libraries
-set(LIBS portaudio avutil avcodec avformat swresample)
+set(LIBS dwmapi User32 portaudio avutil avcodec avformat swresample)
 # Add static libraries
 foreach(LIB IN LISTS ${LIBS})
     add_library(LIB STATIC IMPORTED)

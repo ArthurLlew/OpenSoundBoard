@@ -1,6 +1,6 @@
 #pragma once
 
-// Qt5
+// Qt
 #include <QtCore/QObject>
 #include <QtCore/QMimeData>
 #include <QtCore/QString>
@@ -27,7 +27,7 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
-    protected:
+protected:
 
     /** Manager name.*/
     QString name;
@@ -43,22 +43,21 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     /** Audio player state.*/
     bool isPlayerAlive = false;
 
-    public:
+public:
 
     /** Constructor.
      * 
      *  @param player Audio player.
-     * 
      *  @param name player name.
     */
-    AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent = nullptr);
+    explicit AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent = nullptr);
     /** Destructor.*/
     ~AudioPlayerManager();
 
-    /** Handles paint event.*/
-    void paintEvent(QPaintEvent *);
+protected:
 
-    protected:
+    /** Handles paint event.*/
+    void paintEvent(QPaintEvent *) override;
 
     /** Display player error.
      * 
@@ -69,7 +68,7 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     /** Start/Stop player.*/
     void playerRunStop();
 
-    public:
+public:
 
     /** Returns player state.*/
     bool playerState();
@@ -80,7 +79,7 @@ class AudioPlayerManager : public QWidget, WidgetWarnings
     /** Wait for the player to stop.*/
     void playerWait();
 
-    signals:
+signals:
     /** Ask player to stop.*/
     void askPlayerStop();
 };
@@ -92,12 +91,11 @@ class MicrophonePlayerManager : public AudioPlayerManager
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
-    public:
+public:
 
     /** Constructor.
      * 
      *  @param player Audio player.
-     * 
      *  @param name player name.
     */
     MicrophonePlayerManager(QTabWidget *devices, QString name, QWidget *parent = nullptr);
@@ -124,19 +122,17 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     /** Track current state.*/
     TrackState trackState = STOPPED;
 
-    public:
+public:
 
     /** Constructor.
      * 
      *  @param player Audio player.
-     * 
      *  @param name Player name.
-     * 
      *  @param screeanGeometry Geometry of the computer's primary screen.
     */
     MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screeanGeometry, QWidget *parent = nullptr);
 
-    private:
+private:
 
     /** Handles entering drag event.*/
     void dragEnterEvent(QDragEnterEvent *event);
@@ -162,7 +158,7 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     /** React to player sending signalTrackEnd(). Update track state to STOPPED.*/
     void playerTrackEnded();
 
-    signals:
+signals:
     /** Ask player to set new track.
      * 
      *  @param filepath media file path.

@@ -1,6 +1,6 @@
 #pragma once
 
-// Qt5
+// Qt
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QThreadPool>
@@ -21,31 +21,28 @@ using namespace std;
 /** Basic player class.*/
 class AudioPlayer : public QObject, public QRunnable
 {
-    protected:
+protected:
 
     /** tab widget that describes avaliavle devices.*/
     QTabWidget const *devices;
     /** Player state.*/
     bool is_alive = false;
 
-    public:
+public:
 
     /** Constructor.
      * 
      *  @param devices Tab widget that describes avaliavle devices.
     */
-    AudioPlayer(QTabWidget const *devices);
+    explicit AudioPlayer(QTabWidget const *devices);
 
-    protected:
+protected:
 
     /** Opens stream for the provided device.
      * 
      *  @param targetDevice Device for which we are openning stream.
-     * 
      *  @param sampleFormat Stream sample format.
-     * 
      *  @param SampleRate Stream sample rate.
-     * 
      *  @param sourceDevice Device where data from this stream will go (affects stream settings).
      * 
      *  @return Opened and active stream.
@@ -53,7 +50,7 @@ class AudioPlayer : public QObject, public QRunnable
     PaStream* openDeviceStream(DeviceTab const *targetDevice, PaSampleFormat sampleFormat, double SampleRate = 0,
                                  DeviceTab const *sourceDevice = nullptr);
 
-    public:
+public:
 
     /** Stops the player if it is running.*/
     void stop();
@@ -73,7 +70,7 @@ class AudioPlayer : public QObject, public QRunnable
 /** Player that reroutes microphone input to outputs.*/
 class MicrophonePlayer : public AudioPlayer
 {
-    public:
+public:
 
     /** Constructor.
      * 
@@ -96,12 +93,11 @@ class  MediaFilesPlayer : public AudioPlayer
     /** Track current state.*/
     TrackState nextTrackState = STOPPED;
 
-    public:
+public:
 
     /** Constructor.
      * 
      *  @param devices Tab widget that describes avaliavle devices.
-     * 
      *  @param volume Pointer to volume.
     */
     MediaFilesPlayer(QTabWidget const *devices, float const *volume);

@@ -1,13 +1,13 @@
 #pragma once
 
-// Qt5
+// Qt
 #include <QtWidgets/QMessageBox>
 
 
 /** Describes warning messageboxes that can be shown to user.*/
 class WidgetWarnings
 {
-    protected:
+protected:
 
     /** Displays warning messagebox.
      * 

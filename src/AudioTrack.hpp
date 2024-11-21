@@ -1,6 +1,6 @@
 #pragma once
 
-// Qt5
+// Qt
 #include <QtCore/QPoint>
 #include <QtCore/QMimeData>
 #include <QtCore/QString>
@@ -25,17 +25,16 @@ class AudioTrack: public QWidget
     /** Saved value of mouse position when widget as clicked.*/
     QPoint dragStartPosition;
 
-    public:
+public:
 
     /** Constructor.
      * 
      *  @param filepath Path to the media file.
-     * 
      *  @param player Media files player manager.
     */
-    AudioTrack(QString filepath, QWidget *parent = nullptr);
+    explicit AudioTrack(QString filepath, QWidget *parent = nullptr);
 
-    protected:
+protected:
 
     /** Invoked when mouse is pressed.*/
     void mousePressEvent(QMouseEvent *event);

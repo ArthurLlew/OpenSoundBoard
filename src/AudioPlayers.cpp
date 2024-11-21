@@ -27,7 +27,7 @@ PaStream* AudioPlayer::openDeviceStream(DeviceTab const *targetDevice, PaSampleF
     stream_prams.hostApiSpecificStreamInfo = NULL;
     // Channel count and sample rate
     double sample_rate = (sampleRate == 0) ? selectedTargetDevice.defaultSampleRate : sampleRate;
-    int channelCount = (targetDevice->type == INPUT) ? selectedTargetDevice.maxInputChannels : selectedTargetDevice.maxOutputChannels;
+    int channelCount = (targetDevice->type == DeviceTab::INPUT) ? selectedTargetDevice.maxInputChannels : selectedTargetDevice.maxOutputChannels;
     // Modify them if we have source device
     if (sourceDevice == nullptr)
     {
@@ -41,13 +41,13 @@ PaStream* AudioPlayer::openDeviceStream(DeviceTab const *targetDevice, PaSampleF
     }
 
     // Open stream (depends on device type)
-    if (targetDevice->type == INPUT)
+    if (targetDevice->type == DeviceTab::INPUT)
     {
         res = Pa_OpenStream(&device_stream, &stream_prams, NULL,
                             sample_rate, 1024,
                             paClipOff, NULL, NULL);
     }
-    else if (targetDevice->type == OUTPUT)
+    else if (targetDevice->type == DeviceTab::OUTPUT)
     {
         res = Pa_OpenStream(&device_stream, NULL, &stream_prams,
                             sample_rate, 1024,

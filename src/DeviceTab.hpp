@@ -1,6 +1,6 @@
 #pragma once
 
-// Qt5
+// Qt
 #include <QtCore/Qt>
 #include <QtCore/QRect>
 #include <QtCore/QString>
@@ -18,14 +18,6 @@
 using namespace std;
 
 
-/** Describes device type.*/
-enum DeviceType
-{
-    INPUT,
-    OUTPUT
-};
-
-
 /** Extention of PaDeviceInfo (holds device index too).*/
 typedef struct PaDeviceInfo_ext : PaDeviceInfo
 {
@@ -40,40 +32,43 @@ typedef struct PaDeviceInfo_ext : PaDeviceInfo
 /** Device tab that manages info about available input or output devices.*/
 class DeviceTab: public QWidget
 {
+
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
     /** Stores info about devices, available for this tab.*/
     list<PaDeviceInfo_ext> devices;
 
-    public:
+public:
 
     /** Combobox with device names.*/
     QComboBox *combobox_devices;
     /** Checkbox that tells if the device can be used by the audio player.*/
     QCheckBox *checkbox;
+    /** Describes device type.*/
+    enum DeviceType
+    {
+        INPUT,
+        OUTPUT
+    };
     /** Device type (input/output).*/
     DeviceType type;
 
     /** Constructor.
      * 
      *  @param screenGeometry Geometry of the computer's primary screen.
-     * 
      *  @param checkboxLabel Tab checkbox label.
-     * 
      *  @param checkboxState Tab checkbox state (true/false == checked/unchecked).
-     * 
      *  @param type Device type (input/output).
-     * 
      *  @param combobox_devices Combobox with devices.
     */
-    DeviceTab(QRect *screenGeometry, QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,
-              QWidget *parent = nullptr);
+    explicit DeviceTab(QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,
+                       QWidget *parent = nullptr);
     /** Destructor.*/
     ~DeviceTab();
 
     /** Handles paint event.*/
-    void paintEvent(QPaintEvent *);
+    void paintEvent(QPaintEvent *) override;
 
     /** Refresh devices list.*/
     void refreshDevices();

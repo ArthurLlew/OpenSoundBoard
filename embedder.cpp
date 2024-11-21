@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
                 "#define EMBEDED_FILES\n"
                 "\n"
                 "// In order to use uint8_t\n"
-                "#include <cstdint>\n"
+                "#include <stdint.h>\n"
                 "\n";
 
         // Iterate over files to embed
@@ -100,8 +100,6 @@ int main(int argc, char *argv[])
 
         // Close file
         header.close();
-
-        printf("Successefully embeded all files\n");
     }
     catch(const std::exception& e)
     {

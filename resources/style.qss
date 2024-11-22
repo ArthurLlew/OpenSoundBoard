@@ -71,14 +71,7 @@ QToolButton, QPushButton, QComboBox
 }
 
 
-/* Main window and its separators */
-QWidget#TitleBar
-{
-    margin: 0;
-    border: 0;
-    padding: 0;
-    spacing: 0;
-}
+/* Main window separators */
 QMainWindow::separator
 {
     border: 0;

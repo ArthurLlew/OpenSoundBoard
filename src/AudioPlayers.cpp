@@ -36,8 +36,8 @@ PaStream* AudioPlayer::openDeviceStream(DeviceTab const *targetDevice, PaSampleF
     else
     {
         PaDeviceInfo_ext selectedSourceDevice = sourceDevice->getDevice();
-        stream_prams.channelCount = min(selectedSourceDevice.maxInputChannels, channelCount);
-        sample_rate = min(selectedSourceDevice.defaultSampleRate, sample_rate);
+        stream_prams.channelCount = std::min(selectedSourceDevice.maxInputChannels, channelCount);
+        sample_rate = std::min(selectedSourceDevice.defaultSampleRate, sample_rate);
     }
 
     // Open stream (depends on device type)
@@ -57,7 +57,7 @@ PaStream* AudioPlayer::openDeviceStream(DeviceTab const *targetDevice, PaSampleF
     // Check for errors
     if (res != paNoError)
     {
-        throw runtime_error("Unable to open stream");
+        throw std::runtime_error("Unable to open stream");
     }
 
     // Start stream
@@ -205,7 +205,7 @@ void MediaFilesPlayer::run()
                                 Pa_WriteStream(out_stream_48000, frame.data, frame.nb_samples);
                                 break;
                             default:
-                                throw runtime_error("Unsupported samples rate");
+                                throw std::runtime_error("Unsupported samples rate");
                         }
                     }
                     else

@@ -12,8 +12,6 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 
-using namespace std;
-
 
 /** Describes audio track loaded by user.*/
 class AudioTrack: public QWidget

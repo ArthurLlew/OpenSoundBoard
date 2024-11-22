@@ -73,7 +73,7 @@ PaDeviceInfo_ext DeviceTab::getDevice() const
     }
 
     // If no device was found, app probably ran into some memory issues
-    throw runtime_error("Device list and combobox list mismatch");
+    throw std::runtime_error("Device list and combobox list mismatch");
 }
 
 

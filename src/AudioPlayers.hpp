@@ -15,8 +15,6 @@
 #include "DeviceTab.hpp"
 #include "AudioTrackContext.hpp"
 
-using namespace std;
-
 
 /** Basic player class.*/
 class AudioPlayer : public QObject, public QRunnable

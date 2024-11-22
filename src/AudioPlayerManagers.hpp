@@ -18,8 +18,6 @@
 #include "WidgetMessages.hpp"
 #include "AudioPlayers.hpp"
 
-using namespace std;
-
 
 /** Audio player manager widget. Can run, stop and wait provided audio player.*/
 class AudioPlayerManager : public QWidget, WidgetWarnings

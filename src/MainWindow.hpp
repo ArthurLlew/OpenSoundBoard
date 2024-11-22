@@ -1,7 +1,19 @@
 #pragma once
 
-// Qt
+// Qt core (defines Q_OS_WIN among other things)
 #include <QtCore/Qt>
+
+#ifdef Q_OS_WIN
+// Windows headers
+#define WINVER 0x0A00
+#define _WIN32_WINNT_WIN10
+#include <windows.h>
+#include <windowsx.h>
+#include <dwmapi.h>
+#include <winuser.h>
+#endif
+
+// Qt
 #include <QtCore/QRect>
 #include <QtCore/QString>
 #include <QtCore/QThreadPool>
@@ -27,8 +39,6 @@
 #include "DeviceTab.hpp"
 #include "AudioTrack.hpp"
 #include "AudioPlayerManagers.hpp"
-
-using namespace std;
 
 
 /** Application main window.*/
@@ -73,37 +83,6 @@ protected:
      *  @param event event info.
     */
     void paintEvent(QPaintEvent *event) override;
-    /** Handles mouse press event.
-     * 
-     *  @param event event info.
-    */
-    void mousePressEvent(QMouseEvent *event) override;
-    /** Handles  mouse move event.
-     * 
-     *  @param event event info.
-    */
-    void mouseMoveEvent(QMouseEvent *event) override;
-    /** Handles mouse double click event.
-     * 
-     *  @param event event info.
-    */
-    void mouseDoubleClickEvent(QMouseEvent *event) override;
-    /** Handles native events (for example, allows to handle resizing).
-     * 
-     *  @param eventType event type.
-     *  @param message event info.
-     *  @param result method handling result
-     * 
-     *  @return True if the event was handled, otherwise false.
-    */
-    bool nativeEvent(const QByteArray &, void *message, qintptr *result) override;
-
-    /** Handles minimize window button click.*/
-    void onMinimizeClicked();
-    /** Handles maximize window button click.*/
-    void onMaximizeClicked();
-    /** Handles close window button click.*/
-    void onCloseClicked();
 
     /** Safely starts portaudio (raises exception if unable to initialize).*/
     void startPortaudio();

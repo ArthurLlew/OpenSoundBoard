@@ -1,7 +1,4 @@
-// Windows headers (very important to put them in front of any other includes!)
-#include <windows.h>
-#include <windowsx.h>
-#include <dwmapi.h>
+
 // Header
 #include "MainWindow.hpp"
 
@@ -17,13 +14,17 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         // Prepair to act as a frameless window
         setWindowFlags(flags | Qt::Window);
 
-        // Win32 windo handler setup
+        #ifdef Q_OS_WIN
+        // Get window handler and set custom style
         HWND hwnd = HWND(winId());
-        DWORD style = ::GetWindowLong(hwnd, GWL_STYLE);
-        ::SetWindowLong(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | !WS_BORDER);
-        // Margins for shadow
-        const MARGINS shadow = { 1, 1, 1, 1 };
-        DwmExtendFrameIntoClientArea(hwnd, &shadow);
+        ::SetWindowLong(hwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
+                                        | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+        // Set darkmode
+        BOOL USE_DARK_MODE = true;
+        BOOL SET_IMMERSIVE_DARK_MODE_SUCCESS = SUCCEEDED(DwmSetWindowAttribute(
+                                    hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                    &USE_DARK_MODE, sizeof(USE_DARK_MODE)));
+        #endif
 
         // Get primary screen geometry
         screeanGeometry = new QRect(app->primaryScreen()->availableGeometry());
@@ -31,32 +32,6 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         setMinimumSize(screeanGeometry->width()/1.5, screeanGeometry->height()/1.5);
         setGeometry(screeanGeometry->width()/10, screeanGeometry->height()/8,
                     screeanGeometry->width()/1.5, screeanGeometry->height()/1.5);
-
-        /*
-        // Title bar:
-        */
-        /* Title */
-        QLabel *app_title = new QLabel("OpenSoundBoard");
-        /* Minimize button */
-        QPushButton *button_minimize = new QPushButton("-");
-        connect(button_minimize, &QPushButton::pressed, this, &MainWindow::onMinimizeClicked);
-        /* Maximize button */
-        QPushButton *button_maximize = new QPushButton("o");
-        connect(button_maximize, &QPushButton::pressed, this, &MainWindow::onMaximizeClicked);
-        /* Close button */
-        QPushButton *button_close = new QPushButton("x");
-        connect(button_close, &QPushButton::pressed, this, &MainWindow::onCloseClicked);
-        /* Title bar widget */
-        titleBar = new QWidget();
-        titleBar->setObjectName("TitleBar");
-        QHBoxLayout *title_bar_layout = new QHBoxLayout();
-        titleBar->setLayout(title_bar_layout);
-        title_bar_layout->addWidget(app_title);
-        title_bar_layout->addStretch(); // Spacing
-        title_bar_layout->addWidget(button_minimize);
-        title_bar_layout->addWidget(button_maximize);
-        title_bar_layout->addWidget(button_close);
-        setMenuWidget(titleBar);
 
         /*
         // Central widget:
@@ -96,7 +71,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         */
         tracks = new QTableWidget();
         // Table header should streach to the and of table
-        tracks->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+        tracks->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
         // Disable horisontal scroll bar
         tracks->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         // Table headers
@@ -173,193 +148,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
     opt.initFrom(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
-}
-
-
-void MainWindow::mousePressEvent(QMouseEvent *event)
-{
-    // Handle left mouse button
-    if (event->buttons() == Qt::LeftButton)
-    {
-        // Check if click happened on frame header
-        if (childAt(event->pos()) == titleBar)
-        {
-            // Save mouse position
-            mouseClickedPos = event->pos();
-            // Adjust it if window is maximized using size difference
-            if (isMaximized())
-            {
-                QRect geo_curr = geometry();
-                QRect geo_norm = normalGeometry();
-                mouseClickedPos.setX(mouseClickedPos.x() * geo_norm.width() / geo_curr.width());
-                mouseClickedPos.setY(mouseClickedPos.y() * geo_norm.height() / geo_curr.height());
-            }
-        }
-        else
-        {
-            mouseClickedPos = QPoint(-1,-1);
-        }
-    }
-}
-
-
-void MainWindow::mouseMoveEvent(QMouseEvent *event)
-{
-    // Do nothing if left mouse button is not pressed
-    if (!(event->buttons() & Qt::LeftButton))
-        return;
-    // Handle movement only if left mouse button was pressed on header
-    if (mouseClickedPos.x() != -1 && mouseClickedPos.y() != -1)
-    {
-        // Move to new position
-        move(event->globalPosition().toPoint() - mouseClickedPos);
-        /*if(isMaximized())
-        {
-            ??????????????????????????????????
-        }*/
-    }
-}
-
-
-void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
-{
-    // Handle left mouse button
-    if (event->buttons() == Qt::LeftButton)
-    {
-        // Check if click happened on frame header
-        if (childAt(event->pos()) == titleBar)
-        {
-            if (isMaximized())
-            {
-                //maximum->setIcon(QIcon(maximizeIcon));
-                showNormal();
-            }
-            else
-            {
-                //maximum->setIcon(QIcon(defaultSizeIcon));
-                showMaximized();
-            }
-        }
-    }
-}
-
-
-bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
-{
-    // Avoid compiler warnings
-    Q_UNUSED(eventType)
-
-    // Parse message
-    MSG *msg = static_cast<MSG*>(message);
-
-    // Handle event
-    switch (msg->message)
-    {
-        case WM_NCCALCSIZE:
-        {
-            // Redraw for extra safety
-            *result = WVR_REDRAW;
-            return true;
-        }
-        case WM_NCHITTEST:
-        {
-            // Get cursor positions (also take screen scaling into account)
-            QPoint globalPos(GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam));
-            globalPos.setX(qRound(globalPos.x() / devicePixelRatio()));
-            globalPos.setY(qRound(globalPos.y() / devicePixelRatio()));
-            QPoint localPos = mapFromGlobal(globalPos);
-            int localX = localPos.x();
-            int localY = localPos.y();
-            // Add some spacing, so user can actually hit that gap with mouse
-            int borderPad = 4;
-
-            // Left side
-            if (localX >= 0 && localX <= borderPad)
-            {
-                // Top left
-                if (localY >= 0 && localY <= borderPad)
-                {
-                    *result = HTTOPLEFT;
-                }
-                // Bottom left
-                else if (localY >= height() - borderPad)
-                {
-                    *result = HTBOTTOMLEFT;
-                }
-                // Middle left
-                else
-                {
-                    *result = HTLEFT;
-                }
-            }
-            // Right side
-            else if (localX >= width() - borderPad)
-            {
-                // Top right
-                if (localY >= 0 && localY <= borderPad)
-                {
-                    *result = HTTOPRIGHT;
-                }
-                // Bottom right
-                else if (localY >= height() - borderPad)
-                {
-                    *result = HTBOTTOMRIGHT;
-                }
-                // Middle right
-                else
-                {
-                    *result = HTRIGHT;
-                }
-            }
-            // Middle top
-            else if (localY >= 0 && localY <= borderPad)
-            {
-                *result = HTTOP;
-            }
-            // Middle bottom
-            else if (localY >= height() - borderPad && localY <= height())
-            {
-                *result = HTBOTTOM;
-            }
-            else
-            {
-                // Default handling
-                return QMainWindow::nativeEvent(eventType, message, result);
-            }
-
-            // We handled event
-            return true;
-        }
-        default:
-            break;
-    }
-
-    // Default handling
-    return QMainWindow::nativeEvent(eventType, message, result);
-}
-
-
-void MainWindow::onMinimizeClicked(){
-    showMinimized();
-}
-
-
-void MainWindow::onMaximizeClicked(){
-    if (isMaximized())
-    {
-        //maximum->setIcon(QIcon(maximizeIcon));
-        showNormal();
-    }
-    else
-    {
-        //maximum->setIcon(QIcon(defaultSizeIcon));
-        showMaximized();
-    }
-}
-
-
-void MainWindow::onCloseClicked(){
-    close();
 }
 
 

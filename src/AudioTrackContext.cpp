@@ -83,12 +83,12 @@ void AudioTrackContext::play()
     if (avformat_open_input(&format_ctx, f, NULL, NULL) < 0)
     {
         stop();
-        throw runtime_error("Unable to open input file");
+        throw std::runtime_error("Unable to open input file");
     }
     if (avformat_find_stream_info(format_ctx, NULL) < 0)
     {
         stop();
-        throw runtime_error("Unable to find file streams info");
+        throw std::runtime_error("Unable to find file streams info");
     }
 
     // Find index of the audio stream
@@ -96,7 +96,7 @@ void AudioTrackContext::play()
     if (audio_stream_index < 0)
     {
         stop();
-        throw runtime_error("Unable to find an audio stream");
+        throw std::runtime_error("Unable to find an audio stream");
     }
 
     // Init decoding context
@@ -104,7 +104,7 @@ void AudioTrackContext::play()
     if (!decoder_ctx)
     {
         stop();
-        throw runtime_error("Unable to open create decoding context");
+        throw std::runtime_error("Unable to open create decoding context");
     }
     avcodec_parameters_to_context(decoder_ctx, format_ctx->streams[audio_stream_index]->codecpar);
 
@@ -112,7 +112,7 @@ void AudioTrackContext::play()
     if (avcodec_open2(decoder_ctx, decoder, NULL) < 0)
     {
         stop();
-        throw runtime_error("Unable to open audio decoder");
+        throw std::runtime_error("Unable to open audio decoder");
     }
 
     // DEBUG
@@ -126,14 +126,14 @@ void AudioTrackContext::play()
     if (!packet)
     {
         stop();
-        throw runtime_error("Unable to allocate data packet");
+        throw std::runtime_error("Unable to allocate data packet");
     }
     // Allocate media data frame
     frame = av_frame_alloc();
     if (!frame)
     {
         stop();
-        throw runtime_error("Unable to allocate data frame");
+        throw std::runtime_error("Unable to allocate data frame");
     }
 
     // Allocate resampler context
@@ -141,7 +141,7 @@ void AudioTrackContext::play()
     if (!swr_ctx)
     {
         stop();
-        throw runtime_error("Unable to allocate resampler context");
+        throw std::runtime_error("Unable to allocate resampler context");
     }
     // Set resampler input samples parameters
     av_opt_set_chlayout(swr_ctx,   "in_chlayout",    &decoder_ctx->ch_layout, 0);
@@ -155,14 +155,14 @@ void AudioTrackContext::play()
     if (swr_init(swr_ctx) < 0)
     {
         stop();
-        throw runtime_error("Unable to init resampling context");
+        throw std::runtime_error("Unable to init resampling context");
     }
 
     // Buffer will be used as it is, no alignment
     if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
     {
         stop();
-        throw runtime_error("Could not allocate destination samples");
+        throw std::runtime_error("Could not allocate destination samples");
     }
 
     state = PLAYING;
@@ -226,25 +226,25 @@ AudioTrackFrame AudioTrackContext::readSamples(float volume)
                 {
                     case AVERROR(EAGAIN):
                         stop();
-                        throw runtime_error("Error while sending a packet to the decoder v1");
+                        throw std::runtime_error("Error while sending a packet to the decoder v1");
                         break;
                     case AVERROR_EOF:
                         stop();
-                        throw runtime_error("Error while sending a packet to the decoder v2");
+                        throw std::runtime_error("Error while sending a packet to the decoder v2");
                         break;
                     case AVERROR(EINVAL):
                         stop();
-                        throw runtime_error("Error while sending a packet to the decoder v3");
+                        throw std::runtime_error("Error while sending a packet to the decoder v3");
                         break;
                     case AVERROR(ENOMEM):
                         stop();
-                        throw runtime_error("Error while sending a packet to the decoder v4");
+                        throw std::runtime_error("Error while sending a packet to the decoder v4");
                         break;
                     default:
                         if (packet==NULL)
                         {
                             stop();
-                            throw runtime_error("Error while sending a packet to the decoder");
+                            throw std::runtime_error("Error while sending a packet to the decoder");
                         }
                         break;
                 }
@@ -259,7 +259,7 @@ AudioTrackFrame AudioTrackContext::readSamples(float volume)
         else if (res < 0)
         {
             stop();
-            throw runtime_error("Error while receiving a frame from the decoder");
+            throw std::runtime_error("Error while receiving a frame from the decoder");
         }
         // Success
         else
@@ -276,7 +276,7 @@ AudioTrackFrame AudioTrackContext::readSamples(float volume)
         if (av_samples_alloc(swr_data, &swr_linesize, ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
         {
             stop();
-            throw runtime_error("Error allocating converted samples");
+            throw std::runtime_error("Error allocating converted samples");
         }
         swr_nb_samples = frame->nb_samples;
     }
@@ -286,14 +286,14 @@ AudioTrackFrame AudioTrackContext::readSamples(float volume)
     if (samples_per_channel < 0)
     {
         stop();
-        throw runtime_error("Error while converting");
+        throw std::runtime_error("Error while converting");
     }
     // Get resulting buffer size
     swr_bufsize = av_samples_get_buffer_size(&swr_linesize, ch_layout.nb_channels, samples_per_channel, sample_format, 1);
     if (swr_bufsize < 0)
     {
         stop();
-        throw runtime_error("Could not get sample buffer size");
+        throw std::runtime_error("Could not get sample buffer size");
     }
 
     // Do not forget to dispose processed frame

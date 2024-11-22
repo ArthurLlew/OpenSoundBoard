@@ -15,8 +15,6 @@
 // PortAudio
 #include <portaudio.h>
 
-using namespace std;
-
 
 /** Extention of PaDeviceInfo (holds device index too).*/
 typedef struct PaDeviceInfo_ext : PaDeviceInfo
@@ -37,7 +35,7 @@ class DeviceTab: public QWidget
     Q_OBJECT
 
     /** Stores info about devices, available for this tab.*/
-    list<PaDeviceInfo_ext> devices;
+    std::list<PaDeviceInfo_ext> devices;
 
 public:
 

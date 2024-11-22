@@ -14,8 +14,6 @@ extern "C"
 // Exceptions
 #include <stdexcept>
 
-using namespace std;
-
 
 /** Describes track state.*/
 enum TrackState{

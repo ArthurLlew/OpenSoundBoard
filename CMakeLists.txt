@@ -31,7 +31,7 @@ add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp
     src/AudioPlayers.cpp src/AudioTrackContext.cpp src/WidgetMessages.cpp)
 # Define names of static libraries
-set(LIBS dwmapi User32 portaudio avutil avcodec avformat swresample)
+set(LIBS dwmapi portaudio avutil avcodec avformat swresample)
 # Add static libraries
 foreach(LIB IN LISTS ${LIBS})
     add_library(LIB STATIC IMPORTED)

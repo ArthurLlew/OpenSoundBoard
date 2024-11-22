@@ -2,17 +2,13 @@
 
 // Qt core (defines Q_OS_WIN among other things)
 #include <QtCore/Qt>
-
-#ifdef Q_OS_WIN
 // Windows headers
+#ifdef Q_OS_WIN
 #define WINVER 0x0A00
-#define _WIN32_WINNT_WIN10
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
-#include <winuser.h>
 #endif
-
 // Qt
 #include <QtCore/QRect>
 #include <QtCore/QString>
@@ -83,6 +79,15 @@ protected:
      *  @param event event info.
     */
     void paintEvent(QPaintEvent *event) override;
+    /** Handles native events (for example, allows to handle resizing).
+     * 
+     *  @param eventType event type.
+     *  @param message event info.
+     *  @param result method handling result
+     * 
+     *  @return True if the event was handled, otherwise false.
+    */
+    bool nativeEvent(const QByteArray &, void *message, qintptr *result) override;
 
     /** Safely starts portaudio (raises exception if unable to initialize).*/
     void startPortaudio();
@@ -109,3 +114,7 @@ protected:
     /** Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players).*/
     void refreshDevices();
 };
+
+
+
+static LONG_PTR savedWndProc;

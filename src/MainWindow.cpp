@@ -1,5 +1,3 @@
-
-// Header
 #include "MainWindow.hpp"
 
 
@@ -15,16 +13,14 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
         setWindowFlags(flags | Qt::Window);
 
         #ifdef Q_OS_WIN
-        // Get window handler and set custom style
-        HWND hwnd = HWND(winId());
-        ::SetWindowLong(hwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
-                                        | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-        // Set darkmode
-        BOOL USE_DARK_MODE = true;
-        BOOL SET_IMMERSIVE_DARK_MODE_SUCCESS = SUCCEEDED(DwmSetWindowAttribute(
-                                    hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE,
-                                    &USE_DARK_MODE, sizeof(USE_DARK_MODE)));
+        // Set darkmode for Windows
+        BOOL use_dark_mode = true;
+        DwmSetWindowAttribute(HWND(winId()), DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE,
+                              &use_dark_mode, sizeof(use_dark_mode));
         #endif
+
+        // Set application title
+        setWindowTitle("OpenSoundBoard");
 
         // Get primary screen geometry
         screeanGeometry = new QRect(app->primaryScreen()->availableGeometry());
@@ -148,6 +144,32 @@ void MainWindow::paintEvent(QPaintEvent *event)
     opt.initFrom(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
+{
+    // Avoid compiler warnings
+    Q_UNUSED(eventType)
+
+    // Parse message
+    MSG *msg = static_cast<MSG*>(message);
+
+    // Handle event
+    switch (msg->message)
+    {
+        case WM_NCCALCSIZE:
+        {
+            // Adjust gap between app client area and title bar
+            ((NCCALCSIZE_PARAMS*)msg->lParam)->rgrc->top -= 1;
+            break;
+        }
+        default:
+            break;
+    }
+
+    // Default handling
+    return QMainWindow::nativeEvent(eventType, message, result);
 }
 
 

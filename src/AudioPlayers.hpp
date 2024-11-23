@@ -89,7 +89,7 @@ class  MediaFilesPlayer : public AudioPlayer
     /** Pointer to volume.*/
     float const *volume;
     /** Track current state.*/
-    TrackState nextTrackState = STOPPED;
+    AudioTrackContext::TrackState nextTrackState = AudioTrackContext::STOPPED;
 
 public:
 
@@ -108,7 +108,7 @@ public:
     /** Sets new track to play.*/
     void setNewTrack(QString filepath);
     /** Sets new track state.*/
-    void setNewTrackState(TrackState state);
+    void setNewTrackState(AudioTrackContext::TrackState state);
 
     Q_OBJECT
     signals:

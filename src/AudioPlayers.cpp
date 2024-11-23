@@ -182,7 +182,7 @@ void MediaFilesPlayer::run()
                 if (track->state != nextTrackState)
                     track->setState(nextTrackState);
 
-                if (track->state == PLAYING)
+                if (track->state == AudioTrackContext::PLAYING)
                 {
                     AudioTrackFrame frame = track->readSamples(*volume);
 
@@ -211,7 +211,7 @@ void MediaFilesPlayer::run()
                     else
                     {
                         // Track has ended: update state and notify manager
-                        nextTrackState = STOPPED;
+                        nextTrackState = AudioTrackContext::STOPPED;
                         emit signalTrackEnd();
                     }
                 }
@@ -258,7 +258,7 @@ void MediaFilesPlayer::setNewTrack(QString filepath)
 }
 
 
-void MediaFilesPlayer::setNewTrackState(TrackState state)
+void MediaFilesPlayer::setNewTrackState(AudioTrackContext::TrackState state)
 {
     nextTrackState = state;
 }

@@ -118,7 +118,7 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     /** Track volume.*/
     float volume;
     /** Track current state.*/
-    TrackState trackState = STOPPED;
+    AudioTrackContext::TrackState trackState = AudioTrackContext::STOPPED;
 
 public:
 
@@ -166,5 +166,5 @@ signals:
      * 
      *  @param state new track state.
     */
-    void askNewTrackState(TrackState state);
+    void askNewTrackState(AudioTrackContext::TrackState state);
 };

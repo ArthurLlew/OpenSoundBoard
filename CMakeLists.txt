@@ -14,9 +14,19 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 # Project name
 project(OpenSoundBoard)
 
-# Create embedder
+# Create application icon target
+set(APP_ICON_ICO ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.ico)
+set(APP_ICON_RC ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc)
+set(APP_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.o)
+add_custom_command(
+    OUTPUT ${APP_ICON}
+    DEPENDS ${APP_ICON_ICO} ${APP_ICON_RC}
+    COMMAND windres ${APP_ICON_RC} -o ${APP_ICON}
+    COMMENT "Creating app icon")
+add_custom_target(app_icon ALL DEPENDS ${APP_ICON})
+
+# Create resources target
 add_executable(embedder embedder.cpp)
-# Command to embed all resources into one .h file
 set(RESOURCES_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/src/embedded.h)
 set(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/style.qss)
 add_custom_command(
@@ -24,7 +34,6 @@ add_custom_command(
     DEPENDS embedder ${RESOURCES}
     COMMAND embedder ${RESOURCES} ${RESOURCES_HEADER}
     COMMENT "Embedding resources")
-# Add header file with all resources as a target for later use
 add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 
 # Define list of source files
@@ -50,8 +59,8 @@ set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY Qt6Core_VERSION_MA
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY Qt6Core_VERSION_MINOR "${Qt6Core_VERSION_MAJOR}")
 
 # Executable name and sources (WIN32 disables console window)
-add_executable(OpenSoundBoard WIN32 ${SOURCES})
-add_executable(OpenSoundBoard_debug ${SOURCES})
+add_executable(OpenSoundBoard WIN32 ${SOURCES} ${APP_ICON})
+add_executable(OpenSoundBoard_debug ${SOURCES} ${APP_ICON})
 
 # Is used to process all QT macros with MOC to generate additional code
 set_property(TARGET OpenSoundBoard PROPERTY AUTOMOC ON)
@@ -63,5 +72,5 @@ target_include_directories(OpenSoundBoard_debug PRIVATE ${CMAKE_CURRENT_SOURCE_D
 target_link_libraries(OpenSoundBoard PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
 target_link_libraries(OpenSoundBoard_debug PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
 # Resulting executable should depend on header with resources (so header file is generated before them)
-add_dependencies(OpenSoundBoard resources)
-add_dependencies(OpenSoundBoard_debug resources)
+add_dependencies(OpenSoundBoard resources app_icon)
+add_dependencies(OpenSoundBoard_debug resources app_icon)

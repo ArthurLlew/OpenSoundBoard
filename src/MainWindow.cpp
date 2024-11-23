@@ -149,9 +149,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
 {
-    // Avoid compiler warnings
-    Q_UNUSED(eventType)
-
+    #ifdef Q_OS_WIN
     // Parse message
     MSG *msg = static_cast<MSG*>(message);
 
@@ -167,6 +165,7 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr
         default:
             break;
     }
+    #endif
 
     // Default handling
     return QMainWindow::nativeEvent(eventType, message, result);

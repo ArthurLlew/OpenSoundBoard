@@ -15,14 +15,6 @@ extern "C"
 #include <stdexcept>
 
 
-/** Describes track state.*/
-enum TrackState{
-    STOPPED,
-    PLAYING,
-    PAUSED
-};
-
-
 /** Holds samples to be played.*/
 struct AudioTrackFrame {
     /** Pointer to data (can be NULL).*/
@@ -80,6 +72,12 @@ class AudioTrackContext
 
 public:
 
+    /** Describes track state.*/
+    enum TrackState{
+        STOPPED,
+        PLAYING,
+        PAUSED
+    };
     /** Track current state.*/
     TrackState state = STOPPED;
 

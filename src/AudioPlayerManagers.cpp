@@ -219,8 +219,8 @@ void MediaFilesPlayerManager::setVolume(int value)
 void MediaFilesPlayerManager::trackStop()
 {
     // New track state
-    trackState = STOPPED;
-    emit askNewTrackState(STOPPED);
+    trackState = AudioTrackContext::STOPPED;
+    emit askNewTrackState(AudioTrackContext::STOPPED);
     // Update button
     buttonPlay->setText("Play");
 }
@@ -231,18 +231,18 @@ void MediaFilesPlayerManager::trackPlayPause()
     // Play-pause track
     switch (trackState)
     {
-        case STOPPED:
-        case PAUSED:
+        case AudioTrackContext::STOPPED:
+        case AudioTrackContext::PAUSED:
             // New track state
-            trackState = PLAYING;
-            emit askNewTrackState(PLAYING);
+            trackState = AudioTrackContext::PLAYING;
+            emit askNewTrackState(AudioTrackContext::PLAYING);
             // Update button
             buttonPlay->setText("Pause");
             break;
-        case PLAYING:
+        case AudioTrackContext::PLAYING:
             // New track state
-            trackState = PAUSED;
-            emit askNewTrackState(PAUSED);
+            trackState = AudioTrackContext::PAUSED;
+            emit askNewTrackState(AudioTrackContext::PAUSED);
             // Update button
             buttonPlay->setText("Play");
             break;
@@ -253,7 +253,7 @@ void MediaFilesPlayerManager::trackPlayPause()
 void MediaFilesPlayerManager::playerTrackEnded()
 {
     // New track state
-    trackState = STOPPED;
+    trackState = AudioTrackContext::STOPPED;
     // Update button
     buttonPlay->setText("Play");
 }

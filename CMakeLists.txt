@@ -37,10 +37,10 @@ add_custom_command(
 add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 
 # Define list of source files
-set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp
-    src/AudioPlayers.cpp src/AudioTrackContext.cpp src/WidgetMessages.cpp)
+set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp src/AudioPlayers.cpp
+            src/AudioTrackContext.cpp src/WidgetMessages.cpp)
 # Define names of static libraries
-set(LIBS dwmapi portaudio avutil avcodec avformat swresample)
+set(LIBS dwmapi avutil avcodec avformat swresample)
 # Add static libraries
 foreach(LIB IN LISTS ${LIBS})
     add_library(LIB STATIC IMPORTED)
@@ -52,7 +52,7 @@ foreach(LIB IN LISTS ${LIBS})
         INTERFACE_INCLUDE_DIRECTORIES "C:/Apps/msys64/ucrt64/include")
 endforeach()
 # Find Qt6
-set(LIBS_QT6 Core Widgets Gui)
+set(LIBS_QT6 Core Widgets Gui Multimedia)
 find_package(Qt6 REQUIRED COMPONENTS ${LIBS_QT6})
 # AUTOMOC
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY Qt6Core_VERSION_MAJOR "${Qt6Core_VERSION_MAJOR}")

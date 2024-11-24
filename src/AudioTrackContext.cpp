@@ -1,25 +1,20 @@
 #include "AudioTrackContext.hpp"
 
 
-AudioTrackFrame::AudioTrackFrame(int nb_samples)
+AudioTrackFrame::AudioTrackFrame(int size)
 {
-    this->nb_samples = nb_samples;
+    this->size = size;
 }
 
 
-AudioTrackFrame::AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate, float volume)
+AudioTrackFrame::AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate)
 {
     // Copy audio data
-    int size = nb_channels * mem_size;
+    this->size = nb_channels * mem_size;
     this->data = (float*)malloc(size);
     memcpy(this->data, data[0], size);
 
-    // Apply volume
-    for (int i = 0; i < nb_channels*nb_samples; i++)
-        this->data[i] *= volume;
-
-    // Save other params
-    this->nb_samples = nb_samples;
+    // Save sample rate
     this->sampleRate = sampleRate;
 }
 
@@ -42,6 +37,18 @@ AudioTrackContext::~AudioTrackContext()
 {
     // Stop track
     stop();
+}
+
+
+int AudioTrackContext::getSampleRate()
+{
+    return (decoder_ctx) ? decoder_ctx->sample_rate : 0;
+}
+
+
+int AudioTrackContext::getChannelCount()
+{
+    return (decoder_ctx) ? decoder_ctx->ch_layout.nb_channels : 0;
 }
 
 
@@ -194,7 +201,7 @@ void AudioTrackContext::setState(TrackState state)
 }
 
 
-AudioTrackFrame AudioTrackContext::readSamples(float volume)
+AudioTrackFrame AudioTrackContext::readSamples()
 {
     // Try to find new frame
     while(1)
@@ -300,5 +307,5 @@ AudioTrackFrame AudioTrackContext::readSamples(float volume)
     av_frame_unref(frame);
 
     // Return finalized data
-    return AudioTrackFrame(swr_data, ch_layout.nb_channels, swr_bufsize, swr_nb_samples, decoder_ctx->sample_rate, volume);
+    return AudioTrackFrame(swr_data, ch_layout.nb_channels, swr_bufsize, swr_nb_samples, decoder_ctx->sample_rate);
 }

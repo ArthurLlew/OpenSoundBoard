@@ -1,22 +1,6 @@
 #include "DeviceTab.hpp"
 
 
-PaDeviceInfo_ext::PaDeviceInfo_ext(const PaDeviceInfo &other, int index)
-{
-    this->defaultHighInputLatency = other.defaultHighInputLatency;
-    this->defaultHighOutputLatency = other.defaultHighOutputLatency;
-    this->defaultLowInputLatency = other.defaultLowInputLatency;
-    this->defaultLowOutputLatency = other.defaultLowOutputLatency;
-    this->defaultSampleRate = other.defaultSampleRate;
-    this->hostApi = other.hostApi;
-    this->index = index;
-    this->maxInputChannels = other.maxInputChannels;
-    this->maxOutputChannels = other.maxOutputChannels;
-    this->name = other.name;
-    this->structVersion = other.structVersion;
-}
-
-
 DeviceTab::DeviceTab(QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,
                      QWidget *parent) : QWidget(parent)
 {
@@ -59,21 +43,10 @@ void DeviceTab::paintEvent(QPaintEvent *)
 }
 
 
-PaDeviceInfo_ext DeviceTab::getDevice() const
+QAudioDevice DeviceTab::getDevice() const
 {
-    // Search in devices list via index of combobox list
-    int list_index = 0;
-    for (PaDeviceInfo_ext device : devices)
-    {
-        if (list_index == combobox_devices->currentIndex())
-        {
-            return device;
-        }
-        list_index++;
-    }
-
-    // If no device was found, app probably ran into some memory issues
-    throw std::runtime_error("Device list and combobox list mismatch");
+    // Return audio device info corresponding to selected device in combobox
+    return devices[combobox_devices->currentIndex()];
 }
 
 
@@ -89,19 +62,23 @@ void DeviceTab::refreshDevices()
         devices.clear();
     }
 
-    // Iterate over devices
-    const PaDeviceInfo* device_info;
-    for (int i=0; i < Pa_GetDeviceCount(); i++)
+    // Create new list and fill in combobox
+    switch (type)
     {
-        // Get the device info
-        device_info = Pa_GetDeviceInfo(i);
-        // Select either input or output device (with hostApi==0 being the most OK host API type)
-        if (((type == INPUT)  && (device_info->maxInputChannels  > 0) && (!device_info->hostApi)) ||
-            ((type == OUTPUT) && (device_info->maxOutputChannels > 0) && (!device_info->hostApi)))
+        case INPUT:
         {
-            combobox_devices->addItem(device_info->name);
-            devices.insert(devices.cend(), PaDeviceInfo_ext(*device_info, i));
+            devices = QMediaDevices::audioInputs();
+            break;
         }
+        case OUTPUT:
+        {
+            devices = QMediaDevices::audioOutputs();
+            break;
+        }
+    }
+    for (int i=0; i < devices.count(); i++)
+    {
+        combobox_devices->addItem(devices[i].description());
     }
 
     // Release combobox

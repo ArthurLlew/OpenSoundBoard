@@ -19,16 +19,16 @@ extern "C"
 struct AudioTrackFrame {
     /** Pointer to data (can be NULL).*/
     float *data = NULL;
-    /** Number of samples (if <= 0 then frame has no data).*/
-    int nb_samples = 0;
+    /** Data size (if <= 0 then frame has no data).*/
+    int size = 0;
     /** Sample rate of the frame.*/
     int sampleRate = 0;
 
     /** Constructor.
      * 
-     *  @param nb_samples exit code (should be <= 0).
+     *  @param size exit code (should be <= 0).
     */
-    AudioTrackFrame(int nb_samples);
+    AudioTrackFrame(int size);
     /** Constructor.
      * 
      *  @param data Pointer to audio samples.
@@ -36,9 +36,8 @@ struct AudioTrackFrame {
      *  @param mem_size Data memory size in bytes.
      *  @param nb_samples Number of samples.
      *  @param sampleRate Sample rate.
-     *  @param volume What volume should be applied to samples.
     */
-    explicit AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate, float volume);
+    explicit AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate);
     /** Destructor.*/
     ~AudioTrackFrame();
 };
@@ -89,6 +88,11 @@ public:
     /** Destructor.*/
     ~AudioTrackContext();
 
+    /** Returns audio track sample rate.*/
+    int getSampleRate();
+    /** Returns audio track channel count.*/
+    int getChannelCount();
+
     /** Stop track.*/
     void stop();
     /** Play track.*/
@@ -101,9 +105,7 @@ public:
 
     /** Get next audio frame.
      * 
-     *  @param volume Audio volume.
-     * 
      *  @return Audio samples read from media file.
     */
-    AudioTrackFrame readSamples(float volume);
+    AudioTrackFrame readSamples();
 };

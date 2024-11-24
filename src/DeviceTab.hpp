@@ -12,30 +12,19 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSizePolicy>
-// PortAudio
-#include <portaudio.h>
-
-
-/** Extention of PaDeviceInfo (holds device index too).*/
-typedef struct PaDeviceInfo_ext : PaDeviceInfo
-{
-    // PortAudio device index
-    int index;
-
-    // Copy constructor
-    PaDeviceInfo_ext(const PaDeviceInfo &other, int index);
-} PaDeviceInfo_ext;
+// Qt Multimedia
+#include <QtMultimedia/QMediaDevices>
+#include <QtMultimedia/QAudioDevice>
 
 
 /** Device tab that manages info about available input or output devices.*/
 class DeviceTab: public QWidget
 {
-
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
     /** Stores info about devices, available for this tab.*/
-    std::list<PaDeviceInfo_ext> devices;
+    QList<QAudioDevice> devices;
 
 public:
 
@@ -43,13 +32,13 @@ public:
     QComboBox *combobox_devices;
     /** Checkbox that tells if the device can be used by the audio player.*/
     QCheckBox *checkbox;
-    /** Describes device type.*/
+    /** Describes audio device type.*/
     enum DeviceType
     {
         INPUT,
         OUTPUT
     };
-    /** Device type (input/output).*/
+    /** Device type.*/
     DeviceType type;
 
     /** Constructor.
@@ -73,7 +62,7 @@ public:
     
     /** Get info about selected device.
      * 
-     *  @return Device info.
+     *  @return Audio device info.
     */
-    PaDeviceInfo_ext getDevice() const;
+    QAudioDevice getDevice() const;
 };

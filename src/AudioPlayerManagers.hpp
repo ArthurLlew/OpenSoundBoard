@@ -115,8 +115,6 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     /** Volume label.*/
     QLabel *volumeLabel;
 
-    /** Track volume.*/
-    float volume;
     /** Track current state.*/
     AudioTrackContext::TrackState trackState = AudioTrackContext::STOPPED;
 
@@ -159,12 +157,17 @@ private:
 signals:
     /** Ask player to set new track.
      * 
-     *  @param filepath media file path.
+     *  @param filepath Media file path.
     */
     void askNewTrack(QString filepath);
     /** Ask player to change track state.
      * 
-     *  @param state new track state.
+     *  @param state New track state.
     */
     void askNewTrackState(AudioTrackContext::TrackState state);
+    /** Ask player to change track volume.
+     * 
+     *  @param volume New track volume.
+    */
+    void askNewTrackVolume(float volume);
 };

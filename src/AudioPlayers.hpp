@@ -9,8 +9,9 @@
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QAbstractItemView>
-// PortAudio
-#include <portaudio.h>
+// QtMultimedia
+#include <QtMultimedia/QAudioSource>
+#include <QtMultimedia/QAudioSink>
 // Custom
 #include "DeviceTab.hpp"
 #include "AudioTrackContext.hpp"
@@ -19,6 +20,9 @@
 /** Basic player class.*/
 class AudioPlayer : public QObject, public QRunnable
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
 protected:
 
     /** tab widget that describes avaliavle devices.*/
@@ -34,20 +38,6 @@ public:
     */
     explicit AudioPlayer(QTabWidget const *devices);
 
-protected:
-
-    /** Opens stream for the provided device.
-     * 
-     *  @param targetDevice Device for which we are openning stream.
-     *  @param sampleFormat Stream sample format.
-     *  @param SampleRate Stream sample rate.
-     *  @param sourceDevice Device where data from this stream will go (affects stream settings).
-     * 
-     *  @return Opened and active stream.
-    */
-    PaStream* openDeviceStream(DeviceTab const *targetDevice, PaSampleFormat sampleFormat, double SampleRate = 0,
-                                 DeviceTab const *sourceDevice = nullptr);
-
 public:
 
     /** Stops the player if it is running.*/
@@ -55,7 +45,6 @@ public:
     /** Player cycle (pure virtual).*/
     virtual void run() = 0;
 
-    Q_OBJECT
     signals:
     /** Emitted when the player encounters any error.
      * 
@@ -68,6 +57,9 @@ public:
 /** Player that reroutes microphone input to outputs.*/
 class MicrophonePlayer : public AudioPlayer
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
 public:
 
     /** Constructor.
@@ -84,10 +76,17 @@ public:
 /** Player that manages media files.*/
 class  MediaFilesPlayer : public AudioPlayer
 {
+    // Mandatory for QWidget stuff to work
+    Q_OBJECT
+
     /** Current track.*/
     AudioTrackContext *track = nullptr;
-    /** Pointer to volume.*/
-    float const *volume;
+    /** Audio output (virtual cable).*/
+    QAudioSink *audio_sink_cable = nullptr;
+    /** Audio output.*/
+    QAudioSink *audio_sink = nullptr;
+    /** Audio volume.*/
+    float volume = 1.0;
     /** Track current state.*/
     AudioTrackContext::TrackState nextTrackState = AudioTrackContext::STOPPED;
 
@@ -95,10 +94,9 @@ public:
 
     /** Constructor.
      * 
-     *  @param devices Tab widget that describes avaliavle devices.
-     *  @param volume Pointer to volume.
+     *  @param devices Tab widget that describes available devices.
     */
-    MediaFilesPlayer(QTabWidget const *devices, float const *volume);
+    MediaFilesPlayer(QTabWidget const *devices);
     /** Destructor.*/
     ~MediaFilesPlayer();
 
@@ -109,8 +107,9 @@ public:
     void setNewTrack(QString filepath);
     /** Sets new track state.*/
     void setNewTrackState(AudioTrackContext::TrackState state);
+    /** Sets track volume.*/
+    void setNewTrackVolume(float volume);
 
-    Q_OBJECT
     signals:
     /** Emitted when player track has ended.*/
     void signalTrackEnd();

@@ -10,108 +10,75 @@ AudioPlayer::AudioPlayer(QTabWidget const* devices)
 }
 
 
-PaStream* AudioPlayer::openDeviceStream(DeviceTab const *targetDevice, PaSampleFormat sampleFormat, double sampleRate,
-                                          DeviceTab const *sourceDevice)
-{
-    // Get currently selected device
-    PaDeviceInfo_ext selectedTargetDevice = targetDevice->getDevice();
-
-    // Init
-    PaStream *device_stream = NULL;
-    PaError res;
-    PaStreamParameters stream_prams;
-    // Parameters that depend soly on device
-    stream_prams.device = selectedTargetDevice.index;
-    stream_prams.sampleFormat = sampleFormat;
-    stream_prams.suggestedLatency = selectedTargetDevice.defaultHighInputLatency;
-    stream_prams.hostApiSpecificStreamInfo = NULL;
-    // Channel count and sample rate
-    double sample_rate = (sampleRate == 0) ? selectedTargetDevice.defaultSampleRate : sampleRate;
-    int channelCount = (targetDevice->type == DeviceTab::INPUT) ? selectedTargetDevice.maxInputChannels : selectedTargetDevice.maxOutputChannels;
-    // Modify them if we have source device
-    if (sourceDevice == nullptr)
-    {
-        stream_prams.channelCount = channelCount;
-    }
-    else
-    {
-        PaDeviceInfo_ext selectedSourceDevice = sourceDevice->getDevice();
-        stream_prams.channelCount = std::min(selectedSourceDevice.maxInputChannels, channelCount);
-        sample_rate = std::min(selectedSourceDevice.defaultSampleRate, sample_rate);
-    }
-
-    // Open stream (depends on device type)
-    if (targetDevice->type == DeviceTab::INPUT)
-    {
-        res = Pa_OpenStream(&device_stream, &stream_prams, NULL,
-                            sample_rate, 1024,
-                            paClipOff, NULL, NULL);
-    }
-    else if (targetDevice->type == DeviceTab::OUTPUT)
-    {
-        res = Pa_OpenStream(&device_stream, NULL, &stream_prams,
-                            sample_rate, 1024,
-                            paClipOff, NULL, NULL);
-    }
-
-    // Check for errors
-    if (res != paNoError)
-    {
-        throw std::runtime_error("Unable to open stream");
-    }
-
-    // Start stream
-    Pa_StartStream(device_stream);
-
-    return device_stream;
-}
-
-
 void AudioPlayer::stop()
 {
     is_alive = false;
 }
 
 
-MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devices){}
+MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devices) {}
 
 
 void MicrophonePlayer::run()
 {
     is_alive = true;
 
-    // Audio buffer
-    unsigned long size = 1024;
-    void *buff = NULL;
     // Audio streams
-    PaStream *in_stream = NULL, *virtual_out_stream = NULL, *out_stream = NULL;
+    QAudioSource *audio_source = nullptr;
+    QAudioSink *audio_sink_cable = nullptr, *audio_sink = nullptr;
     
     try
     {
-        // Allocate audio buffer
-        buff = malloc(sizeof(paInt16)*size);
-
-        // Open relevant streams
-        in_stream = openDeviceStream((DeviceTab*)devices->widget(0), paInt16);
-        virtual_out_stream = openDeviceStream((DeviceTab*)devices->widget(1), paInt16, 0, (DeviceTab*)devices->widget(0));
-        out_stream = openDeviceStream((DeviceTab*)devices->widget(2), paInt16, 0, (DeviceTab*)devices->widget(0));
+        // Open relevant streams (output streams inherit input stream format, so check if it is supported)
+        QAudioDevice audio_source_device = ((DeviceTab*)devices->widget(0))->getDevice();
+        QAudioFormat audio_source_format = audio_source_device.preferredFormat();
+        audio_source = new QAudioSource(audio_source_device, audio_source_format);
+        QAudioDevice audio_sink_cable_device = ((DeviceTab*)devices->widget(1))->getDevice();
+        if (audio_sink_cable_device.isFormatSupported(audio_source_format))
+        {
+            audio_sink_cable = new QAudioSink(audio_sink_cable_device, audio_source_format);
+        }
+        else
+        {
+            throw std::runtime_error("Virtual output device does not support input device audio format");
+        }
+        QAudioDevice audio_sink_device = ((DeviceTab*)devices->widget(2))->getDevice();
+        if (audio_sink_device.isFormatSupported(audio_source_format))
+        {
+            audio_sink = new QAudioSink(audio_sink_device, audio_source_format);
+        }
+        else
+        {
+            throw std::runtime_error("Output device does not support input device audio format");
+        }
+        // Start streams and get their IODevices
+        QIODevice *audio_source_io = audio_source->start();
+        QIODevice *audio_sink_cable_io = audio_sink_cable->start();
+        QIODevice *sink_io = audio_sink->start();
 
         // Player cycle
-        while (is_alive && Pa_IsStreamActive(in_stream))
+        while (is_alive && (audio_source->state() != QtAudio::StoppedState))
         {
             // Handle input stream (depending on checkbox and stream state)
-            if (((DeviceTab*)devices->widget(0))->checkbox->isChecked() && Pa_IsStreamActive(in_stream))
+            if (((DeviceTab*)devices->widget(0))->checkbox->isChecked() && (audio_source->state() != QtAudio::StoppedState))
             {
+                #define SOUND_BYTE_SIZE 1024 
+
                 // Read microphone input
-                Pa_ReadStream(in_stream, buff, size);
+                QByteArray sound = audio_source_io->read(SOUND_BYTE_SIZE);
+
+                // Wait for availiable space to write data
+                while ((audio_sink_cable->bytesFree() < SOUND_BYTE_SIZE) || (audio_sink->bytesFree() < SOUND_BYTE_SIZE)) {}
+
+                #undef SOUND_BYTE_SIZE
 
                 // Write to virtual output stream (depending on checkbox and stream state)
-                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked() && Pa_IsStreamActive(virtual_out_stream))
-                    Pa_WriteStream(virtual_out_stream, buff, size);
+                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked() && (audio_sink_cable->state() != QtAudio::StoppedState))
+                    audio_sink_cable_io->write(sound);
 
                 // Write to output stream (depending on checkbox and stream state)
-                if (((DeviceTab*)devices->widget(2))->checkbox->isChecked() && Pa_IsStreamActive(out_stream))
-                    Pa_WriteStream(out_stream, buff, size);
+                if (((DeviceTab*)devices->widget(2))->checkbox->isChecked() && (audio_sink->state() != QtAudio::StoppedState))
+                    sink_io->write(sound);
             }
         }
     }
@@ -120,34 +87,28 @@ void MicrophonePlayer::run()
         emit signalError(e.what());
     }
 
-    // Free buffer if allocated
-    if(buff)
-        free(buff);
     // Free streams if allocated
-    if (in_stream)
+    if (audio_source)
     {
-        Pa_AbortStream(in_stream);
-        Pa_CloseStream(in_stream);
+        audio_source->stop();
+        delete audio_source;
     }
-    if (virtual_out_stream)
+    if (audio_sink_cable)
     {
-        Pa_AbortStream(virtual_out_stream);
-        Pa_CloseStream(virtual_out_stream);
+        audio_sink_cable->stop();
+        delete audio_sink_cable;
     }
-    if (out_stream)
+    if (audio_sink)
     {
-        Pa_AbortStream(out_stream);
-        Pa_CloseStream(out_stream);
+        audio_sink->stop();
+        delete audio_sink;
     }
 
     is_alive = false;
 }
 
 
-MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices, float const *volume) : AudioPlayer(devices)
-{
-    this->volume = volume;
-}
+MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices) : AudioPlayer(devices) {}
 
 
 MediaFilesPlayer::~MediaFilesPlayer()
@@ -158,90 +119,82 @@ MediaFilesPlayer::~MediaFilesPlayer()
 
 void MediaFilesPlayer::run()
 {
+    if (track == nullptr)
+        return;
+
     is_alive = true;
 
-    // Audio streams
-    PaStream *virtual_out_stream_44100 = NULL, *out_stream_44100 = NULL,
-             *virtual_out_stream_48000 = NULL, *out_stream_48000 = NULL;
+    track->setState(AudioTrackContext::PLAYING);
+
+    // Audio format
+    QAudioFormat format;
+    format.setSampleRate(track->getSampleRate());
+    format.setChannelCount(track->getChannelCount());
+    format.setSampleFormat(QAudioFormat::Float);
 
     try
     {
         // Open relevant streams
-        virtual_out_stream_44100 = openDeviceStream((DeviceTab*)devices->widget(1), paFloat32, 44100);
-        out_stream_44100 = openDeviceStream((DeviceTab*)devices->widget(2), paFloat32, 44100);
-        virtual_out_stream_48000 = openDeviceStream((DeviceTab*)devices->widget(1), paFloat32, 48000);
-        out_stream_48000 = openDeviceStream((DeviceTab*)devices->widget(2), paFloat32, 48000);
+        audio_sink_cable = new QAudioSink(((DeviceTab*)devices->widget(1))->getDevice(), format);
+        audio_sink = new QAudioSink(((DeviceTab*)devices->widget(2))->getDevice(), format);
+        // Start streams and get their IODevices
+        QIODevice *audio_sink_cable_io = audio_sink_cable->start();
+        audio_sink_cable->setVolume(volume);
+        QIODevice *sink_io = audio_sink->start();
+        audio_sink->setVolume(volume);
 
         // Player cycle
         while (is_alive)
         {
-            // Check for the first playing file
-            if (track != nullptr)
+            // Set next track state
+            if (track->state != nextTrackState)
+                track->setState(nextTrackState);
+
+            if (track->state == AudioTrackContext::PLAYING)
             {
-                // Set next track state
-                if (track->state != nextTrackState)
-                    track->setState(nextTrackState);
+                // Read new frame
+                AudioTrackFrame frame = track->readSamples();
 
-                if (track->state == AudioTrackContext::PLAYING)
+                if (frame.size > 0)
                 {
-                    AudioTrackFrame frame = track->readSamples(*volume);
+                    // Convert frame
+                    QByteArray sound = QByteArray((char*)frame.data, frame.size/2);
 
-                    if (frame.nb_samples > 0)
-                    {
-                        switch (frame.sampleRate)
-                        {
-                            case 44100:
-                                // Write to virtual output stream (depending on checkbox)
-                                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
-                                    Pa_WriteStream(virtual_out_stream_44100, frame.data, frame.nb_samples);
-                                // Write to output stream
-                                Pa_WriteStream(out_stream_44100, frame.data, frame.nb_samples);
-                                break;
-                            case 48000:
-                                // Write to virtual output stream (depending on checkbox)
-                                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
-                                    Pa_WriteStream(virtual_out_stream_48000, frame.data, frame.nb_samples);
-                                // Write to output stream
-                                Pa_WriteStream(out_stream_48000, frame.data, frame.nb_samples);
-                                break;
-                            default:
-                                throw std::runtime_error("Unsupported samples rate");
-                        }
-                    }
-                    else
-                    {
-                        // Track has ended: update state and notify manager
-                        nextTrackState = AudioTrackContext::STOPPED;
-                        emit signalTrackEnd();
-                    }
+                    // Wait for availiable space to write data
+                    while ((audio_sink_cable->bytesFree() < frame.size) || (audio_sink->bytesFree() < frame.size)) {}
+
+                    // Write to virtual output stream (depending on checkbox)
+                    if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
+                        audio_sink_cable_io->write(sound);
+                    // Write to output stream
+                    sink_io->write(sound);
+                }
+                else
+                {
+                    // Track has ended: update state and notify manager
+                    nextTrackState = AudioTrackContext::STOPPED;
+                    emit signalTrackEnd();
                 }
             }
         }
     }
     catch(const std::exception& e)
     {
+        nextTrackState = AudioTrackContext::STOPPED;
+        emit signalTrackEnd();
         emit signalError(e.what());
     }
 
     // Free streams if allocated
-    if (virtual_out_stream_44100)
+    if (audio_sink_cable)
     {
-        Pa_AbortStream(virtual_out_stream_44100);
-        Pa_CloseStream(virtual_out_stream_44100);
+        audio_sink_cable->stop();
+        delete audio_sink_cable;
     }
-    if (out_stream_44100)
+    if (audio_sink)
     {
-        Pa_AbortStream(out_stream_44100);
-        Pa_CloseStream(out_stream_44100);
-    }if (virtual_out_stream_48000)
-    {
-        Pa_AbortStream(virtual_out_stream_48000);
-        Pa_CloseStream(virtual_out_stream_48000);
-    }
-    if (out_stream_48000)
-    {
-        Pa_AbortStream(out_stream_48000);
-        Pa_CloseStream(out_stream_48000);
+        audio_sink->stop();
+        delete audio_sink;
     }
 
     is_alive = false;
@@ -261,4 +214,15 @@ void MediaFilesPlayer::setNewTrack(QString filepath)
 void MediaFilesPlayer::setNewTrackState(AudioTrackContext::TrackState state)
 {
     nextTrackState = state;
+}
+
+
+void MediaFilesPlayer::setNewTrackVolume(float volume)
+{
+    this->volume = volume;
+    // If any audio audio_sink is opened update their volume too
+    if (audio_sink_cable)
+        audio_sink_cable->setVolume(volume);
+    if (audio_sink)
+        audio_sink->setVolume(volume);
 }

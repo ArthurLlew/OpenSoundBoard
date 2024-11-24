@@ -28,8 +28,6 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTabWidget>
-// PortAudio
-#include <portaudio.h>
 // Custom
 #include "WidgetMessages.hpp"
 #include "DeviceTab.hpp"
@@ -88,9 +86,6 @@ protected:
      *  @return True if the event was handled, otherwise false.
     */
     bool nativeEvent(const QByteArray &, void *message, qintptr *result) override;
-
-    /** Safely starts portaudio (raises exception if unable to initialize).*/
-    void startPortaudio();
 
     /** Select directory with media files.*/
     void selectDirectory();

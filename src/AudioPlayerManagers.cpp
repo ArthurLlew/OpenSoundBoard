@@ -133,12 +133,13 @@ MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget *devices, QString na
 
 MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screeanGeometry, QWidget *parent)
 // Init of the player happens here
-: AudioPlayerManager(new MediaFilesPlayer(devices, &volume), name, parent)
+: AudioPlayerManager(new MediaFilesPlayer(devices), name, parent)
 {
     // Connect signals to player
     connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalTrackEnd, this, &MediaFilesPlayerManager::playerTrackEnded);
     connect(this, &MediaFilesPlayerManager::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrack);
     connect(this, &MediaFilesPlayerManager::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackState);
+    connect(this, &MediaFilesPlayerManager::askNewTrackVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackVolume);
 
     /*
     // Additional layouts:
@@ -210,8 +211,9 @@ void MediaFilesPlayerManager::playerError(QString message)
 
 void MediaFilesPlayerManager::setVolume(int value)
 {
-    // Update volume var and label
-    volume = ((float)value)/100;
+    // Ask player to change volume
+    emit askNewTrackVolume(((float)value)/100);
+    // Update volume label
     volumeLabel->setText(QString::number(value));
 }
 

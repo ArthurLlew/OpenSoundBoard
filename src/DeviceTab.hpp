@@ -29,9 +29,9 @@ class DeviceTab: public QWidget
 public:
 
     /** Combobox with device names.*/
-    QComboBox *combobox_devices;
+    QComboBox *combobox_devices = nullptr;
     /** Checkbox that tells if the device can be used by the audio player.*/
-    QCheckBox *checkbox;
+    QCheckBox *checkbox = nullptr;
     /** Describes audio device type.*/
     enum DeviceType
     {

@@ -26,7 +26,7 @@ class AudioPlayer : public QObject, public QRunnable
 protected:
 
     /** tab widget that describes avaliavle devices.*/
-    QTabWidget const *devices;
+    QTabWidget const *devices = nullptr;
     /** Player state.*/
     bool is_alive = false;
 

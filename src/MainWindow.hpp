@@ -42,23 +42,23 @@ class MainWindow: public QMainWindow, WidgetWarnings
     Q_OBJECT
 
     /** Geometry of the computer's primary screen.*/
-    QRect *screeanGeometry;
+    QRect *screeanGeometry = nullptr;
     /** Mouse position picked up by mousePressEvent.*/
     QPoint mouseClickedPos;
 
     /** App title widget.*/
-    QWidget *titleBar;
+    QWidget *titleBar = nullptr;
     /** List of tracks.*/
-    QTableWidget *tracks;
+    QTableWidget *tracks = nullptr;
     /** Devices tab.*/
-    QTabWidget *devices;
+    QTabWidget *devices = nullptr;
 
     /** Microphone player manager.*/
-    MicrophonePlayerManager *microphonePlayerManager;
+    MicrophonePlayerManager *microphonePlayerManager = nullptr;
     /** Media files player manager.*/
-    MediaFilesPlayerManager *mediafilesPlayerManager1;
+    MediaFilesPlayerManager *mediafilesPlayerManager1 = nullptr;
     /** Media files player manager.*/
-    MediaFilesPlayerManager *mediafilesPlayerManager2;
+    MediaFilesPlayerManager *mediafilesPlayerManager2 = nullptr;
 
 public:
 

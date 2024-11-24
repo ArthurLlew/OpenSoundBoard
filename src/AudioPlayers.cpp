@@ -57,10 +57,11 @@ void MicrophonePlayer::run()
         QIODevice *sink_io = audio_sink->start();
 
         // Player cycle
-        while (is_alive && (audio_source->state() != QtAudio::StoppedState))
+        while (is_alive && (audio_source->state() != QtAudio::StoppedState) && (audio_sink_cable->state() != QtAudio::StoppedState)
+               && (audio_sink->state() != QtAudio::StoppedState))
         {
             // Handle input stream (depending on checkbox and stream state)
-            if (((DeviceTab*)devices->widget(0))->checkbox->isChecked() && (audio_source->state() != QtAudio::StoppedState))
+            if (((DeviceTab*)devices->widget(0))->checkbox->isChecked())
             {
                 #define SOUND_BYTE_SIZE 1024 
 
@@ -73,14 +74,22 @@ void MicrophonePlayer::run()
                 #undef SOUND_BYTE_SIZE
 
                 // Write to virtual output stream (depending on checkbox and stream state)
-                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked() && (audio_sink_cable->state() != QtAudio::StoppedState))
+                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
                     audio_sink_cable_io->write(sound);
 
                 // Write to output stream (depending on checkbox and stream state)
-                if (((DeviceTab*)devices->widget(2))->checkbox->isChecked() && (audio_sink->state() != QtAudio::StoppedState))
+                if (((DeviceTab*)devices->widget(2))->checkbox->isChecked())
                     sink_io->write(sound);
             }
         }
+
+        // Check if loop ended because any of the streams suddenly died
+        if (audio_source->state() == QtAudio::StoppedState)
+            emit signalError("Audio input suddenly died");
+        if (audio_sink_cable->state() == QtAudio::StoppedState)
+            emit signalError("Audio output cable suddenly died");
+        if (audio_sink->state() == QtAudio::StoppedState)
+            emit signalError("Audio output suddenly died");
     }
     catch(const std::exception& e)
     {

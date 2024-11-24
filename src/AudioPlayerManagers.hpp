@@ -30,14 +30,14 @@ protected:
     /** Manager name.*/
     QString name;
     /** Widget main layout.*/
-    QVBoxLayout *layout;
+    QVBoxLayout *layout = nullptr;
     /** Start/Stop button.*/
-    QPushButton *buttonStartStop;
+    QPushButton *buttonStartStop = nullptr;
 
     /** Thread pool where player will run.*/
-    QThreadPool *threadpool;
+    QThreadPool *threadpool = nullptr;
     /** Audio player.*/
-    AudioPlayer *player;
+    AudioPlayer *player = nullptr;
     /** Audio player state.*/
     bool isPlayerAlive = false;
 
@@ -107,13 +107,11 @@ class MediaFilesPlayerManager : public AudioPlayerManager
     Q_OBJECT
 
     /** Track name label.*/
-    QLabel *trackName;
+    QLabel *trackName = nullptr;
     /** Play button.*/
-    QPushButton *buttonPlay;
-    /** Track progress bar.*/
-    QProgressBar *progress;
+    QPushButton *buttonPlay = nullptr;
     /** Volume label.*/
-    QLabel *volumeLabel;
+    QLabel *volumeLabel = nullptr;
 
     /** Track current state.*/
     AudioTrackContext::TrackState trackState = AudioTrackContext::STOPPED;

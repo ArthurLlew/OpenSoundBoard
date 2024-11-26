@@ -22,6 +22,8 @@ MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devi
 void MicrophonePlayer::run()
 {
     isRunning = true;
+    // Create audio streams on launch
+    mustUpdateDevices = true;
 
     try
     {
@@ -104,6 +106,9 @@ void MediaFilesPlayer::run()
     // No track ==>> no playing
     if (track == nullptr)
         return;
+
+    // Create audio streams on launch
+    mustUpdateDevices = true;
 
     #define TRACK_END \
         track->setState(AudioTrackContext::STOPPED);\

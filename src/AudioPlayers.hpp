@@ -28,7 +28,7 @@ class AudioPlayer : public QObject, public QRunnable
 protected:
 
     /** Device update schedule.*/
-    bool mustUpdateDevices = true;
+    bool mustUpdateDevices = false;
 
     /** Tab widget that describes available devices.*/
     QTabWidget const *devices = nullptr;
@@ -78,7 +78,7 @@ public:
      * 
      *  @param devices Tab widget that describes avaliavle devices.
     */
-    MicrophonePlayer(QTabWidget const *devices);
+    explicit MicrophonePlayer(QTabWidget const *devices);
 
     /** Player cycle.*/
     void run();
@@ -111,7 +111,7 @@ public:
      * 
      *  @param devices Tab widget that describes available devices.
     */
-    MediaFilesPlayer(QTabWidget const *devices);
+    explicit MediaFilesPlayer(QTabWidget const *devices);
     /** Destructor.*/
     ~MediaFilesPlayer();
 

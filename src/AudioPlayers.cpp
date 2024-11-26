@@ -81,8 +81,11 @@ void MicrophonePlayer::run()
 
     // Free streams
     delete audioSource;
+    audioSource = nullptr;
     delete audioVCableSink;
+    audioVCableSink = nullptr;
     delete audioSink;
+    audioSink = nullptr;
 }
 
 
@@ -188,15 +191,16 @@ void MediaFilesPlayer::run()
 
     // Free streams
     delete audioVCableSink;
+    audioVCableSink = nullptr;
     delete audioSink;
+    audioSink = nullptr;
 }
 
 
 void MediaFilesPlayer::setNewTrack(QString filepath)
 {
     // Manage old track
-    if (track != nullptr)
-        delete track;
+    delete track;
     // Create new track context
     track = new AudioTrackContext(filepath);
 }

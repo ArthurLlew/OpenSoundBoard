@@ -14,6 +14,8 @@
 #include <QtMultimedia/QAudioSink>
 // Custom
 #include "DeviceTab.hpp"
+#include "AudioSink.hpp"
+#include "AudioSource.hpp"
 #include "AudioTrackContext.hpp"
 
 
@@ -25,10 +27,11 @@ class AudioPlayer : public QObject, public QRunnable
 
 protected:
 
-    /** tab widget that describes avaliavle devices.*/
+    /** Device update schedule.*/
+    bool mustUpdateDevices = true;
+
+    /** Tab widget that describes available devices.*/
     QTabWidget const *devices = nullptr;
-    /** Player state.*/
-    bool is_alive = false;
 
 public:
 
@@ -38,15 +41,14 @@ public:
     */
     explicit AudioPlayer(QTabWidget const *devices);
 
-public:
-
-    /** Stops the player if it is running.*/
-    void stop();
     /** Player cycle (pure virtual).*/
     virtual void run() = 0;
 
-    signals:
-    /** Emitted when the player encounters any error.
+    /** Updates audio streams.*/
+    virtual void updateAudioStreams();
+
+signals:
+    /** Emitted when player encounters any error.
      * 
      *  @param message error message.
     */
@@ -60,6 +62,16 @@ class MicrophonePlayer : public AudioPlayer
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
+    /** Player state.*/
+    bool isRunning = false;
+
+    /** Audio input.*/
+    AudioSource *audioSource = nullptr;
+    /** Audio output (virtual cable).*/
+    AudioSink *audioVCableSink = nullptr;
+    /** Audio output.*/
+    AudioSink *audioSink = nullptr;
+
 public:
 
     /** Constructor.
@@ -70,6 +82,8 @@ public:
 
     /** Player cycle.*/
     void run();
+    /** Stops the player if it is running.*/
+    void stop();
 };
 
 
@@ -81,14 +95,15 @@ class  MediaFilesPlayer : public AudioPlayer
 
     /** Current track.*/
     AudioTrackContext *track = nullptr;
-    /** Audio output (virtual cable).*/
-    QAudioSink *audio_sink_cable = nullptr;
-    /** Audio output.*/
-    QAudioSink *audio_sink = nullptr;
+    /** Requested track state.*/
+    AudioTrackContext::TrackState newTrackState = AudioTrackContext::STOPPED;
     /** Audio volume.*/
-    float volume = 1.0;
-    /** Track current state.*/
-    AudioTrackContext::TrackState nextTrackState = AudioTrackContext::STOPPED;
+    float volume = 0.5;
+
+    /** Audio output (virtual cable).*/
+    AudioSink *audioVCableSink = nullptr;
+    /** Audio output.*/
+    AudioSink *audioSink = nullptr;
 
 public:
 
@@ -103,14 +118,14 @@ public:
     /** Player cycle.*/
     void run();
 
-    /** Sets new track to play.*/
+    /** Sets new audio track to play.*/
     void setNewTrack(QString filepath);
-    /** Sets new track state.*/
+    /** Sets new audio track state.*/
     void setNewTrackState(AudioTrackContext::TrackState state);
-    /** Sets track volume.*/
+    /** Sets audio track volume.*/
     void setNewTrackVolume(float volume);
 
-    signals:
-    /** Emitted when player track has ended.*/
+signals:
+    /** Emitted when audio track has ended.*/
     void signalTrackEnd();
 };

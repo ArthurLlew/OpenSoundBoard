@@ -10,9 +10,9 @@ AudioPlayer::AudioPlayer(QTabWidget const* devices)
 }
 
 
-void AudioPlayer::stop()
+void AudioPlayer::updateAudioStreams()
 {
-    is_alive = false;
+    mustUpdateDevices = true;
 }
 
 
@@ -21,99 +21,72 @@ MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devi
 
 void MicrophonePlayer::run()
 {
-    is_alive = true;
+    isRunning = true;
 
-    // Audio streams
-    QAudioSource *audio_source = nullptr;
-    QAudioSink *audio_sink_cable = nullptr, *audio_sink = nullptr;
-    
     try
     {
-        // Open relevant streams (output streams inherit input stream format, so check if it is supported)
-        QAudioDevice audio_source_device = ((DeviceTab*)devices->widget(0))->getDevice();
-        QAudioFormat audio_source_format = audio_source_device.preferredFormat();
-        audio_source = new QAudioSource(audio_source_device, audio_source_format);
-        QAudioDevice audio_sink_cable_device = ((DeviceTab*)devices->widget(1))->getDevice();
-        if (audio_sink_cable_device.isFormatSupported(audio_source_format))
-        {
-            audio_sink_cable = new QAudioSink(audio_sink_cable_device, audio_source_format);
-        }
-        else
-        {
-            throw std::runtime_error("Virtual output device does not support input device audio format");
-        }
-        QAudioDevice audio_sink_device = ((DeviceTab*)devices->widget(2))->getDevice();
-        if (audio_sink_device.isFormatSupported(audio_source_format))
-        {
-            audio_sink = new QAudioSink(audio_sink_device, audio_source_format);
-        }
-        else
-        {
-            throw std::runtime_error("Output device does not support input device audio format");
-        }
-        // Start streams and get their IODevices
-        QIODevice *audio_source_io = audio_source->start();
-        QIODevice *audio_sink_cable_io = audio_sink_cable->start();
-        QIODevice *sink_io = audio_sink->start();
-
         // Player cycle
-        while (is_alive && (audio_source->state() != QtAudio::StoppedState) && (audio_sink_cable->state() != QtAudio::StoppedState)
-               && (audio_sink->state() != QtAudio::StoppedState))
+        while (isRunning)
         {
+            // Check stream schedule
+            if (mustUpdateDevices)
+            {
+                delete audioSource;
+                audioSource = new AudioSource((DeviceTab*)devices->widget(0));
+                delete audioVCableSink;
+                audioVCableSink = new AudioSink((DeviceTab*)devices->widget(1), audioSource->format());
+                delete audioSink;
+                audioSink = new AudioSink((DeviceTab*)devices->widget(2), audioSource->format());
+                mustUpdateDevices = false;
+            }
+
+            // Check streams
+            if (!audioSource->error().isEmpty())
+                throw std::runtime_error("Audio input: " + audioSource->error().toStdString());
+            if (!audioVCableSink->error().isEmpty())
+                throw std::runtime_error("Audio Virtual cable output: " + audioVCableSink->error().toStdString());
+            if (!audioSink->error().isEmpty())
+                throw std::runtime_error("Audio output: " + audioSink->error().toStdString());
+
+
             // Handle input stream (depending on checkbox and stream state)
             if (((DeviceTab*)devices->widget(0))->checkbox->isChecked())
             {
-                #define SOUND_BYTE_SIZE 1024 
+                #define AUDIO_BYTE_SIZE 1024 
 
                 // Read microphone input
-                QByteArray sound = audio_source_io->read(SOUND_BYTE_SIZE);
+                QByteArray audio = audioSource->read(AUDIO_BYTE_SIZE);
 
                 // Wait for availiable space to write data
-                while ((audio_sink_cable->bytesFree() < SOUND_BYTE_SIZE) || (audio_sink->bytesFree() < SOUND_BYTE_SIZE)) {}
+                while (audioVCableSink->bytesFree(AUDIO_BYTE_SIZE) || audioSink->bytesFree(AUDIO_BYTE_SIZE)) {}
 
-                #undef SOUND_BYTE_SIZE
+                #undef AUDIO_BYTE_SIZE
 
                 // Write to virtual output stream (depending on checkbox and stream state)
                 if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
-                    audio_sink_cable_io->write(sound);
+                    audioVCableSink->write(audio);
 
                 // Write to output stream (depending on checkbox and stream state)
                 if (((DeviceTab*)devices->widget(2))->checkbox->isChecked())
-                    sink_io->write(sound);
+                    audioSink->write(audio);
             }
         }
-
-        // Check if loop ended because any of the streams suddenly died
-        if (audio_source->state() == QtAudio::StoppedState)
-            emit signalError("Audio input suddenly died");
-        if (audio_sink_cable->state() == QtAudio::StoppedState)
-            emit signalError("Audio output cable suddenly died");
-        if (audio_sink->state() == QtAudio::StoppedState)
-            emit signalError("Audio output suddenly died");
     }
     catch(const std::exception& e)
     {
         emit signalError(e.what());
     }
 
-    // Free streams if allocated
-    if (audio_source)
-    {
-        audio_source->stop();
-        delete audio_source;
-    }
-    if (audio_sink_cable)
-    {
-        audio_sink_cable->stop();
-        delete audio_sink_cable;
-    }
-    if (audio_sink)
-    {
-        audio_sink->stop();
-        delete audio_sink;
-    }
+    // Free streams
+    delete audioSource;
+    delete audioVCableSink;
+    delete audioSink;
+}
 
-    is_alive = false;
+
+void MicrophonePlayer::stop()
+{
+    isRunning = false;
 }
 
 
@@ -128,36 +101,49 @@ MediaFilesPlayer::~MediaFilesPlayer()
 
 void MediaFilesPlayer::run()
 {
+    // No track ==>> no playing
     if (track == nullptr)
         return;
 
-    is_alive = true;
-
-    track->setState(AudioTrackContext::PLAYING);
-
-    // Audio format
-    QAudioFormat format;
-    format.setSampleRate(track->getSampleRate());
-    format.setChannelCount(track->getChannelCount());
-    format.setSampleFormat(QAudioFormat::Float);
+    #define TRACK_END \
+        track->setState(AudioTrackContext::STOPPED);\
+        emit signalTrackEnd();
 
     try
     {
-        // Open relevant streams
-        audio_sink_cable = new QAudioSink(((DeviceTab*)devices->widget(1))->getDevice(), format);
-        audio_sink = new QAudioSink(((DeviceTab*)devices->widget(2))->getDevice(), format);
-        // Start streams and get their IODevices
-        QIODevice *audio_sink_cable_io = audio_sink_cable->start();
-        audio_sink_cable->setVolume(volume);
-        QIODevice *sink_io = audio_sink->start();
-        audio_sink->setVolume(volume);
+        // Play track
+        track->setState(AudioTrackContext::PLAYING);
+
+        // Audio track format
+        QAudioFormat format;
+        format.setSampleRate(track->getSampleRate());
+        format.setChannelCount(track->getChannelCount());
+        format.setSampleFormat(QAudioFormat::Float);
 
         // Player cycle
-        while (is_alive)
+        while (track->state != AudioTrackContext::STOPPED)
         {
+            // Check stream schedule
+            if (mustUpdateDevices)
+            {
+                delete audioVCableSink;
+                audioVCableSink = new AudioSink((DeviceTab*)devices->widget(1), format);
+                audioVCableSink->setVolume(volume);
+                delete audioSink;
+                audioSink = new AudioSink((DeviceTab*)devices->widget(2), format);
+                audioVCableSink->setVolume(volume);
+                mustUpdateDevices = false;
+            }
+
+            // Check streams
+            if (!audioVCableSink->error().isEmpty())
+                throw std::runtime_error("Audio Virtual cable output: " + audioVCableSink->error().toStdString());
+            if (!audioSink->error().isEmpty())
+                throw std::runtime_error("Audio output: " + audioSink->error().toStdString());
+
             // Set next track state
-            if (track->state != nextTrackState)
-                track->setState(nextTrackState);
+            if (track->state != newTrackState)
+                track->setState(newTrackState);
 
             if (track->state == AudioTrackContext::PLAYING)
             {
@@ -170,43 +156,34 @@ void MediaFilesPlayer::run()
                     QByteArray sound = QByteArray((char*)frame.data, frame.size/2);
 
                     // Wait for availiable space to write data
-                    while ((audio_sink_cable->bytesFree() < frame.size) || (audio_sink->bytesFree() < frame.size)) {}
+                    while (audioVCableSink->bytesFree(frame.size) || audioSink->bytesFree(frame.size)) {}
 
                     // Write to virtual output stream (depending on checkbox)
                     if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
-                        audio_sink_cable_io->write(sound);
+                        audioVCableSink->write(sound);
                     // Write to output stream
-                    sink_io->write(sound);
+                    audioSink->write(sound);
                 }
                 else
                 {
                     // Track has ended: update state and notify manager
-                    nextTrackState = AudioTrackContext::STOPPED;
-                    emit signalTrackEnd();
+                    TRACK_END
                 }
             }
         }
     }
     catch(const std::exception& e)
     {
-        nextTrackState = AudioTrackContext::STOPPED;
-        emit signalTrackEnd();
+        // Update state and notify manager
+        TRACK_END
         emit signalError(e.what());
     }
 
-    // Free streams if allocated
-    if (audio_sink_cable)
-    {
-        audio_sink_cable->stop();
-        delete audio_sink_cable;
-    }
-    if (audio_sink)
-    {
-        audio_sink->stop();
-        delete audio_sink;
-    }
+    #undef TRACK_END
 
-    is_alive = false;
+    // Free streams
+    delete audioVCableSink;
+    delete audioSink;
 }
 
 
@@ -222,7 +199,7 @@ void MediaFilesPlayer::setNewTrack(QString filepath)
 
 void MediaFilesPlayer::setNewTrackState(AudioTrackContext::TrackState state)
 {
-    nextTrackState = state;
+    newTrackState = state;
 }
 
 
@@ -230,8 +207,8 @@ void MediaFilesPlayer::setNewTrackVolume(float volume)
 {
     this->volume = volume;
     // If any audio audio_sink is opened update their volume too
-    if (audio_sink_cable)
-        audio_sink_cable->setVolume(volume);
-    if (audio_sink)
-        audio_sink->setVolume(volume);
+    if (audioVCableSink)
+        audioVCableSink->setVolume(volume);
+    if (audioSink)
+        audioSink->setVolume(volume);
 }

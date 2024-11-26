@@ -45,8 +45,8 @@ void DeviceTab::paintEvent(QPaintEvent *)
 
 QAudioDevice DeviceTab::getDevice() const
 {
-    // Return audio device info corresponding to selected device in combobox
-    return devices[combobox_devices->currentIndex()];
+    // Return audio device info corresponding to selected device in combobox (empty device if there are no devices)
+    return combobox_devices->count() != 0 ? devices[combobox_devices->currentIndex()] : QAudioDevice();
 }
 
 

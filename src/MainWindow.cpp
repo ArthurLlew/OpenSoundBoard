@@ -4,9 +4,6 @@
 // Constructor
 MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
-    // Prepair to act as a frameless window
-    setWindowFlags(flags | Qt::Window);
-
     #ifdef Q_OS_WIN
     // Set darkmode for Windows
     BOOL use_dark_mode = true;
@@ -87,15 +84,15 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     void (QComboBox:: *indexChangedSignal)(int) = &QComboBox::currentIndexChanged;
     devices->addTab(new DeviceTab("Listen to input", true, DeviceTab::INPUT, combobox_devices), "Input Device");
     // Connect after device tab creation to ensure MainWindow::restartPlayers won't be called inside constructor (causing crash)
-    connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
+    connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
     /* Virtual Output Cable */
     combobox_devices = new QComboBox();
     devices->addTab(new DeviceTab("Feed to virtual output", true, DeviceTab::OUTPUT, combobox_devices), "Virtual Output Cable");
-    connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
+    connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
     /* Output Device */
     combobox_devices = new QComboBox();
     devices->addTab(new DeviceTab("Feed to ouput", false, DeviceTab::OUTPUT, combobox_devices), "Output Device");
-    connect(combobox_devices, indexChangedSignal, this, &MainWindow::restartPlayers);
+    connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
 
     /*
     // Player managers:
@@ -197,81 +194,21 @@ void MainWindow::selectDirectory()
 }
 
 
-void MainWindow::startPlayers(bool microphone_player, bool mediafiles_player1, bool mediafiles_player2)
+void MainWindow::updateDevices()
 {
-    // Check if we can launch microphone player
-    if (((DeviceTab*)devices->widget(0))->combobox_devices->count() == 0)
-    {
-        displayWarning("No input devices found!\nTry to refresh devices");
-    }
-    else if (((DeviceTab*)devices->widget(1))->combobox_devices->count() == 0)
-    {
-        displayWarning("No virtual output cable found!\nTry to refresh devices");
-    }
-    else if (((DeviceTab*)devices->widget(2))->combobox_devices->count() == 0)
-    {
-        displayWarning("No output devices found!\nTry to refresh devices");
-    }
-    else if (microphone_player)
-    {
-        microphonePlayerManager->playerRun();
-    }
-
-    // Check if we can launch mediafiles player
-    if (((DeviceTab*)devices->widget(1))->combobox_devices->count() == 0)
-    {
-        displayWarning("No virtual output cable found!\nTry to refresh devices");
-    }
-    else if (((DeviceTab*)devices->widget(2))->combobox_devices->count() == 0)
-    {
-        displayWarning("No output devices found!\nTry to refresh devices");
-    }
-    else
-    {
-        if (mediafiles_player1)
-            mediafilesPlayerManager1->playerRun();
-        if (mediafiles_player2)
-            mediafilesPlayerManager2->playerRun();
-    }
-}
-
-
-void MainWindow::stopPlayers(bool *microphone_player, bool *mediafiles_player1, bool *mediafiles_player2)
-{
-    // Save players state, tell them to stop and wait till they finish
-    *microphone_player = microphonePlayerManager->playerState();
-    *mediafiles_player1 = mediafilesPlayerManager1->playerState();
-    *mediafiles_player2 = mediafilesPlayerManager2->playerState();
-    microphonePlayerManager->playerStop();
-    mediafilesPlayerManager1->playerStop();
-    mediafilesPlayerManager2->playerStop();
-    microphonePlayerManager->playerWait();
-    mediafilesPlayerManager1->playerWait();
-    mediafilesPlayerManager2->playerWait();
-}
-
-
-void MainWindow::restartPlayers(int unused)
-{
-    // Restart players depending on their previous state
-    bool microphone_player, mediafiles_player1, mediafiles_player2;
-    stopPlayers(&microphone_player, &mediafiles_player1, &mediafiles_player2);
-    startPlayers(microphone_player, mediafiles_player1, mediafiles_player2);
+    microphonePlayerManager->updateDevices();
+    mediafilesPlayerManager1->updateDevices();
+    mediafilesPlayerManager2->updateDevices();
 }
 
 
 void MainWindow::refreshDevices()
 {
-    // Stop players
-    bool microphone_player, mediafiles_player1, mediafiles_player2;
-    stopPlayers(&microphone_player, &mediafiles_player1, &mediafiles_player2);
-    
     // Refresh list of devices in each device tab
     for (int i=0; i<devices->count(); i++)
     {
         ((DeviceTab*)devices->widget(i))->refreshDevices();
     }
 
-    // Start players
-    startPlayers(microphone_player, mediafiles_player1, mediafiles_player2);
+    updateDevices();
 }

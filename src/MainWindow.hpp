@@ -90,26 +90,9 @@ protected:
     /** Select directory with media files.*/
     void selectDirectory();
 
-    /** Starts players.
-     * 
-     *  @param microphone_player previous microphone player state.
-     *  @param mediafiles_player1 previous mediafiles player state.
-     *  @param mediafiles_player2 previous mediafiles player state.
-    */
-    void startPlayers(bool microphone_player, bool mediafiles_player1, bool mediafiles_player2);
-    /** Stops players.
-     * 
-     *  @param microphone_player where to store current microphone player state.
-     *  @param mediafiles_player1 where to store current mediafiles player state.
-     *  @param mediafiles_player2 where to store current mediafiles player state.
-    */
-    void stopPlayers(bool *microphone_player, bool *mediafiles_player1, bool *mediafiles_player2);
-    /** Restarts players.*/
-    void restartPlayers(int unused);
-    /** Refreshes lists of devices (also restarts portaudio to get up-to-date list and restarts players).*/
+    /** Updates devices in active players.*/
+    void updateDevices();
+
+    /** Refreshes lists of input/output devices.*/
     void refreshDevices();
 };
-
-
-
-static LONG_PTR savedWndProc;

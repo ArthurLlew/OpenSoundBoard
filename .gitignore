@@ -1,7 +1,6 @@
 .vscode/
 build/
 exmpls/
-test_tracks/
 resources/app.ai
 resources/app.png
 resources/app.o

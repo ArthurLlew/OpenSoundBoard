@@ -31,15 +31,11 @@ protected:
     QString name;
     /** Widget main layout.*/
     QVBoxLayout *layout = nullptr;
-    /** Start/Stop button.*/
-    QPushButton *buttonStartStop = nullptr;
 
     /** Thread pool where player will run.*/
     QThreadPool *threadpool = nullptr;
     /** Audio player.*/
     AudioPlayer *player = nullptr;
-    /** Audio player state.*/
-    bool isPlayerAlive = false;
 
 public:
 
@@ -64,22 +60,19 @@ protected:
     void playerError(QString message);
 
     /** Start/Stop player.*/
-    void playerRunStop();
+    virtual void playerStartStop() = 0;
 
 public:
 
-    /** Returns player state.*/
-    bool playerState();
-    /** Start player.*/
-    void playerRun();
     /** Stop player.*/
-    void playerStop();
-    /** Wait for the player to stop.*/
-    void playerWait();
+    virtual void playerStop() = 0;
+
+    /** Updates devices in running player.*/
+    virtual void updateDevices() = 0;
 
 signals:
-    /** Ask player to stop.*/
-    void askPlayerStop();
+    /** Ask player to update devices.*/
+    void askToUpdateDevices();
 };
 
 
@@ -89,6 +82,12 @@ class MicrophonePlayerManager : public AudioPlayerManager
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
+    /** Audio player state.*/
+    bool isRunning = false;
+
+    /** Start/Stop button.*/
+    QPushButton *buttonStartStop = nullptr;
+
 public:
 
     /** Constructor.
@@ -96,7 +95,26 @@ public:
      *  @param player Audio player.
      *  @param name player name.
     */
-    MicrophonePlayerManager(QTabWidget *devices, QString name, QWidget *parent = nullptr);
+    explicit MicrophonePlayerManager(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
+    /** Destructor.*/
+    ~MicrophonePlayerManager();
+
+private:
+
+    /** Start/Stop player.*/
+    void playerStartStop();
+
+public:
+
+    /** Stop player.*/
+    void playerStop();
+
+    /** Updates devices in running player.*/
+    void updateDevices();
+
+signals:
+    /** Ask player to stop.*/
+    void askToStop();
 };
 
 
@@ -124,7 +142,9 @@ public:
      *  @param name Player name.
      *  @param screeanGeometry Geometry of the computer's primary screen.
     */
-    MediaFilesPlayerManager(QTabWidget *devices, QString name, QRect *screeanGeometry, QWidget *parent = nullptr);
+    explicit MediaFilesPlayerManager(QTabWidget const *devices, QString name, QRect *screeanGeometry, QWidget *parent = nullptr);
+    /** Destructor.*/
+    ~MediaFilesPlayerManager();
 
 private:
 
@@ -135,22 +155,23 @@ private:
 
     /** Display player error.
      * 
-     *  @param message error message.
-    */
-    void playerError(QString message);
-
-    /** Display player error.
-     * 
      *  @param value volume value. int[0..100] is converted to float[0..1]
     */
     void setVolume(int value);
 
-    /** Stop audio track.*/
-    void trackStop();
-    /** Audio track play-pause.*/
-    void trackPlayPause();
-    /** React to player sending signalTrackEnd(). Update track state to STOPPED.*/
+    /** Handler for track end signal.*/
     void playerTrackEnded();
+
+    /** Start/Stop player.*/
+    void playerStartStop();
+
+public:
+
+    /** Stop player.*/
+    void playerStop();
+
+    /** Updates devices in running player.*/
+    void updateDevices();
 
 signals:
     /** Ask player to set new track.

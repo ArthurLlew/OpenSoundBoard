@@ -1,4 +1,4 @@
-#include "AudioTrack.hpp"
+#include <AudioTrack.hpp>
 
 
 AudioTrack::AudioTrack(QString filepath, QWidget *parent) : QWidget(parent)

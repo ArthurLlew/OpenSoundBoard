@@ -221,7 +221,6 @@ AudioTrackFrame AudioTrackContext::readSamples()
             if (av_read_frame(format_ctx, packet) < 0)
             {
                 // End of file
-                stop();
                 return 0;
             }
 

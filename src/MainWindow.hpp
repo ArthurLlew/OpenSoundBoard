@@ -29,10 +29,11 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTabWidget>
 // Custom
-#include "WidgetMessages.hpp"
-#include "DeviceTab.hpp"
-#include "AudioTrack.hpp"
-#include "AudioPlayerManagers.hpp"
+#include <WidgetMessages.hpp>
+#include <DeviceTab.hpp>
+#include <AudioTrack.hpp>
+#include <AudioPlayerManagers/MicrophonePlayerManager.hpp>
+#include <AudioPlayerManagers/MediaFilesPlayerManager.hpp>
 
 
 /** Application main window.*/

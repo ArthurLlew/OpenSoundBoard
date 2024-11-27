@@ -37,8 +37,11 @@ add_custom_command(
 add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 
 # Define list of source files
-set(SOURCES src/main.cpp src/MainWindow.cpp src/DeviceTab.cpp src/AudioTrack.cpp src/AudioPlayerManagers.cpp src/AudioPlayers.cpp
-            src/AudioSink.cpp src/AudioSource.cpp src/AudioTrackContext.cpp src/WidgetMessages.cpp)
+set(SOURCES src/main.cpp src/MainWindow.cpp src/WidgetMessages.cpp src/DeviceTab.cpp src/AudioTrack.cpp
+            src/AudioPlayerManagers/AudioPlayerManager.cpp src/AudioPlayerManagers/MicrophonePlayerManager.cpp
+            src/AudioPlayerManagers/MediaFilesPlayerManager.cpp
+            src/AudioPlayers/AudioPlayer.cpp src/AudioPlayers/MicrophonePlayer.cpp src/AudioPlayers/MediaFilesPlayer.cpp
+            src/AudioPlayers/AudioTrackContext.cpp)
 # Define names of static libraries
 set(LIBS dwmapi avutil avcodec avformat swresample)
 # Add static libraries
@@ -66,8 +69,8 @@ add_executable(OpenSoundBoard_debug ${SOURCES} ${APP_ICON})
 set_property(TARGET OpenSoundBoard PROPERTY AUTOMOC ON)
 set_property(TARGET OpenSoundBoard_debug PROPERTY AUTOMOC ON)
 # Include path for .hpp files
-target_include_directories(OpenSoundBoard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(OpenSoundBoard_debug PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(OpenSoundBoard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(OpenSoundBoard_debug PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 # Libraries linking
 target_link_libraries(OpenSoundBoard PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
 target_link_libraries(OpenSoundBoard_debug PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)

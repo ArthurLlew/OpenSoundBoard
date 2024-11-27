@@ -1,4 +1,4 @@
-#include "WidgetMessages.hpp"
+#include <WidgetMessages.hpp>
 
 
 void WidgetWarnings::displayWarning(QString message)

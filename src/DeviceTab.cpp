@@ -1,4 +1,4 @@
-#include "DeviceTab.hpp"
+#include <DeviceTab.hpp>
 
 
 DeviceTab::DeviceTab(QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,

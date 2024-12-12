@@ -70,10 +70,8 @@ void MediaFilesPlayer::run()
                     // Wait for availiable space to write data
                     while ((audioVCableSink->bytesFree() < frame.size) || (audioSink->bytesFree() < frame.size)) {}
 
-                    // Write to virtual output stream (depending on checkbox)
-                    if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
-                        audioVCableSinkIO->write(sound);
-                    // Write to output stream
+                    // Write data
+                    audioVCableSinkIO->write(sound);
                     audioSinkIO->write(sound);
                 }
                 else

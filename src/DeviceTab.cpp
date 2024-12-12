@@ -1,8 +1,7 @@
 #include <DeviceTab.hpp>
 
 
-DeviceTab::DeviceTab(QString checkboxLabel, bool checkboxState, DeviceType type, QComboBox *combobox_devices,
-                     QWidget *parent) : QWidget(parent)
+DeviceTab::DeviceTab(DeviceType type, QComboBox *combobox_devices, QWidget *parent) : QWidget(parent)
 {
     // Save device type
     this->type = type;
@@ -10,14 +9,9 @@ DeviceTab::DeviceTab(QString checkboxLabel, bool checkboxState, DeviceType type,
     // Widget layout
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setAlignment(Qt::AlignTop);
-    // Layout contents:
     // Combobox
     this->combobox_devices = combobox_devices;
     layout->addWidget(this->combobox_devices);
-    // Checkbox
-    checkbox = new QCheckBox(checkboxLabel);
-    checkbox->setChecked(checkboxState);
-    layout->addWidget(checkbox);
 
     // Load devices
     refreshDevices();

@@ -82,16 +82,16 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     /* Input device */
     QComboBox *combobox_devices = new QComboBox();
     void (QComboBox:: *indexChangedSignal)(int) = &QComboBox::currentIndexChanged;
-    devices->addTab(new DeviceTab("Listen to input", true, DeviceTab::INPUT, combobox_devices), "Input Device");
+    devices->addTab(new DeviceTab(DeviceTab::INPUT, combobox_devices), "Input Device");
     // Connect after device tab creation to ensure MainWindow::restartPlayers won't be called inside constructor (causing crash)
     connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
     /* Virtual Output Cable */
     combobox_devices = new QComboBox();
-    devices->addTab(new DeviceTab("Feed to virtual output", true, DeviceTab::OUTPUT, combobox_devices), "Virtual Output Cable");
+    devices->addTab(new DeviceTab(DeviceTab::OUTPUT, combobox_devices), "Virtual Output Cable");
     connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
     /* Output Device */
     combobox_devices = new QComboBox();
-    devices->addTab(new DeviceTab("Feed to ouput", false, DeviceTab::OUTPUT, combobox_devices), "Output Device");
+    devices->addTab(new DeviceTab(DeviceTab::OUTPUT, combobox_devices), "Output Device");
     connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
 
     /*
@@ -103,7 +103,7 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     right_vertbox->addWidget(mediafilesPlayerManager1);
     mediafilesPlayerManager2 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
     right_vertbox->addWidget(mediafilesPlayerManager2);
-    // Add streatch to stick widgets to the top
+    // Add stretch to stick widgets to the top
     right_vertbox->addStretch();
 }
 
@@ -111,10 +111,6 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
 // Destructor
 MainWindow::~MainWindow()
 {
-    // Delete player managers (players are stopped and deleted automatically inside destructor)
-    delete microphonePlayerManager;
-    delete mediafilesPlayerManager1;
-    delete mediafilesPlayerManager2;
 }
 
 

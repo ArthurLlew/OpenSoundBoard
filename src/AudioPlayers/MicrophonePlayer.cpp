@@ -42,7 +42,6 @@ void MicrophonePlayer::run()
             {
                 audioSourceIO = restartAudioSource(&audioSource, (DeviceTab*)devices->widget(0));
                 audioVCableSinkIO = restartAudioSink(&audioVCableSink, (DeviceTab*)devices->widget(1), audioSource->format());
-                audioSinkIO = restartAudioSink(&audioSink, (DeviceTab*)devices->widget(2), audioSource->format());
                 mustUpdateDevices = false;
             }
 
@@ -51,30 +50,19 @@ void MicrophonePlayer::run()
                 throw std::runtime_error("Audio input suddenly stopped");
             if (audioVCableSink->state() == QtAudio::StoppedState)
                 throw std::runtime_error("Audio Virtual cable output suddenly stopped");
-            if (audioSink->state() == QtAudio::StoppedState)
-                throw std::runtime_error("Audio output suddenly stopped");
 
-            // Handle input stream (depending on checkbox and stream state)
-            if (((DeviceTab*)devices->widget(0))->checkbox->isChecked())
-            {
-                #define AUDIO_BYTE_SIZE 1024 
+            #define AUDIO_BYTE_SIZE 1024 
 
-                // Read microphone input
-                QByteArray audio = audioSourceIO->read(AUDIO_BYTE_SIZE);
+            // Read microphone input
+            QByteArray audio = audioSourceIO->read(AUDIO_BYTE_SIZE);
 
-                // Wait for availiable space to write data
-                while ((audioVCableSink->bytesFree() < AUDIO_BYTE_SIZE) || (audioSink->bytesFree() < AUDIO_BYTE_SIZE)) {}
+            // Wait for availiable space to write data
+            while (audioVCableSink->bytesFree() < AUDIO_BYTE_SIZE) {}
 
-                #undef AUDIO_BYTE_SIZE
+            #undef AUDIO_BYTE_SIZE
 
-                // Write to virtual output stream (depending on checkbox and stream state)
-                if (((DeviceTab*)devices->widget(1))->checkbox->isChecked())
-                    audioVCableSinkIO->write(audio);
-
-                // Write to output stream (depending on checkbox and stream state)
-                if (((DeviceTab*)devices->widget(2))->checkbox->isChecked())
-                    audioSinkIO->write(audio);
-            }
+            // Write to virtual output stream (depending on checkbox and stream state)
+            audioVCableSinkIO->write(audio);
         }
     }
     catch(const std::exception& e)
@@ -87,8 +75,6 @@ void MicrophonePlayer::run()
     audioSource = nullptr;
     delete audioVCableSink;
     audioVCableSink = nullptr;
-    delete audioSink;
-    audioSink = nullptr;
 }
 
 

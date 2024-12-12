@@ -1,7 +1,7 @@
 #include <AudioPlayerManagers/MediaFilesPlayerManager.hpp>
 
 
-MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QString name, QRect *screeanGeometry, QWidget *parent)
+MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QString name, QWidget *parent)
 // Init of the player happens here
 : AudioPlayerManager(new MediaFilesPlayer(devices), name, parent)
 {
@@ -50,7 +50,8 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QStr
     connect(volume_slider, &QSlider::valueChanged, this, &MediaFilesPlayerManager::setVolume);
     volume_slider->setRange(0,100);
     volume_slider->setValue(30);
-    volume_slider->setMinimumWidth(screeanGeometry->width()/14);
+    QRect screeanGeometry = static_cast<QApplication*>(QApplication::instance())->primaryScreen()->availableGeometry();
+    volume_slider->setMinimumWidth(screeanGeometry.width()/14);
     volume_slider->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
     box_layout3->addWidget(volume_slider);
     box_layout3->addWidget(volumeLabel);

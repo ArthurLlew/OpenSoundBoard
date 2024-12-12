@@ -1,5 +1,5 @@
 /* Common background color */
-QMainWindow
+QMainWindow, QMessageBox
 {
 	background: rgb(32, 32, 32);
 }

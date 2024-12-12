@@ -42,8 +42,6 @@ class MainWindow: public QMainWindow, WidgetWarnings
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
-    /** Geometry of the computer's primary screen.*/
-    QRect *screeanGeometry = nullptr;
     /** Mouse position picked up by mousePressEvent.*/
     QPoint mouseClickedPos;
 

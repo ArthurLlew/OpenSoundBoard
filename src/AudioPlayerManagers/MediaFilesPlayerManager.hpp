@@ -9,6 +9,8 @@
 #include <QtGui/QPainter>
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDropEvent>
+#include <QtGui/QScreen>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QHBoxLayout>
@@ -42,9 +44,8 @@ public:
      * 
      *  @param player Audio player.
      *  @param name Player name.
-     *  @param screeanGeometry Geometry of the computer's primary screen.
     */
-    explicit MediaFilesPlayerManager(QTabWidget const *devices, QString name, QRect *screeanGeometry, QWidget *parent = nullptr);
+    explicit MediaFilesPlayerManager(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
     /** Destructor.*/
     ~MediaFilesPlayerManager();
 

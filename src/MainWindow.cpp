@@ -15,11 +15,11 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     setWindowTitle("OpenSoundBoard");
 
     // Get primary screen geometry
-    screeanGeometry = new QRect(app->primaryScreen()->availableGeometry());
+    QRect screeanGeometry = app->primaryScreen()->availableGeometry();
     // Set geomenty depending on screen resolution
-    setMinimumSize(screeanGeometry->width()/1.5, screeanGeometry->height()/1.5);
-    setGeometry(screeanGeometry->width()/10, screeanGeometry->height()/8,
-                screeanGeometry->width()/1.5, screeanGeometry->height()/1.5);
+    setMinimumSize(screeanGeometry.width()/1.5, screeanGeometry.height()/1.5);
+    setGeometry(screeanGeometry.width()/10, screeanGeometry.height()/8,
+                screeanGeometry.width()/1.5, screeanGeometry.height()/1.5);
 
     /*
     // Central widget:
@@ -99,9 +99,9 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     */
     microphonePlayerManager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
     right_vertbox->addWidget(microphonePlayerManager);
-    mediafilesPlayerManager1 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
+    mediafilesPlayerManager1 = new MediaFilesPlayerManager(devices, "Media Files Player");
     right_vertbox->addWidget(mediafilesPlayerManager1);
-    mediafilesPlayerManager2 = new MediaFilesPlayerManager(devices, "Media Files Player", screeanGeometry);
+    mediafilesPlayerManager2 = new MediaFilesPlayerManager(devices, "Media Files Player");
     right_vertbox->addWidget(mediafilesPlayerManager2);
     // Add stretch to stick widgets to the top
     right_vertbox->addStretch();

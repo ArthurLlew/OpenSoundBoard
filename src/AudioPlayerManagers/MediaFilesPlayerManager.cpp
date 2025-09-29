@@ -10,7 +10,7 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QStr
 
     // Connect signals to player
     connect(this, &MediaFilesPlayerManager::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioStreams);
-    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalTrackEnd, this, &MediaFilesPlayerManager::playerTrackEnded);
+    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalNewTrackState, this, &MediaFilesPlayerManager::onTrackStateChanged);
     connect(this, &MediaFilesPlayerManager::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrack);
     connect(this, &MediaFilesPlayerManager::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackState);
     connect(this, &MediaFilesPlayerManager::askNewTrackVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackVolume);
@@ -38,11 +38,11 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QStr
     box_layout1->addWidget(trackName);
     // Play/Pause button
     buttonPlay = new QPushButton("Play");
-    connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerManager::playerStartStop);
+    connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerManager::startStop);
     box_layout3->addWidget(buttonPlay);
     // Stop buttom
     QPushButton *button_stop = new QPushButton("Stop");
-    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::playerStop);
+    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::stop);
     box_layout3->addWidget(button_stop);
     // Volume slider and label
     QSlider *volume_slider = new QSlider(Qt::Orientation::Horizontal);
@@ -61,7 +61,7 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QStr
 MediaFilesPlayerManager::~MediaFilesPlayerManager()
 {
     // Stop player
-    playerStop();
+    stop();
 }
 
 
@@ -102,53 +102,50 @@ void MediaFilesPlayerManager::updateDevices()
 }
 
 
-void MediaFilesPlayerManager::playerStop()
+void MediaFilesPlayerManager::stop()
 {
     // Kill player only if he is working
-    if (trackState != AudioTrackContext::STOPPED)
+    if (((MediaFilesPlayer*)player)->getTrackState() != AudioTrackContext::STOPPED)
     {
-        // New track state
+        // Stop track
         emit askNewTrackState(AudioTrackContext::STOPPED);
         threadpool->waitForDone(-1);
-        // Update state
-        trackState = AudioTrackContext::STOPPED;
-        // Update button
-        buttonPlay->setText("Play");
     }
 }
 
 
-void MediaFilesPlayerManager::playerStartStop()
+void MediaFilesPlayerManager::startStop()
 {
     // Play-pause track
-    switch (trackState)
+    switch (((MediaFilesPlayer*)player)->getTrackState())
     {
         case AudioTrackContext::STOPPED:
             // Start player
             threadpool->start(player);
         case AudioTrackContext::PAUSED:
-            // New track state
+            // Set new track state
             emit askNewTrackState(AudioTrackContext::PLAYING);
-            trackState = AudioTrackContext::PLAYING;
-            // Update button
-            buttonPlay->setText("Pause");
             break;
         case AudioTrackContext::PLAYING:
-            // New track state
+            // Set new track state
             emit askNewTrackState(AudioTrackContext::PAUSED);
-            trackState = AudioTrackContext::PAUSED;
-            // Update button
-            buttonPlay->setText("Play");
             break;
     }
 }
 
 
-void MediaFilesPlayerManager::playerTrackEnded()
+void MediaFilesPlayerManager::onTrackStateChanged(AudioTrackContext::TrackState state)
 {
-    threadpool->waitForDone(-1);
-    // New track state
-    trackState = AudioTrackContext::STOPPED;
-    // Update button
-    buttonPlay->setText("Play");
+    switch (state)
+    {
+        case AudioTrackContext::STOPPED:
+        case AudioTrackContext::PAUSED:
+            // Update button
+            buttonPlay->setText("Play");
+            break;
+        case AudioTrackContext::PLAYING:
+            // Update button
+            buttonPlay->setText("Pause");
+            break;
+    }
 }

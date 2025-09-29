@@ -60,12 +60,12 @@ protected:
     void playerError(QString message);
 
     /** Start/Stop player.*/
-    virtual void playerStartStop() = 0;
+    virtual void startStop() = 0;
 
 public:
 
     /** Stop player.*/
-    virtual void playerStop() = 0;
+    virtual void stop() = 0;
 
     /** Updates devices in running player.*/
     virtual void updateDevices() = 0;

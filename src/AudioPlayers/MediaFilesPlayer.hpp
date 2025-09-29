@@ -37,6 +37,9 @@ public:
 
     /** Player cycle.*/
     void run();
+    
+    /** Gets audio track state.*/
+    AudioTrackContext::TrackState getTrackState();
 
     /** Sets new audio track to play.*/
     void setNewTrack(QString filepath);
@@ -44,8 +47,9 @@ public:
     void setNewTrackState(AudioTrackContext::TrackState state);
     /** Sets audio track volume.*/
     void setNewTrackVolume(float volume);
+    
 
 signals:
-    /** Emitted when audio track has ended.*/
-    void signalTrackEnd();
+    /** Emitted to update audio track state.*/
+    void signalNewTrackState(AudioTrackContext::TrackState state);
 };

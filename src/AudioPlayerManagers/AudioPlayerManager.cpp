@@ -42,5 +42,5 @@ void AudioPlayerManager::playerError(QString message)
 {
     displayWarning(name + " error:\n" + message);
     // Update player state
-    playerStop();
+    stop();
 }

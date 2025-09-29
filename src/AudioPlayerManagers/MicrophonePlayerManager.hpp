@@ -46,12 +46,12 @@ public:
 private:
 
     /** Start/Stop player.*/
-    void playerStartStop();
+    void startStop();
 
 public:
 
     /** Stop player.*/
-    void playerStop();
+    void stop();
 
     /** Updates devices in running player.*/
     void updateDevices();

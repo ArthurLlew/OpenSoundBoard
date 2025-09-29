@@ -17,7 +17,7 @@ MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget const *devices, QStr
     layout->addLayout(header_layout);
     // Start/Stop button
     buttonStartStop = new QPushButton("Start");
-    connect(buttonStartStop, &QPushButton::pressed, this, &MicrophonePlayerManager::playerStartStop);
+    connect(buttonStartStop, &QPushButton::pressed, this, &MicrophonePlayerManager::startStop);
     header_layout->addWidget(buttonStartStop);
     // Label
     QLabel *label = new QLabel(name);
@@ -28,11 +28,11 @@ MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget const *devices, QStr
 MicrophonePlayerManager::~MicrophonePlayerManager()
 {
     // Stop player
-    playerStop();
+    stop();
 }
 
 
-void MicrophonePlayerManager::playerStop()
+void MicrophonePlayerManager::stop()
 {
     // Kill player only if he is working
     if (isRunning)
@@ -48,11 +48,11 @@ void MicrophonePlayerManager::playerStop()
 }
 
 
-void MicrophonePlayerManager::playerStartStop()
+void MicrophonePlayerManager::startStop()
 {
     if (isRunning)
     {
-        playerStop();
+        stop();
     }
     else
     {

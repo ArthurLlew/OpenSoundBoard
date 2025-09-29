@@ -62,19 +62,19 @@ private:
     */
     void setVolume(int value);
 
-    /** Handler for track end signal.*/
-    void playerTrackEnded();
-
     /** Start/Stop player.*/
-    void playerStartStop();
+    void startStop();
 
 public:
 
-    /** Stop player.*/
-    void playerStop();
+    /** Stops player.*/
+    void stop();
 
     /** Updates devices in running player.*/
     void updateDevices();
+    
+    /** Handler for track state update signal.*/
+    void onTrackStateChanged(AudioTrackContext::TrackState state);
 
 signals:
     /** Ask player to set new track.

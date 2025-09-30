@@ -76,7 +76,7 @@ void MediaFilesPlayerWidget::dropEvent(QDropEvent *event)
     // Get file path and name
     QStringList list = QString::fromUtf8(event->mimeData()->data("filepath&name")).split("?");
     
-    // Ask player to change track
+    // Stop player and ask to change track
     stop();
     emit askNewTrack(list[0]);
     // Update track name

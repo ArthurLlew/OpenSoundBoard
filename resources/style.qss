@@ -11,7 +11,7 @@ QHeaderView::section
 {
 	background: rgb(24, 24, 24);
 }
-DeviceTab, AudioPlayerManager, QTableWidget, QTableView
+DeviceTab, AudioPlayerWidget, QTableWidget, QTableView
 {
 	background: rgb(41, 41, 41);
 }
@@ -64,7 +64,7 @@ QToolButton, QPushButton, QTabWidget::pane, DeviceTab, QComboBox, QComboBox QAbs
 {
     border: 1px solid black;
 }
-AudioPlayerManager, QTabBar::tab, QSlider::groove:horizontal
+AudioPlayerWidget, QTabBar::tab, QSlider::groove:horizontal
 {
     border: 2px solid black;
 }

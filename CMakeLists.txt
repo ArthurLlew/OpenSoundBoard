@@ -38,8 +38,8 @@ add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 
 # Define list of source files
 set(SOURCES src/main.cpp src/MainWindow.cpp src/WidgetMessages.cpp src/DeviceTab.cpp src/AudioTrack.cpp
-            src/AudioPlayerManagers/AudioPlayerManager.cpp src/AudioPlayerManagers/MicrophonePlayerManager.cpp
-            src/AudioPlayerManagers/MediaFilesPlayerManager.cpp
+            src/AudioPlayerWidgets/AudioPlayerWidget.cpp src/AudioPlayerWidgets/MicrophonePlayerWidget.cpp
+            src/AudioPlayerWidgets/MediaFilesPlayerWidget.cpp
             src/AudioPlayers/AudioPlayer.cpp src/AudioPlayers/MicrophonePlayer.cpp src/AudioPlayers/MediaFilesPlayer.cpp
             src/AudioPlayers/AudioTrackContext.cpp)
 # Define names of static libraries

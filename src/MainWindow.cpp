@@ -97,12 +97,12 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     /*
     // Player managers:
     */
-    microphonePlayerManager = new MicrophonePlayerManager(devices, "Microphone Rerouter");
-    right_vertbox->addWidget(microphonePlayerManager);
-    mediafilesPlayerManager1 = new MediaFilesPlayerManager(devices, "Media Files Player");
-    right_vertbox->addWidget(mediafilesPlayerManager1);
-    mediafilesPlayerManager2 = new MediaFilesPlayerManager(devices, "Media Files Player");
-    right_vertbox->addWidget(mediafilesPlayerManager2);
+    microphonePlayerWidget = new MicrophonePlayerWidget(devices, "Microphone Rerouter");
+    right_vertbox->addWidget(microphonePlayerWidget);
+    mediafilesPlayerWidget1 = new MediaFilesPlayerWidget(devices, "Media Files Player");
+    right_vertbox->addWidget(mediafilesPlayerWidget1);
+    mediafilesPlayerWidget2 = new MediaFilesPlayerWidget(devices, "Media Files Player");
+    right_vertbox->addWidget(mediafilesPlayerWidget2);
     // Add stretch to stick widgets to the top
     right_vertbox->addStretch();
 }
@@ -192,9 +192,9 @@ void MainWindow::selectDirectory()
 
 void MainWindow::updateDevices()
 {
-    microphonePlayerManager->updateDevices();
-    mediafilesPlayerManager1->updateDevices();
-    mediafilesPlayerManager2->updateDevices();
+    microphonePlayerWidget->updateDevices();
+    mediafilesPlayerWidget1->updateDevices();
+    mediafilesPlayerWidget2->updateDevices();
 }
 
 

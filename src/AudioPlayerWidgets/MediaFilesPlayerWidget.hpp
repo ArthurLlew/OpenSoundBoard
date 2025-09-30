@@ -18,12 +18,12 @@
 #include <QtWidgets/QProgressbar>
 // Custom
 #include <WidgetMessages.hpp>
-#include <AudioPlayerManagers/AudioPlayerManager.hpp>
+#include <AudioPlayerWidgets/AudioPlayerWidget.hpp>
 #include <AudioPlayers/MediaFilesPlayer.hpp>
 
 
-/** Media files player manager.*/
-class MediaFilesPlayerManager : public AudioPlayerManager
+/** Media files player widget.*/
+class MediaFilesPlayerWidget : public AudioPlayerWidget
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
@@ -45,9 +45,9 @@ public:
      *  @param player Audio player.
      *  @param name Player name.
     */
-    explicit MediaFilesPlayerManager(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
+    explicit MediaFilesPlayerWidget(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
     /** Destructor.*/
-    ~MediaFilesPlayerManager();
+    ~MediaFilesPlayerWidget();
 
 private:
 
@@ -91,5 +91,5 @@ signals:
      * 
      *  @param volume New track volume.
     */
-    void askNewTrackVolume(float volume);
+    void askNewTrackVolume(qreal volume);
 };

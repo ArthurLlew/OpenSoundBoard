@@ -16,12 +16,12 @@
 #include <QtWidgets/QProgressbar>
 // Custom
 #include <WidgetMessages.hpp>
-#include <AudioPlayerManagers/AudioPlayerManager.hpp>
+#include <AudioPlayerWidgets/AudioPlayerWidget.hpp>
 #include <AudioPlayers/MicrophonePlayer.hpp>
 
 
-/** Microphone player manager.*/
-class MicrophonePlayerManager : public AudioPlayerManager
+/** Microphone player widget.*/
+class MicrophonePlayerWidget : public AudioPlayerWidget
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
@@ -39,9 +39,9 @@ public:
      *  @param player Audio player.
      *  @param name player name.
     */
-    explicit MicrophonePlayerManager(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
+    explicit MicrophonePlayerWidget(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
     /** Destructor.*/
-    ~MicrophonePlayerManager();
+    ~MicrophonePlayerWidget();
 
 private:
 

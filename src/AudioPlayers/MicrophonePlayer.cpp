@@ -37,7 +37,7 @@ void MicrophonePlayer::run()
         // Player cycle
         while (isRunning)
         {
-            // Check stream schedule
+            // Update streams if needed
             if (mustUpdateDevices)
             {
                 audioSourceIO = restartAudioSource(&audioSource, (DeviceTab*)devices->widget(0));
@@ -56,13 +56,11 @@ void MicrophonePlayer::run()
             // Read microphone input
             QByteArray audio = audioSourceIO->read(AUDIO_BYTE_SIZE);
 
-            // Wait for availiable space to write data
+            // Wait for availiable space and write data
             while (audioVCableSink->bytesFree() < AUDIO_BYTE_SIZE) {}
+            audioVCableSinkIO->write(audio);
 
             #undef AUDIO_BYTE_SIZE
-
-            // Write to virtual output stream (depending on checkbox and stream state)
-            audioVCableSinkIO->write(audio);
         }
     }
     catch(const std::exception& e)
@@ -71,8 +69,10 @@ void MicrophonePlayer::run()
     }
 
     // Free streams
+    audioSource->stop();
     delete audioSource;
     audioSource = nullptr;
+    audioVCableSink->stop();
     delete audioVCableSink;
     audioVCableSink = nullptr;
 }

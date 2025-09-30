@@ -89,14 +89,14 @@ public:
     ~AudioTrackContext();
 
     /** Returns audio track sample rate.*/
-    int getSampleRate();
+    int getSampleRate() const;
     /** Returns audio track channel count.*/
-    int getChannelCount();
+    int getChannelCount() const;
 
-    /** Stop track.*/
-    void stop();
-    /** Play track.*/
-    void play();
+    /** Open track.*/
+    void open();
+    /** Close track.*/
+    void close();
     /** Update track state.
      * 
      *  @param state New track state.

@@ -22,11 +22,11 @@ void MediaFilesPlayer::run()
     // Track state update macro
     #define TRACK_STATE_UPDATE(state) \
         track->setState(state); \
-        emit signalNewTrackState(state);
+        emit updateTrackState(state);
 
     try
     {
-        // Track state
+        // Init track state
         TRACK_STATE_UPDATE(AudioTrackContext::PLAYING)
 
         // Audio track format
@@ -38,7 +38,7 @@ void MediaFilesPlayer::run()
         // Player cycle
         while (track->state != AudioTrackContext::STOPPED)
         {
-            // Check stream schedule
+            // Update streams if needed
             if (mustUpdateDevices)
             {
                 audioVCableSinkIO = restartAudioSink(&audioVCableSink, (DeviceTab*)devices->widget(1), format);
@@ -70,10 +70,8 @@ void MediaFilesPlayer::run()
                     // Convert frame
                     QByteArray sound = QByteArray((char*)frame.data, frame.size/2);
 
-                    // Wait for availiable space to write data
+                    // Wait for availiable space and write data
                     while ((audioVCableSink->bytesFree() < frame.size) || (audioSink->bytesFree() < frame.size)) {}
-
-                    // Write data
                     audioVCableSinkIO->write(sound);
                     audioSinkIO->write(sound);
                 }
@@ -100,8 +98,10 @@ void MediaFilesPlayer::run()
     #undef TRACK_STATE_UPDATE
 
     // Free streams
+    audioVCableSink->stop();
     delete audioVCableSink;
     audioVCableSink = nullptr;
+    audioSink->stop();
     delete audioSink;
     audioSink = nullptr;
 }
@@ -113,27 +113,27 @@ AudioTrackContext::TrackState MediaFilesPlayer::getTrackState()
 }
 
 
-void MediaFilesPlayer::setNewTrack(QString filepath)
+void MediaFilesPlayer::setTrack(QString filepath)
 {
     // Manage old track
     delete track;
     // Create new track context
     track = new AudioTrackContext(filepath);
     // Update track state
-    emit signalNewTrackState(track->state);
+    emit updateTrackState(track->state);
 }
 
 
-void MediaFilesPlayer::setNewTrackState(AudioTrackContext::TrackState state)
+void MediaFilesPlayer::setTrackState(AudioTrackContext::TrackState state)
 {
     newTrackState = state;
 }
 
 
-void MediaFilesPlayer::setNewTrackVolume(float volume)
+void MediaFilesPlayer::setTrackVolume(qreal volume)
 {
     this->volume = volume;
-    // If any audio audio_sink is opened update their volume too
+    // Update volume in any opened audio sink
     if (audioVCableSink)
         audioVCableSink->setVolume(volume);
     if (audioSink)

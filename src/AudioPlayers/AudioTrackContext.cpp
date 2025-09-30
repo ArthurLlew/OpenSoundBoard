@@ -35,24 +35,23 @@ AudioTrackContext::AudioTrackContext(QString filepath)
 
 AudioTrackContext::~AudioTrackContext()
 {
-    // Stop track
-    stop();
+    close();
 }
 
 
-int AudioTrackContext::getSampleRate()
+int AudioTrackContext::getSampleRate() const
 {
     return (decoder_ctx) ? decoder_ctx->sample_rate : 0;
 }
 
 
-int AudioTrackContext::getChannelCount()
+int AudioTrackContext::getChannelCount() const
 {
     return (decoder_ctx) ? decoder_ctx->ch_layout.nb_channels : 0;
 }
 
 
-void AudioTrackContext::stop()
+void AudioTrackContext::close()
 {
     state = STOPPED;
 
@@ -83,18 +82,18 @@ void AudioTrackContext::stop()
 }
 
 
-void AudioTrackContext::play()
+void AudioTrackContext::open()
 {
     // Open file and get info about media streams in file
     const char* f = filepath.toStdString().c_str();
     if (avformat_open_input(&format_ctx, f, NULL, NULL) < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to open input file");
     }
     if (avformat_find_stream_info(format_ctx, NULL) < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to find file streams info");
     }
 
@@ -102,7 +101,7 @@ void AudioTrackContext::play()
     audio_stream_index = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &decoder, 0);
     if (audio_stream_index < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to find an audio stream");
     }
 
@@ -110,7 +109,7 @@ void AudioTrackContext::play()
     decoder_ctx = avcodec_alloc_context3(decoder);
     if (!decoder_ctx)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to open create decoding context");
     }
     avcodec_parameters_to_context(decoder_ctx, format_ctx->streams[audio_stream_index]->codecpar);
@@ -118,7 +117,7 @@ void AudioTrackContext::play()
     // Init audio decoder
     if (avcodec_open2(decoder_ctx, decoder, NULL) < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to open audio decoder");
     }
 
@@ -132,14 +131,14 @@ void AudioTrackContext::play()
     packet = av_packet_alloc();
     if (!packet)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to allocate data packet");
     }
     // Allocate media data frame
     frame = av_frame_alloc();
     if (!frame)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to allocate data frame");
     }
 
@@ -147,7 +146,7 @@ void AudioTrackContext::play()
     swr_ctx = swr_alloc();
     if (!swr_ctx)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to allocate resampler context");
     }
     // Set resampler input samples parameters
@@ -161,14 +160,14 @@ void AudioTrackContext::play()
     // Init resampler context
     if (swr_init(swr_ctx) < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Unable to init resampling context");
     }
 
     // Buffer will be used as it is, no alignment
     if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Could not allocate destination samples");
     }
 
@@ -181,14 +180,14 @@ void AudioTrackContext::setState(TrackState state)
     // Stop or play-pause cycle
     if (state == STOPPED)
     {
-        stop();
+        close();
     }
     else
     {
         switch (this->state)
         {
             case STOPPED:
-                play();
+                open();
                 break;
             case PLAYING:
                 this->state = PAUSED;
@@ -231,25 +230,25 @@ AudioTrackFrame AudioTrackContext::readSamples()
                 switch (avcodec_send_packet(decoder_ctx, packet))
                 {
                     case AVERROR(EAGAIN):
-                        stop();
+                        close();
                         throw std::runtime_error("Error while sending a packet to the decoder v1");
                         break;
                     case AVERROR_EOF:
-                        stop();
+                        close();
                         throw std::runtime_error("Error while sending a packet to the decoder v2");
                         break;
                     case AVERROR(EINVAL):
-                        stop();
+                        close();
                         throw std::runtime_error("Error while sending a packet to the decoder v3");
                         break;
                     case AVERROR(ENOMEM):
-                        stop();
+                        close();
                         throw std::runtime_error("Error while sending a packet to the decoder v4");
                         break;
                     default:
                         if (packet==NULL)
                         {
-                            stop();
+                            close();
                             throw std::runtime_error("Error while sending a packet to the decoder");
                         }
                         break;
@@ -264,7 +263,7 @@ AudioTrackFrame AudioTrackContext::readSamples()
         // Other errors
         else if (res < 0)
         {
-            stop();
+            close();
             throw std::runtime_error("Error while receiving a frame from the decoder");
         }
         // Success
@@ -281,7 +280,7 @@ AudioTrackFrame AudioTrackContext::readSamples()
         av_freep(&swr_data[0]);
         if (av_samples_alloc(swr_data, &swr_linesize, ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
         {
-            stop();
+            close();
             throw std::runtime_error("Error allocating converted samples");
         }
         swr_nb_samples = frame->nb_samples;
@@ -291,14 +290,14 @@ AudioTrackFrame AudioTrackContext::readSamples()
     int samples_per_channel = swr_convert(swr_ctx, swr_data, swr_nb_samples, (const uint8_t **)frame->extended_data, frame->nb_samples);
     if (samples_per_channel < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Error while converting");
     }
     // Get resulting buffer size
     swr_bufsize = av_samples_get_buffer_size(&swr_linesize, ch_layout.nb_channels, samples_per_channel, sample_format, 1);
     if (swr_bufsize < 0)
     {
-        stop();
+        close();
         throw std::runtime_error("Could not get sample buffer size");
     }
 

@@ -1,13 +1,13 @@
-#include <AudioPlayerManagers/MicrophonePlayerManager.hpp>
+#include <AudioPlayerWidgets/MicrophonePlayerWidget.hpp>
 
 
-MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget const *devices, QString name, QWidget *parent)
+MicrophonePlayerWidget::MicrophonePlayerWidget(QTabWidget const *devices, QString name, QWidget *parent)
 // Init of the player happens here
-: AudioPlayerManager(new MicrophonePlayer(devices), name, parent)
+: AudioPlayerWidget(new MicrophonePlayer(devices), name, parent)
 {
     // Connect signals to player
-    connect(this, &MicrophonePlayerManager::askToStop, (MicrophonePlayer*)this->player, MicrophonePlayer::stop);
-    connect(this, &MicrophonePlayerManager::askToUpdateDevices, (MicrophonePlayer*)this->player, MicrophonePlayer::updateAudioStreams);
+    connect(this, &MicrophonePlayerWidget::askToStop, (MicrophonePlayer*)this->player, MicrophonePlayer::stop);
+    connect(this, &MicrophonePlayerWidget::askToUpdateDevices, (MicrophonePlayer*)this->player, MicrophonePlayer::updateAudioDevices);
 
     /*
     // Header layout:
@@ -17,7 +17,7 @@ MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget const *devices, QStr
     layout->addLayout(header_layout);
     // Start/Stop button
     buttonStartStop = new QPushButton("Start");
-    connect(buttonStartStop, &QPushButton::pressed, this, &MicrophonePlayerManager::startStop);
+    connect(buttonStartStop, &QPushButton::pressed, this, &MicrophonePlayerWidget::startStop);
     header_layout->addWidget(buttonStartStop);
     // Label
     QLabel *label = new QLabel(name);
@@ -25,14 +25,14 @@ MicrophonePlayerManager::MicrophonePlayerManager(QTabWidget const *devices, QStr
 }
 
 
-MicrophonePlayerManager::~MicrophonePlayerManager()
+MicrophonePlayerWidget::~MicrophonePlayerWidget()
 {
     // Stop player
     stop();
 }
 
 
-void MicrophonePlayerManager::stop()
+void MicrophonePlayerWidget::stop()
 {
     // Kill player only if he is working
     if (isRunning)
@@ -48,7 +48,7 @@ void MicrophonePlayerManager::stop()
 }
 
 
-void MicrophonePlayerManager::startStop()
+void MicrophonePlayerWidget::startStop()
 {
     if (isRunning)
     {
@@ -66,7 +66,7 @@ void MicrophonePlayerManager::startStop()
 }
 
 
-void MicrophonePlayerManager::updateDevices()
+void MicrophonePlayerWidget::updateDevices()
 {
     emit askToUpdateDevices();
 }

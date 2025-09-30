@@ -19,8 +19,8 @@
 #include <AudioPlayers/AudioPlayer.hpp>
 
 
-/** Audio player manager widget. Can run, stop and wait provided audio player.*/
-class AudioPlayerManager : public QWidget, WidgetWarnings
+/** Audio player widget.*/
+class AudioPlayerWidget : public QWidget, WidgetWarnings
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
@@ -44,9 +44,9 @@ public:
      *  @param player Audio player.
      *  @param name player name.
     */
-    explicit AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent = nullptr);
+    explicit AudioPlayerWidget(AudioPlayer *player, QString name, QWidget *parent = nullptr);
     /** Destructor.*/
-    ~AudioPlayerManager();
+    ~AudioPlayerWidget();
 
 protected:
 

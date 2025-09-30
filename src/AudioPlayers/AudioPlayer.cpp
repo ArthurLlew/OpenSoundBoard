@@ -10,7 +10,7 @@ AudioPlayer::AudioPlayer(QTabWidget const* devices)
 }
 
 
-void AudioPlayer::updateAudioStreams()
+void AudioPlayer::updateAudioDevices()
 {
     mustUpdateDevices = true;
 }

@@ -1,19 +1,19 @@
-#include <AudioPlayerManagers/MediaFilesPlayerManager.hpp>
+#include <AudioPlayerWidgets/MediaFilesPlayerWidget.hpp>
 
 
-MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QString name, QWidget *parent)
+MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QString name, QWidget *parent)
 // Init of the player happens here
-: AudioPlayerManager(new MediaFilesPlayer(devices), name, parent)
+: AudioPlayerWidget(new MediaFilesPlayer(devices), name, parent)
 {
     // Allow dropping of draggable widgets
     setAcceptDrops(true);
 
     // Connect signals to player
-    connect(this, &MediaFilesPlayerManager::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioStreams);
-    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalNewTrackState, this, &MediaFilesPlayerManager::onTrackStateChanged);
-    connect(this, &MediaFilesPlayerManager::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrack);
-    connect(this, &MediaFilesPlayerManager::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackState);
-    connect(this, &MediaFilesPlayerManager::askNewTrackVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setNewTrackVolume);
+    connect(this, &MediaFilesPlayerWidget::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioDevices);
+    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::updateTrackState, this, &MediaFilesPlayerWidget::onTrackStateChanged);
+    connect(this, &MediaFilesPlayerWidget::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrack);
+    connect(this, &MediaFilesPlayerWidget::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrackState);
+    connect(this, &MediaFilesPlayerWidget::askNewTrackVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrackVolume);
 
     /*
     // Header label:
@@ -38,16 +38,16 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QStr
     box_layout1->addWidget(trackName);
     // Play/Pause button
     buttonPlay = new QPushButton("Play");
-    connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerManager::startStop);
+    connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerWidget::startStop);
     box_layout3->addWidget(buttonPlay);
     // Stop buttom
     QPushButton *button_stop = new QPushButton("Stop");
-    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerManager::stop);
+    connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerWidget::stop);
     box_layout3->addWidget(button_stop);
     // Volume slider and label
     QSlider *volume_slider = new QSlider(Qt::Orientation::Horizontal);
     volumeLabel = new QLabel(QString::number(volume_slider->value()));
-    connect(volume_slider, &QSlider::valueChanged, this, &MediaFilesPlayerManager::setVolume);
+    connect(volume_slider, &QSlider::valueChanged, this, &MediaFilesPlayerWidget::setVolume);
     volume_slider->setRange(0,100);
     volume_slider->setValue(30);
     QRect screeanGeometry = static_cast<QApplication*>(QApplication::instance())->primaryScreen()->availableGeometry();
@@ -58,26 +58,26 @@ MediaFilesPlayerManager::MediaFilesPlayerManager(QTabWidget const *devices, QStr
 }
 
 
-MediaFilesPlayerManager::~MediaFilesPlayerManager()
+MediaFilesPlayerWidget::~MediaFilesPlayerWidget()
 {
-    // Stop player
     stop();
 }
 
 
-void MediaFilesPlayerManager::dragEnterEvent(QDragEnterEvent *event)
+void MediaFilesPlayerWidget::dragEnterEvent(QDragEnterEvent *event)
 {
     if (event->mimeData()->hasFormat("filepath&name"))
         event->acceptProposedAction();
 }
 
 
-void MediaFilesPlayerManager::dropEvent(QDropEvent *event)
+void MediaFilesPlayerWidget::dropEvent(QDropEvent *event)
 {
     // Get file path and name
     QStringList list = QString::fromUtf8(event->mimeData()->data("filepath&name")).split("?");
     
     // Ask player to change track
+    stop();
     emit askNewTrack(list[0]);
     // Update track name
     trackName->setText(list[1]);
@@ -87,22 +87,22 @@ void MediaFilesPlayerManager::dropEvent(QDropEvent *event)
 }
 
 
-void MediaFilesPlayerManager::setVolume(int value)
+void MediaFilesPlayerWidget::setVolume(int value)
 {
     // Ask player to change volume
-    emit askNewTrackVolume(((float)value)/100);
+    emit askNewTrackVolume(QtAudio::convertVolume(value / qreal(100.0), QtAudio::LogarithmicVolumeScale, QtAudio::LinearVolumeScale));
     // Update volume label
     volumeLabel->setText(QString::number(value));
 }
 
 
-void MediaFilesPlayerManager::updateDevices()
+void MediaFilesPlayerWidget::updateDevices()
 {
     emit askToUpdateDevices();
 }
 
 
-void MediaFilesPlayerManager::stop()
+void MediaFilesPlayerWidget::stop()
 {
     // Kill player only if he is working
     if (((MediaFilesPlayer*)player)->getTrackState() != AudioTrackContext::STOPPED)
@@ -114,7 +114,7 @@ void MediaFilesPlayerManager::stop()
 }
 
 
-void MediaFilesPlayerManager::startStop()
+void MediaFilesPlayerWidget::startStop()
 {
     // Play-pause track
     switch (((MediaFilesPlayer*)player)->getTrackState())
@@ -134,7 +134,7 @@ void MediaFilesPlayerManager::startStop()
 }
 
 
-void MediaFilesPlayerManager::onTrackStateChanged(AudioTrackContext::TrackState state)
+void MediaFilesPlayerWidget::onTrackStateChanged(AudioTrackContext::TrackState state)
 {
     switch (state)
     {

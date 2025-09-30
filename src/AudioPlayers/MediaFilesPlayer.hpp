@@ -41,15 +41,15 @@ public:
     /** Gets audio track state.*/
     AudioTrackContext::TrackState getTrackState();
 
-    /** Sets new audio track to play.*/
-    void setNewTrack(QString filepath);
-    /** Sets new audio track state.*/
-    void setNewTrackState(AudioTrackContext::TrackState state);
+    /** Sets audio track.*/
+    void setTrack(QString filepath);
+    /** Sets audio track state.*/
+    void setTrackState(AudioTrackContext::TrackState state);
     /** Sets audio track volume.*/
-    void setNewTrackVolume(float volume);
+    void setTrackVolume(qreal volume);
     
 
 signals:
     /** Emitted to update audio track state.*/
-    void signalNewTrackState(AudioTrackContext::TrackState state);
+    void updateTrackState(AudioTrackContext::TrackState state);
 };

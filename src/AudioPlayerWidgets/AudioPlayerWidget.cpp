@@ -1,7 +1,7 @@
-#include <AudioPlayerManagers/AudioPlayerManager.hpp>
+#include <AudioPlayerWidgets/AudioPlayerWidget.hpp>
 
 
-AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidget *parent)
+AudioPlayerWidget::AudioPlayerWidget(AudioPlayer *player, QString name, QWidget *parent)
 : QWidget(parent)
 {
     this->player = player;
@@ -12,7 +12,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
     threadpool->setExpiryTimeout(-1);
 
     // Connect signal to player
-    connect(this->player, AudioPlayer::signalError, this, &AudioPlayerManager::playerError);
+    connect(this->player, AudioPlayer::signalError, this, &AudioPlayerWidget::playerError);
 
     // Main layout
     layout = new QVBoxLayout();
@@ -21,7 +21,7 @@ AudioPlayerManager::AudioPlayerManager(AudioPlayer *player, QString name, QWidge
 }
 
 
-AudioPlayerManager::~AudioPlayerManager()
+AudioPlayerWidget::~AudioPlayerWidget()
 {
     // Delete player and threadpool
     delete player;
@@ -29,7 +29,7 @@ AudioPlayerManager::~AudioPlayerManager()
 }
 
 
-void AudioPlayerManager::paintEvent(QPaintEvent *)
+void AudioPlayerWidget::paintEvent(QPaintEvent *)
 {
     QStyleOption opt;
     opt.initFrom(this);
@@ -38,7 +38,7 @@ void AudioPlayerManager::paintEvent(QPaintEvent *)
 }
 
 
-void AudioPlayerManager::playerError(QString message)
+void AudioPlayerWidget::playerError(QString message)
 {
     displayWarning(name + " error:\n" + message);
     // Update player state

@@ -32,8 +32,8 @@
 #include <WidgetMessages.hpp>
 #include <DeviceTab.hpp>
 #include <AudioTrack.hpp>
-#include <AudioPlayerManagers/MicrophonePlayerManager.hpp>
-#include <AudioPlayerManagers/MediaFilesPlayerManager.hpp>
+#include <AudioPlayerWidgets/MicrophonePlayerWidget.hpp>
+#include <AudioPlayerWidgets/MediaFilesPlayerWidget.hpp>
 
 
 /** Application main window.*/
@@ -53,11 +53,11 @@ class MainWindow: public QMainWindow, WidgetWarnings
     QTabWidget *devices = nullptr;
 
     /** Microphone player manager.*/
-    MicrophonePlayerManager *microphonePlayerManager = nullptr;
+    MicrophonePlayerWidget *microphonePlayerWidget = nullptr;
     /** Media files player manager.*/
-    MediaFilesPlayerManager *mediafilesPlayerManager1 = nullptr;
+    MediaFilesPlayerWidget *mediafilesPlayerWidget1 = nullptr;
     /** Media files player manager.*/
-    MediaFilesPlayerManager *mediafilesPlayerManager2 = nullptr;
+    MediaFilesPlayerWidget *mediafilesPlayerWidget2 = nullptr;
 
 public:
 

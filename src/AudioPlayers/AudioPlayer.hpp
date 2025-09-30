@@ -56,8 +56,8 @@ protected:
 
 public:
 
-    /** Updates audio streams.*/
-    virtual void updateAudioStreams();
+    /** Updates audio devices.*/
+    virtual void updateAudioDevices();
 
     /** Player cycle (pure virtual).*/
     virtual void run() = 0;

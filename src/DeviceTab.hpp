@@ -28,7 +28,7 @@ class DeviceTab: public QWidget
 
 public:
 
-    /** Combobox with device names.*/
+    /** Combobox with devices.*/
     QComboBox *combobox_devices = nullptr;
     /** Describes audio device type.*/
     enum DeviceType
@@ -51,10 +51,10 @@ public:
     /** Handles paint event.*/
     void paintEvent(QPaintEvent *) override;
 
-    /** Refresh devices list.*/
+    /** Refreshes devices list.*/
     void refreshDevices();
     
-    /** Get info about selected device.
+    /** Returns info about selected device.
      * 
      *  @return Audio device info.
     */

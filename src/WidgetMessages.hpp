@@ -13,7 +13,7 @@
 #include <QtWidgets/QMessageBox>
 
 
-/** Describes warning messageboxes that can be shown to user.*/
+/** Implements warning messagebox functionality.*/
 class WidgetWarnings
 {
 protected:

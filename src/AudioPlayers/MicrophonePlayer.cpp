@@ -33,8 +33,6 @@ QIODevice* MicrophonePlayer::restartAudioSource(QAudioSource **audioSource, Devi
 void MicrophonePlayer::run()
 {
     isRunning = true;
-    // Create audio streams on launch
-    mustUpdateDevices = true;
 
     try
     {

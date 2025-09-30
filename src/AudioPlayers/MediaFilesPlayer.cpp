@@ -16,9 +16,6 @@ void MediaFilesPlayer::run()
     if (track == nullptr)
         return;
 
-    // Create audio streams on launch
-    mustUpdateDevices = true;
-
     // Track state update macro
     #define TRACK_STATE_UPDATE(state) \
         track->setState(state); \

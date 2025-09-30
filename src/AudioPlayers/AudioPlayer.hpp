@@ -24,8 +24,8 @@ protected:
     /** Tab widget that describes available devices.*/
     QTabWidget const *devices = nullptr;
 
-    /** Device update schedule.*/
-    bool mustUpdateDevices = false;
+    /** Whether devices should be updated (always update at startup).*/
+    bool mustUpdateDevices = true;
 
     /** Audio output (virtual cable).*/
     QAudioSink *audioVCableSink = nullptr;

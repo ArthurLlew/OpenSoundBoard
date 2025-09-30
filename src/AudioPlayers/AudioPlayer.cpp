@@ -18,8 +18,12 @@ void AudioPlayer::updateAudioDevices()
 
 QIODevice* AudioPlayer::restartAudioSink(QAudioSink **audioSink, DeviceTab *deviceTab, const QAudioFormat &format)
 {
-    // Delete previous audio sink
-    delete *audioSink;
+    // Stop and delete previous audio sink
+    if (*audioSink != nullptr)
+    {
+        (*audioSink)->stop();
+        delete *audioSink;
+    }
 
     // Get currrently selected device
     QAudioDevice audio_device = deviceTab->getDevice();

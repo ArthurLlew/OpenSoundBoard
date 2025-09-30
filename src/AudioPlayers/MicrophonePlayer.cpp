@@ -6,8 +6,12 @@ MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devi
 
 QIODevice* MicrophonePlayer::restartAudioSource(QAudioSource **audioSource, DeviceTab *deviceTab)
 {
-    // Delete previous audio source
-    delete *audioSource;
+    // Stop and delete previous audio source
+    if (*audioSource != nullptr)
+    {
+        (*audioSource)->stop();
+        delete *audioSource;
+    }
 
     // Get currrently selected device
     QAudioDevice audio_device = deviceTab->getDevice();

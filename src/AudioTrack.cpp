@@ -35,12 +35,14 @@ void AudioTrack::mouseMoveEvent(QMouseEvent *event)
     if ((event->pos() - dragStartPosition).manhattanLength() < QApplication::startDragDistance())
         return;
 
-    // Create draggable object and fill MIME data with fila path and name ('?' is not allowed in file
-    // path so use it as delimiter)
+    // Create draggable object and fill MIME data with file path and name ('?' is not allowed in file
+    // path so use it as delimiter). Also set pixmap icon.
     QDrag *drag = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
     mimeData->setData("filepath&name", (filepath + "?" + name).toUtf8());
     drag->setMimeData(mimeData);
+    QPixmap pixmap(":/resources/dragged_track.png");
+    drag->setPixmap(pixmap);
 
     // Invoke drag action
     Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);

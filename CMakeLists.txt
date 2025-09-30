@@ -65,6 +65,16 @@ set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY Qt6Core_VERSION_MI
 add_executable(OpenSoundBoard WIN32 ${SOURCES} ${APP_ICON})
 add_executable(OpenSoundBoard_debug ${SOURCES} ${APP_ICON})
 
+# Embeded resources using Qt6
+find_package(Qt6 REQUIRED COMPONENTS Core)
+set(EMBEDED_RESOURCES resources/arrow_up.png resources/arrow_down.png resources/dragged_track.png)
+qt_add_resources(OpenSoundBoard "resources"
+    PREFIX "/"
+    FILES ${EMBEDED_RESOURCES})
+qt_add_resources(OpenSoundBoard_debug "resources"
+    PREFIX "/"
+    FILES ${EMBEDED_RESOURCES})
+
 # Is used to process all QT macros with MOC to generate additional code
 set_property(TARGET OpenSoundBoard PROPERTY AUTOMOC ON)
 set_property(TARGET OpenSoundBoard_debug PROPERTY AUTOMOC ON)

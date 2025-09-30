@@ -139,3 +139,50 @@ QSlider::add-page:horizontal
 {
     background: rgb(133, 133, 133);
 }
+
+/* Scroll bar */
+QScrollBar:vertical {
+    background: #171717;
+    width: 18px;
+    margin: 16px 0 16px 0;
+}
+/* Scroll bar handle */
+QScrollBar::handle:vertical {
+    border: 1px solid #171717;
+    background: #4d4d4d;
+}
+QScrollBar::handle:vertical:hover {
+    border: 1px solid #171717;
+    background: #7a7a7a;
+}
+/* Scroll bar arrows */
+QScrollBar::sub-line:vertical {
+    background: #171717 url(:/resources/arrow_up.png);
+    height: 16px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+QScrollBar::sub-line:vertical:hover {
+    background: #373737 url(:/resources/arrow_up.png);
+    height: 16px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+QScrollBar::add-line:vertical {
+    background: #171717 url(:/resources/arrow_down.png);
+    height: 16px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+QScrollBar::add-line:vertical:hover {
+    background: #373737 url(:/resources/arrow_down.png);
+    height: 16px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    border: 1px solid #171717;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}

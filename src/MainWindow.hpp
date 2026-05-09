@@ -64,10 +64,7 @@ public:
 
 protected:
 
-    /** Handles paint event.
-     * 
-     *  @param event event info.
-    */
+    /** Redifinition allows usage of QSS.*/
     void paintEvent(QPaintEvent *event) override;
 
     /** Select directory with media files.*/

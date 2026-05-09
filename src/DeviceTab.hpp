@@ -48,7 +48,7 @@ public:
     /** Destructor.*/
     ~DeviceTab();
 
-    /** Handles paint event.*/
+    /** Redifinition allows usage of QSS.*/
     void paintEvent(QPaintEvent *) override;
 
     /** Refreshes devices list.*/

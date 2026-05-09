@@ -50,7 +50,7 @@ public:
 
 protected:
 
-    /** Handles paint event.*/
+    /** Redifinition allows usage of QSS.*/
     void paintEvent(QPaintEvent *) override;
 
     /** Display player error.

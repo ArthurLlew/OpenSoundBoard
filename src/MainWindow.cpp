@@ -1,9 +1,25 @@
 #include <MainWindow.hpp>
 
+#include <SDL2/SDL.h>
+#include <iostream>
+
+void listDevices() {
+    SDL_Init(SDL_INIT_AUDIO);
+    // 0 — устройства воспроизведения (speakers), 1 — записи (mic)
+    int count = SDL_GetNumAudioDevices(0); 
+    
+    std::cout << "devices count: " << count << std::endl;
+    for (int i = 0; i < count; ++i) {
+        const char* name = SDL_GetAudioDeviceName(i, 0); //
+        std::cout << "  [" << i << "] " << (name ? name : "Unknown") << std::endl;
+    }
+}
+
 
 // Constructor
 MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
+    listDevices();
     // Set application title
     setWindowTitle("OpenSoundBoard");
 

@@ -2,13 +2,6 @@
 
 // Qt core (defines Q_OS_WIN among other things)
 #include <QtCore/Qt>
-// Windows headers
-#ifdef Q_OS_WIN
-#define WINVER 0x0A00
-#include <windows.h>
-#include <windowsx.h>
-#include <dwmapi.h>
-#endif
 // Qt
 #include <QtWidgets/QMessageBox>
 

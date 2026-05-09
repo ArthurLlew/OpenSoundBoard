@@ -327,16 +327,16 @@ public:
                     av_packet_unref(packet);
                 }
             }
+            // Success
+            else if (res == 0)
+            {
+                break;
+            }
             // Other errors
-            else if (res < 0)
+            else
             {
                 close();
                 throw std::runtime_error("Error while receiving a frame from the decoder");
-            }
-            // Success
-            else
-            {
-                break;
             }
         }
 

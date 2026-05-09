@@ -4,7 +4,6 @@
 // Constructor
 MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
-    listDevices();
     // Set application title
     setWindowTitle("OpenSoundBoard");
 

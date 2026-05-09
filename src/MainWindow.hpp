@@ -2,13 +2,6 @@
 
 // Qt core (defines Q_OS_WIN among other things)
 #include <QtCore/Qt>
-// Windows headers
-#ifdef Q_OS_WIN
-#define WINVER 0x0A00
-#include <windows.h>
-#include <windowsx.h>
-#include <dwmapi.h>
-#endif
 // Qt
 #include <QtCore/QRect>
 #include <QtCore/QString>
@@ -76,15 +69,6 @@ protected:
      *  @param event event info.
     */
     void paintEvent(QPaintEvent *event) override;
-    /** Handles native events (for example, allows to handle resizing).
-     * 
-     *  @param eventType event type.
-     *  @param message event info.
-     *  @param result method handling result
-     * 
-     *  @return True if the event was handled, otherwise false.
-    */
-    bool nativeEvent(const QByteArray &, void *message, qintptr *result) override;
 
     /** Select directory with media files.*/
     void selectDirectory();

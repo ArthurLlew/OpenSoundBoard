@@ -10,7 +10,6 @@
 #include <QtMultimedia/QAudioSink>
 // Custom
 #include <DeviceTab.hpp>
-#include <AudioPlayers/AudioTrackContext.hpp>
 
 
 /** Basic player class.*/
@@ -44,6 +43,21 @@ public:
 
 protected:
 
+    /**
+     * Stops given audio stream.
+     */
+    template<typename QAudioStream>
+    void stopAudioStream(QAudioStream **audioStream)
+    {
+        // Stop and delete previous audio sink
+        if (*audioStream != nullptr)
+        {
+            (*audioStream)->stop();
+            delete *audioStream;
+            *audioStream = nullptr;
+        }
+    }
+
     /** Restarts given audio sink.
      * 
      *  @param audioSink Audio sink to restart.
@@ -51,7 +65,7 @@ protected:
      *  @param format Audio format to use when opening audio sink.
      * 
      *  @return IO device of restarted audio sink.
-    */
+     */
     virtual QIODevice* restartAudioSink(QAudioSink **audioSink, DeviceTab *deviceTab, const QAudioFormat &format);
 
 public:

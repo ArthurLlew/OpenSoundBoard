@@ -11,7 +11,6 @@
 // Custom
 #include <DeviceTab.hpp>
 #include <AudioPlayers/AudioPlayer.hpp>
-#include <AudioPlayers/AudioTrackContext.hpp>
 
 
 /** Player that reroutes microphone input to outputs.*/

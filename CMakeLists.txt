@@ -1,5 +1,5 @@
 # Min CMake version
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 4.0)
 
 # Sets C/C++ compilers
 set(CMAKE_C_COMPILER "gcc")
@@ -41,7 +41,7 @@ set(SOURCES src/main.cpp src/MainWindow.cpp src/WidgetMessages.cpp src/DeviceTab
             src/AudioPlayerWidgets/AudioPlayerWidget.cpp src/AudioPlayerWidgets/MicrophonePlayerWidget.cpp
             src/AudioPlayerWidgets/MediaFilesPlayerWidget.cpp
             src/AudioPlayers/AudioPlayer.cpp src/AudioPlayers/MicrophonePlayer.cpp src/AudioPlayers/MediaFilesPlayer.cpp
-            src/AudioPlayers/AudioTrackContext.cpp)
+            src/AudioPlayers/AudioTrackReader.cpp)
 # Define names of static libraries
 set(LIBS dwmapi avutil avcodec avformat swresample)
 # Add static libraries

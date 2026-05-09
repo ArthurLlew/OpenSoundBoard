@@ -4,13 +4,6 @@
 // Constructor
 MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
-    #ifdef Q_OS_WIN
-    // Set darkmode for Windows
-    BOOL use_dark_mode = true;
-    DwmSetWindowAttribute(HWND(winId()), DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE,
-                            &use_dark_mode, sizeof(use_dark_mode));
-    #endif
-
     // Set application title
     setWindowTitle("OpenSoundBoard");
 
@@ -123,31 +116,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
     opt.initFrom(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
-}
-
-
-bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
-{
-    #ifdef Q_OS_WIN
-    // Parse message
-    MSG *msg = static_cast<MSG*>(message);
-
-    // Handle event
-    switch (msg->message)
-    {
-        case WM_NCCALCSIZE:
-        {
-            // Adjust gap between app client area and title bar
-            ((NCCALCSIZE_PARAMS*)msg->lParam)->rgrc->top -= 1;
-            break;
-        }
-        default:
-            break;
-    }
-    #endif
-
-    // Default handling
-    return QMainWindow::nativeEvent(eventType, message, result);
 }
 
 

@@ -35,9 +35,6 @@ class MediaFilesPlayerWidget : public AudioPlayerWidget
     /** Volume label.*/
     QLabel *volumeLabel = nullptr;
 
-    /** Track current state.*/
-    AudioTrackContext::TrackState trackState = AudioTrackContext::STOPPED;
-
 public:
 
     /** Constructor.
@@ -74,7 +71,7 @@ public:
     void updateDevices();
     
     /** Handler for track state update signal.*/
-    void onTrackStateChanged(AudioTrackContext::TrackState state);
+    void onTrackStateChanged(MediaFilesPlayer::TrackState state);
 
 signals:
     /** Ask player to set new track.
@@ -86,7 +83,7 @@ signals:
      * 
      *  @param state New track state.
     */
-    void askNewTrackState(AudioTrackContext::TrackState state);
+    void askNewTrackState(MediaFilesPlayer::TrackState state);
     /** Ask player to change track volume.
      * 
      *  @param volume New track volume.

@@ -9,19 +9,33 @@
 // Custom
 #include <DeviceTab.hpp>
 #include <AudioPlayers/AudioPlayer.hpp>
-#include <AudioPlayers/AudioTrackContext.hpp>
+#include <AudioPlayers/AudioTrackReader.cpp>
 
 
-/** Player that manages media files.*/
+/**
+ * Player that manages media files.
+ */
 class  MediaFilesPlayer : public AudioPlayer
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
+public:
+    /** Describes track state.*/
+    enum TrackState{
+        STOPPED,
+        PLAYING,
+        PAUSED
+    };
+
+private:
     /** Current track.*/
     AudioTrackContext *track = nullptr;
+    /** Current track state.*/
+    TrackState state = STOPPED;
     /** Requested track state.*/
-    AudioTrackContext::TrackState newTrackState = AudioTrackContext::STOPPED;
+    TrackState newTrackState = STOPPED;
+
     /** Audio volume.*/
     float volume = 0.5;
 
@@ -37,19 +51,27 @@ public:
 
     /** Player cycle.*/
     void run();
-    
-    /** Gets audio track state.*/
-    AudioTrackContext::TrackState getTrackState();
 
     /** Sets audio track.*/
     void setTrack(QString filepath);
-    /** Sets audio track state.*/
-    void setTrackState(AudioTrackContext::TrackState state);
+    
+    /**
+     * @return audio track state.
+     */
+    TrackState getTrackState();
+    /**
+     *  @param state new track state.
+    */
+    void setTrackState(TrackState state);
+    /**
+     *  @param state new track state.
+    */
+    void nextTrackState(TrackState state);
+
     /** Sets audio track volume.*/
     void setTrackVolume(qreal volume);
     
-
 signals:
     /** Emitted to update audio track state.*/
-    void updateTrackState(AudioTrackContext::TrackState state);
+    void updateTrackState(TrackState state);
 };

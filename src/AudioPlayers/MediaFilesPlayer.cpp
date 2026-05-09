@@ -1,6 +1,5 @@
 #include <AudioPlayers/MediaFilesPlayer.hpp>
 
-
 MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices) : AudioPlayer(devices) {}
 
 
@@ -16,15 +15,10 @@ void MediaFilesPlayer::run()
     if (track == nullptr)
         return;
 
-    // Track state update macro
-    #define TRACK_STATE_UPDATE(state) \
-        track->setState(state); \
-        emit updateTrackState(state);
-
     try
     {
-        // Init track state
-        TRACK_STATE_UPDATE(AudioTrackContext::PLAYING)
+        // Start playing track
+        setTrackState(PLAYING);
 
         // Audio track format
         QAudioFormat format;
@@ -33,7 +27,7 @@ void MediaFilesPlayer::run()
         format.setSampleFormat(QAudioFormat::Float);
 
         // Player cycle
-        while (track->state != AudioTrackContext::STOPPED)
+        while (state != STOPPED)
         {
             // Update streams if needed
             if (mustUpdateDevices)
@@ -52,20 +46,20 @@ void MediaFilesPlayer::run()
                 throw std::runtime_error("Audio output suddenly stopped");
 
             // Set scheduled track state
-            if (track->state != newTrackState)
+            if (state != newTrackState)
             {
-                TRACK_STATE_UPDATE(newTrackState)
+                setTrackState(newTrackState);
             }
 
-            if (track->state == AudioTrackContext::PLAYING)
+            if (state == PLAYING)
             {
                 // Read new frame
-                AudioTrackFrame frame = track->readSamples();
+                AudioTrackFrame frame = track->readSample();
 
                 if (frame.size > 0)
                 {
                     // Convert frame
-                    QByteArray sound = QByteArray((char*)frame.data, frame.size/2);
+                    QByteArray sound = QByteArray((char*)frame.data, frame.size/track->getChannelCount());
 
                     // Wait for availiable space and write data
                     while ((audioVCableSink->bytesFree() < frame.size) || (audioSink->bytesFree() < frame.size)) {}
@@ -75,55 +69,77 @@ void MediaFilesPlayer::run()
                 else
                 {
                     // Wait for the track to finish
-                    while ((track->state != AudioTrackContext::STOPPED) &&
-                           ((audioVCableSink->bufferSize() != audioVCableSink->bytesFree())
-                            || (audioSink->bufferSize() != audioSink->bytesFree()))) {}
+                    while (audioVCableSink->bufferSize() != audioVCableSink->bytesFree()
+                           || audioSink->bufferSize() != audioSink->bytesFree()) {}
 
-                    // Track has ended: update state and notify manager
-                    TRACK_STATE_UPDATE(AudioTrackContext::STOPPED)
+                    // Track has ended: update state
+                    setTrackState(STOPPED);
                 }
             }
         }
     }
     catch(const std::exception& e)
     {
-        // Error: update track state and notify manager
-        TRACK_STATE_UPDATE(AudioTrackContext::STOPPED)
+        // Error: update track state
+        setTrackState(STOPPED);
         emit signalError(e.what());
     }
 
-    #undef TRACK_STATE_UPDATE
-
-    // Free streams
-    audioVCableSink->stop();
-    delete audioVCableSink;
-    audioVCableSink = nullptr;
-    audioSink->stop();
-    delete audioSink;
-    audioSink = nullptr;
+    // Stop streams
+    stopAudioStream(&audioVCableSink);
+    stopAudioStream(&audioSink);
+    // Raise update flag
+    mustUpdateDevices = true;
 }
 
 
-AudioTrackContext::TrackState MediaFilesPlayer::getTrackState()
+MediaFilesPlayer::TrackState MediaFilesPlayer::getTrackState()
 {
-    return track == nullptr ? AudioTrackContext::STOPPED : track-> state;
+    return track == nullptr ? STOPPED : state;
+}
+
+
+void MediaFilesPlayer::setTrackState(TrackState state)
+{
+    if (track != nullptr)
+    {
+        // Close track if set to stop
+        if (this->state == PLAYING || this->state == PAUSED && state == STOPPED)
+        {
+            track->close();
+        }
+        // Start track if was stopped
+        if (this->state == STOPPED && state == PLAYING || state == PAUSED)
+        {
+            track->open();
+        }
+
+        // Update state
+        this->state = state;
+        newTrackState = state;
+
+        emit updateTrackState(this->state);
+    }
+}
+
+void MediaFilesPlayer::nextTrackState(TrackState state)
+{
+    if (track != nullptr)
+        newTrackState = state;
 }
 
 
 void MediaFilesPlayer::setTrack(QString filepath)
 {
     // Manage old track
-    delete track;
+    if (track != nullptr)
+    {
+        delete track;
+        track = nullptr;
+    }
+
     // Create new track context
     track = new AudioTrackContext(filepath);
-    // Update track state
-    emit updateTrackState(track->state);
-}
-
-
-void MediaFilesPlayer::setTrackState(AudioTrackContext::TrackState state)
-{
-    newTrackState = state;
 }
 
 

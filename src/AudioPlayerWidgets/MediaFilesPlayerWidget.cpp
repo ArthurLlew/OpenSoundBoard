@@ -12,7 +12,7 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     connect(this, &MediaFilesPlayerWidget::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioDevices);
     connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::updateTrackState, this, &MediaFilesPlayerWidget::onTrackStateChanged);
     connect(this, &MediaFilesPlayerWidget::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrack);
-    connect(this, &MediaFilesPlayerWidget::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrackState);
+    connect(this, &MediaFilesPlayerWidget::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::nextTrackState);
     connect(this, &MediaFilesPlayerWidget::askNewTrackVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrackVolume);
 
     /*
@@ -104,11 +104,11 @@ void MediaFilesPlayerWidget::updateDevices()
 
 void MediaFilesPlayerWidget::stop()
 {
-    // Kill player only if he is working
-    if (((MediaFilesPlayer*)player)->getTrackState() != AudioTrackContext::STOPPED)
+    // Kill player only if it is working
+    if (((MediaFilesPlayer*)player)->getTrackState() != MediaFilesPlayer::STOPPED)
     {
         // Stop track
-        emit askNewTrackState(AudioTrackContext::STOPPED);
+        emit askNewTrackState(MediaFilesPlayer::STOPPED);
         threadpool->waitForDone(-1);
     }
 }
@@ -119,32 +119,33 @@ void MediaFilesPlayerWidget::startStop()
     // Play-pause track
     switch (((MediaFilesPlayer*)player)->getTrackState())
     {
-        case AudioTrackContext::STOPPED:
-            // Start player
+        // Start player
+        case MediaFilesPlayer::STOPPED:
+            threadpool->waitForDone(-1);
             threadpool->start(player);
-        case AudioTrackContext::PAUSED:
-            // Set new track state
-            emit askNewTrackState(AudioTrackContext::PLAYING);
+        // Set playing
+        case MediaFilesPlayer::PAUSED:
+            emit askNewTrackState(MediaFilesPlayer::PLAYING);
             break;
-        case AudioTrackContext::PLAYING:
-            // Set new track state
-            emit askNewTrackState(AudioTrackContext::PAUSED);
+        // Set paused
+        case MediaFilesPlayer::PLAYING:
+            emit askNewTrackState(MediaFilesPlayer::PAUSED);
             break;
     }
 }
 
 
-void MediaFilesPlayerWidget::onTrackStateChanged(AudioTrackContext::TrackState state)
+void MediaFilesPlayerWidget::onTrackStateChanged(MediaFilesPlayer::TrackState state)
 {
     switch (state)
     {
-        case AudioTrackContext::STOPPED:
-        case AudioTrackContext::PAUSED:
-            // Update button
+        // Stopped and paused state
+        case MediaFilesPlayer::STOPPED:
+        case MediaFilesPlayer::PAUSED:
             buttonPlay->setText("Play");
             break;
-        case AudioTrackContext::PLAYING:
-            // Update button
+        // Playing state
+        case MediaFilesPlayer::PLAYING:
             buttonPlay->setText("Pause");
             break;
     }

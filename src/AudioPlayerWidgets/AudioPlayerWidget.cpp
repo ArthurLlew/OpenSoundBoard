@@ -44,3 +44,9 @@ void AudioPlayerWidget::playerError(QString message)
     // Update player state
     stop();
 }
+
+
+void AudioPlayerWidget::updateDevices()
+{
+    emit askToUpdateDevices();
+}

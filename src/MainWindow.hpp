@@ -31,50 +31,58 @@
 #include <AudioPlayerWidgets/MediaFilesPlayerWidget.hpp>
 
 
-/** Application main window.*/
+/**
+ * Main window widget of application.
+ */
 class MainWindow: public QMainWindow, WidgetWarning
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
-    /** Mouse position picked up by mousePressEvent.*/
-    QPoint mouseClickedPos;
-
-    /** App title widget.*/
-    QWidget *titleBar = nullptr;
-    /** List of tracks.*/
+    // List of tracks.
     QTableWidget *tracks = nullptr;
-    /** Devices tab.*/
+    // Devices tab.
     QTabWidget *devices = nullptr;
 
-    /** Microphone player manager.*/
+    // Microphone player manager.
     MicrophonePlayerWidget *microphonePlayerWidget = nullptr;
-    /** Media files player manager.*/
+    // Media files player manager 1.
     MediaFilesPlayerWidget *mediafilesPlayerWidget1 = nullptr;
-    /** Media files player manager.*/
+    // Media files player manager 2.
     MediaFilesPlayerWidget *mediafilesPlayerWidget2 = nullptr;
 
 public:
 
-    /** Constructor.
+    /**
+     * Constructor.
      * 
-     *  @param app QT application.
+     * @param app Qt application
     */
     explicit MainWindow(const QApplication *app, QWidget *parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
-    /** Destructor.*/
+    /**
+     * Destructor.
+     */
     ~MainWindow();
 
 protected:
 
-    /** Redifinition allows usage of QSS.*/
+    /**
+     * Reimplemented to allow usage of QSS.
+     */
     void paintEvent(QPaintEvent *event) override;
 
-    /** Select directory with media files.*/
+    /**
+     * Opens directory (via file dialog) and loads info about all media files in it.
+     */
     void selectDirectory();
 
-    /** Updates devices in active players.*/
+    /**
+     * Updates list of audio devices in media players.
+     */
     void updateDevices();
 
-    /** Refreshes lists of input/output devices.*/
+    /**
+     * Updates list of audio devices.
+     */
     void refreshDevices();
 };

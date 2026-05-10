@@ -18,7 +18,9 @@
 #include <AudioPlayers/AudioPlayer.hpp>
 
 
-/** Audio player widget.*/
+/**
+ * Audio player widget.
+ */
 class AudioPlayerWidget : public QWidget, WidgetWarning
 {
     // Mandatory for QWidget stuff to work
@@ -26,50 +28,64 @@ class AudioPlayerWidget : public QWidget, WidgetWarning
 
 protected:
 
-    /** Manager name.*/
+    // Manager name.
     QString name;
-    /** Widget main layout.*/
+    // Widget main layout.
     QVBoxLayout *layout = nullptr;
 
-    /** Thread pool where player will run.*/
+    // Thread pool where player will run.
     QThreadPool *threadpool = nullptr;
-    /** Audio player.*/
+    // Audio player.
     AudioPlayer *player = nullptr;
 
 public:
 
-    /** Constructor.
+    /**
+     * Constructor.
      * 
-     *  @param player Audio player.
-     *  @param name player name.
-    */
+     * @param player Audio player
+     * @param name player name
+     */
     explicit AudioPlayerWidget(AudioPlayer *player, QString name, QWidget *parent = nullptr);
-    /** Destructor.*/
+    /**
+     * Destructor.
+     */
     ~AudioPlayerWidget();
 
 protected:
 
-    /** Redifinition allows usage of QSS.*/
+    /**
+     * Reimplemented to allow usage of QSS.
+     */
     void paintEvent(QPaintEvent *) override;
 
-    /** Display player error.
+    /**
+     * Display player error.
      * 
-     *  @param message error message.
-    */
+     * @param message error message
+     */
     void playerError(QString message);
 
-    /** Start/Stop player.*/
+    /**
+     * Start/Stop player.
+     */
     virtual void startStop() = 0;
 
 public:
 
-    /** Stop player.*/
+    /**
+     * Stop player.
+     */
     virtual void stop() = 0;
 
-    /** Updates devices in running player.*/
-    virtual void updateDevices() = 0;
+    /**
+     * Updates devices in running player.
+     */
+    void updateDevices();
 
 signals:
-    /** Ask player to update devices.*/
+    /**
+     * Signals player to update devices.
+     */
     void askToUpdateDevices();
 };

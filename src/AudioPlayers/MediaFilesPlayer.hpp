@@ -16,57 +16,75 @@ class  MediaFilesPlayer : public AudioPlayer
     Q_OBJECT
 
 public:
-    /** Describes track state.*/
-    enum TrackState{
+
+    /**
+     * Describes track state.
+     */
+    enum State{
         STOPPED,
         PLAYING,
         PAUSED
     };
 
 private:
-    /** Current track.*/
-    AudioTrackContext *track = nullptr;
-    /** Current track state.*/
-    TrackState state = STOPPED;
-    /** Requested track state.*/
-    TrackState newTrackState = STOPPED;
 
-    /** Audio volume.*/
+    // Current track.
+    AudioTrackContext *track = nullptr;
+    // Current track state.
+    State state = STOPPED;
+    // Requested track state.
+    State nextTrackState = STOPPED;
+
+    // Audio volume.
     float volume = 0.5;
 
 public:
 
-    /** Constructor.
+    /**
+     * Constructor.
      * 
-     *  @param devices Tab widget that describes available devices.
-    */
+     * @param devices tab widget that describes available devices
+     */
     explicit MediaFilesPlayer(QTabWidget const *devices);
-    /** Destructor.*/
+    /**
+     * Destructor.
+     */
     ~MediaFilesPlayer();
 
-    /** Player cycle.*/
+    /**
+     * @return player state
+     */
+    State getState() { return track == nullptr ? STOPPED : state; }
+
+    /**
+     * Player cycle.
+     */
     void run();
 
-    /** Sets audio track.*/
-    void setTrack(QString filepath);
-    
     /**
-     * @return audio track state.
+     * Sets audio track.
      */
-    TrackState getTrackState();
-    /**
-     *  @param state new track state.
-    */
-    void setTrackState(TrackState state);
-    /**
-     *  @param state new track state.
-    */
-    void nextTrackState(TrackState state);
+    void setTrack(QString filepath);
 
-    /** Sets audio track volume.*/
-    void setTrackVolume(qreal volume);
+    /**
+     * Sets audio track volume
+     */
+    void setVolume(qreal volume);
+
+private:
+    /**
+     * @param state new track state
+     */
+    void setState(State state);
+public:
+    /**
+     * @param state planned track state
+     */
+    void setPlannedState(State state);
     
 signals:
-    /** Emitted to update audio track state.*/
-    void updateTrackState(TrackState state);
+    /**
+     * Signals to update audio track state
+     */
+    void signalState(State state);
 };

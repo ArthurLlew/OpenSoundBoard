@@ -11,71 +11,86 @@
 #include <AudioPlayers/MediaFilesPlayer.hpp>
 
 
-/** Media files player widget.*/
+/**
+ * Media files player widget.
+ */
 class MediaFilesPlayerWidget : public AudioPlayerWidget
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
-    /** Track name label.*/
+    // Track name label.
     QLabel *trackName = nullptr;
-    /** Play button.*/
+    // Play button.
     QPushButton *buttonPlay = nullptr;
-    /** Volume label.*/
+    // Volume label.
     QLabel *volumeLabel = nullptr;
 
 public:
 
-    /** Constructor.
+    /**
+     * Constructor.
      * 
-     *  @param player Audio player.
-     *  @param name Player name.
-    */
+     * @param player Audio player.
+     * @param name Player name.
+     */
     explicit MediaFilesPlayerWidget(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
-    /** Destructor.*/
+    /**
+     * Destructor.
+     */
     ~MediaFilesPlayerWidget();
 
 private:
 
-    /** Handles entering drag event.*/
+    /**
+     * Handles entering drag event.
+     */
     void dragEnterEvent(QDragEnterEvent *event);
-    /** Handles items (with appropriate type) dropped on this widget.*/
+    /**
+     * Handles items (with appropriate type) dropped on this widget.
+     */
     void dropEvent(QDropEvent *event);
 
-    /** Display player error.
+    /**
+     * Display player error.
      * 
-     *  @param value volume value. int[0..100] is converted to float[0..1]
-    */
+     * @param value volume value. int[0..100] is converted to float[0..1]
+     */
     void setVolume(int value);
 
-    /** Start/Stop player.*/
-    void startStop();
+    /**
+     * Start/Stop player.
+     */
+    void startStop() override;
 
 public:
 
-    /** Stops player.*/
-    void stop();
-
-    /** Updates devices in running player.*/
-    void updateDevices();
+    /**
+     * Stops player.
+     */
+    void stop() override;
     
-    /** Handler for track state update signal.*/
-    void onTrackStateChanged(MediaFilesPlayer::TrackState state);
+    /**
+     * Handler for track state update signal.
+     */
+    void onTrackStateChanged(MediaFilesPlayer::State state);
 
 signals:
-    /** Ask player to set new track.
+    /**
+     * Ask player to change track.
      * 
-     *  @param filepath Media file path.
-    */
+     * @param filepath media file path
+     */
     void askNewTrack(QString filepath);
-    /** Ask player to change track state.
+    /**
+     * Ask player to change state.
      * 
-     *  @param state New track state.
-    */
-    void askNewTrackState(MediaFilesPlayer::TrackState state);
-    /** Ask player to change track volume.
+     * @param state new state
+     */
+    void askNewState(MediaFilesPlayer::State state);
+    /** Ask player to change volume.
      * 
-     *  @param volume New track volume.
-    */
-    void askNewTrackVolume(qreal volume);
+     *  @param volume volume value
+     */
+    void askNewVolume(qreal volume);
 };

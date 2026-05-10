@@ -10,10 +10,10 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
 
     // Connect signals to player
     connect(this, &MediaFilesPlayerWidget::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioDevices);
-    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::updateTrackState, this, &MediaFilesPlayerWidget::onTrackStateChanged);
+    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalState, this, &MediaFilesPlayerWidget::onTrackStateChanged);
     connect(this, &MediaFilesPlayerWidget::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrack);
-    connect(this, &MediaFilesPlayerWidget::askNewTrackState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::nextTrackState);
-    connect(this, &MediaFilesPlayerWidget::askNewTrackVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrackVolume);
+    connect(this, &MediaFilesPlayerWidget::askNewState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setPlannedState);
+    connect(this, &MediaFilesPlayerWidget::askNewVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setVolume);
 
     /*
     // Header label:
@@ -90,25 +90,19 @@ void MediaFilesPlayerWidget::dropEvent(QDropEvent *event)
 void MediaFilesPlayerWidget::setVolume(int value)
 {
     // Ask player to change volume
-    emit askNewTrackVolume(QtAudio::convertVolume(value / qreal(100.0), QtAudio::LogarithmicVolumeScale, QtAudio::LinearVolumeScale));
+    emit askNewVolume(QtAudio::convertVolume(value / qreal(100.0), QtAudio::LogarithmicVolumeScale, QtAudio::LinearVolumeScale));
     // Update volume label
     volumeLabel->setText(QString::number(value));
-}
-
-
-void MediaFilesPlayerWidget::updateDevices()
-{
-    emit askToUpdateDevices();
 }
 
 
 void MediaFilesPlayerWidget::stop()
 {
     // Kill player only if it is working
-    if (((MediaFilesPlayer*)player)->getTrackState() != MediaFilesPlayer::STOPPED)
+    if (((MediaFilesPlayer*)player)->getState() != MediaFilesPlayer::STOPPED)
     {
         // Stop track
-        emit askNewTrackState(MediaFilesPlayer::STOPPED);
+        emit askNewState(MediaFilesPlayer::STOPPED);
         threadpool->waitForDone(-1);
     }
 }
@@ -117,7 +111,7 @@ void MediaFilesPlayerWidget::stop()
 void MediaFilesPlayerWidget::startStop()
 {
     // Play-pause track
-    switch (((MediaFilesPlayer*)player)->getTrackState())
+    switch (((MediaFilesPlayer*)player)->getState())
     {
         // Start player
         case MediaFilesPlayer::STOPPED:
@@ -125,17 +119,17 @@ void MediaFilesPlayerWidget::startStop()
             threadpool->start(player);
         // Set playing
         case MediaFilesPlayer::PAUSED:
-            emit askNewTrackState(MediaFilesPlayer::PLAYING);
+            emit askNewState(MediaFilesPlayer::PLAYING);
             break;
         // Set paused
         case MediaFilesPlayer::PLAYING:
-            emit askNewTrackState(MediaFilesPlayer::PAUSED);
+            emit askNewState(MediaFilesPlayer::PAUSED);
             break;
     }
 }
 
 
-void MediaFilesPlayerWidget::onTrackStateChanged(MediaFilesPlayer::TrackState state)
+void MediaFilesPlayerWidget::onTrackStateChanged(MediaFilesPlayer::State state)
 {
     switch (state)
     {

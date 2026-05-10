@@ -10,43 +10,48 @@
 #include <AudioPlayers/MicrophonePlayer.hpp>
 
 
-/** Microphone player widget.*/
+/**
+ * Microphone player widget.
+ */
 class MicrophonePlayerWidget : public AudioPlayerWidget
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT
 
-    /** Audio player state.*/
-    bool isRunning = false;
-
-    /** Start/Stop button.*/
+    // Start/Stop button.
     QPushButton *buttonStartStop = nullptr;
 
 public:
 
-    /** Constructor.
+    /**
+     * Constructor.
      * 
-     *  @param player Audio player.
-     *  @param name player name.
-    */
+     * @param player Audio player
+     * @param name player name
+     */
     explicit MicrophonePlayerWidget(QTabWidget const *devices, QString name, QWidget *parent = nullptr);
-    /** Destructor.*/
+    /**
+     * Destructor.
+     */
     ~MicrophonePlayerWidget();
 
 private:
 
-    /** Start/Stop player.*/
-    void startStop();
+    /**
+     * Start/Stop player.
+     */
+    void startStop() override;
 
 public:
 
-    /** Stop player.*/
-    void stop();
-
-    /** Updates devices in running player.*/
-    void updateDevices();
+    /**
+     * Stop player.
+     */
+    void stop() override;
 
 signals:
-    /** Ask player to stop.*/
+    /**
+     * Signals player to stop.
+     */
     void askToStop();
 };

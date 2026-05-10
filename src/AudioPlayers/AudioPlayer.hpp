@@ -14,7 +14,9 @@
 #include <DeviceTab.hpp>
 
 
-/** Basic player class.*/
+/**
+ * Basic player class.
+ */
 class AudioPlayer : public QObject, public QRunnable
 {
     // Mandatory for QWidget stuff to work
@@ -22,25 +24,28 @@ class AudioPlayer : public QObject, public QRunnable
 
 protected:
 
-    /** Tab widget that describes available devices.*/
+    // Tab widget that describes available devices.
     QTabWidget const *devices = nullptr;
 
-    /** Whether devices should be updated (always update at startup).*/
+    // Whether devices should be updated (always update at startup).
     bool mustUpdateDevices = true;
 
-    /** Audio output (virtual cable).*/
+    // Audio output (virtual cable).
     QAudioSink *audioVCableSink = nullptr;
+    // Audio output IO (virtual cable).
     QIODevice *audioVCableSinkIO = nullptr;
-    /** Audio output.*/
+    // Audio output.
     QAudioSink *audioSink = nullptr;
+    // Audio output IO.
     QIODevice *audioSinkIO = nullptr;
 
 public:
 
-    /** Constructor.
+    /**
+     * Constructor.
      * 
-     *  @param devices Tab widget that describes avaliavle devices.
-    */
+     * @param devices tab widget that describes avaliavle devices
+     */
     explicit AudioPlayer(QTabWidget const *devices);
 
 protected:
@@ -51,7 +56,7 @@ protected:
     template<typename QAudioStream>
     void stopAudioStream(QAudioStream **audioStream)
     {
-        // Stop and delete previous audio sink
+        // Stop and delete previous audio stream
         if (*audioStream != nullptr)
         {
             (*audioStream)->stop();
@@ -60,28 +65,34 @@ protected:
         }
     }
 
-    /** Restarts given audio sink.
+    /**
+     * Restarts given audio sink.
      * 
-     *  @param audioSink Audio sink to restart.
-     *  @param deviceTab Device tab with audio device info.
-     *  @param format Audio format to use when opening audio sink.
+     * @param audioSink Audio sink to restart
+     * @param deviceTab Device tab with audio device info
+     * @param format Audio format to use when opening audio sink
      * 
-     *  @return IO device of restarted audio sink.
+     * @return IO device of restarted audio sink
      */
     virtual QIODevice* restartAudioSink(QAudioSink **audioSink, DeviceTab *deviceTab, const QAudioFormat &format);
 
 public:
 
-    /** Updates audio devices.*/
+    /**
+     * Updates audio devices.
+     */
     virtual void updateAudioDevices();
 
-    /** Player cycle (pure virtual).*/
+    /**
+     * Player cycle.
+     */
     virtual void run() = 0;
 
 signals:
-    /** Emitted when player encounters any error.
+    /**
+     * Singals about player error.
      * 
-     *  @param message error message.
-    */
+     * @param message error message
+     */
     void signalError(QString message);
 };

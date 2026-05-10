@@ -12,15 +12,16 @@
 
 /**
  * Allows class to show warning message box.
-*/
+ */
 class WidgetWarning
 {
 protected:
 
-    /** Displays warning message box.
+    /**
+     * Displays warning message box.
      * 
-     *  @param message text to display.
-    */
+     * @param message text to display
+     */
     void displayWarning(QString message)
     {
         // Create message box

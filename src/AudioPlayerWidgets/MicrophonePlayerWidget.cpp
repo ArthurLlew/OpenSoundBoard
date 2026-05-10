@@ -35,13 +35,11 @@ MicrophonePlayerWidget::~MicrophonePlayerWidget()
 void MicrophonePlayerWidget::stop()
 {
     // Kill player only if he is working
-    if (isRunning)
+    if (((MicrophonePlayer*)player)->getState())
     {
         // Stop player and wait for it to finish
         emit askToStop();
         threadpool->waitForDone(-1);
-        // Update state
-        isRunning = false;
         // Update button
         buttonStartStop->setText("Start");
     }
@@ -50,7 +48,7 @@ void MicrophonePlayerWidget::stop()
 
 void MicrophonePlayerWidget::startStop()
 {
-    if (isRunning)
+    if (((MicrophonePlayer*)player)->getState())
     {
         stop();
     }
@@ -58,15 +56,7 @@ void MicrophonePlayerWidget::startStop()
     {
         // Start player
         threadpool->start(player);
-        // Update state
-        isRunning = true;
         // Update button
         buttonStartStop->setText("Stop");
     }
-}
-
-
-void MicrophonePlayerWidget::updateDevices()
-{
-    emit askToUpdateDevices();
 }

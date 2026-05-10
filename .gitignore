@@ -1,7 +1,5 @@
 .vscode/
 build/
-resources/app.ai
-resources/dragged_track.ai
-resources/app.png
-resources/app.o
+*.ai
+*.o
 src/embedded.h

@@ -70,7 +70,7 @@ add_executable(OpenSoundBoard_debug ${SOURCES} ${APP_ICON})
 
 # Embeded resources using Qt
 find_package(Qt6 REQUIRED COMPONENTS Core)
-set(EMBEDED_RESOURCES resources/arrow_up.png resources/arrow_down.png resources/dragged_track.png)
+set(EMBEDED_RESOURCES resources/app.png resources/arrow_up.png resources/arrow_down.png resources/dragged_track.png)
 qt_add_resources(OpenSoundBoard "resources"
     PREFIX "/"
     FILES ${EMBEDED_RESOURCES})

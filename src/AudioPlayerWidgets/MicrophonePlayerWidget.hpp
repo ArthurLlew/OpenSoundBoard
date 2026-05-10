@@ -15,7 +15,6 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressbar>
 // Custom
-#include <WidgetMessages.hpp>
 #include <AudioPlayerWidgets/AudioPlayerWidget.hpp>
 #include <AudioPlayers/MicrophonePlayer.hpp>
 

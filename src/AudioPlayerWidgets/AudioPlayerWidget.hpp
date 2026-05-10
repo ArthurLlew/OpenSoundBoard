@@ -15,12 +15,12 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressbar>
 // Custom
-#include <WidgetMessages.hpp>
+#include <WidgetMessageBoxing/WidgetWarning.cpp>
 #include <AudioPlayers/AudioPlayer.hpp>
 
 
 /** Audio player widget.*/
-class AudioPlayerWidget : public QWidget, WidgetWarnings
+class AudioPlayerWidget : public QWidget, WidgetWarning
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT

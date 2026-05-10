@@ -22,7 +22,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTabWidget>
 // Custom
-#include <WidgetMessages.hpp>
+#include <WidgetMessageBoxing/WidgetWarning.cpp>
 #include <DeviceTab.hpp>
 #include <AudioTrack.hpp>
 #include <AudioPlayerWidgets/MicrophonePlayerWidget.hpp>
@@ -30,7 +30,7 @@
 
 
 /** Application main window.*/
-class MainWindow: public QMainWindow, WidgetWarnings
+class MainWindow: public QMainWindow, WidgetWarning
 {
     // Mandatory for QWidget stuff to work
     Q_OBJECT

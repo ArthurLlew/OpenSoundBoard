@@ -17,86 +17,42 @@ extern "C"
 #include <stdexcept>
 
 
-/** Holds samples to be played.*/
-struct AudioTrackFrame {
-    /** Pointer to data (can be NULL).*/
-    float *data = nullptr;
-    /** Data size (if <= 0 then frame has no data).*/
-    int size = 0;
-    /** Sample rate of the frame.*/
-    int sampleRate = 0;
-
-    /** Constructor.
-     * 
-     *  @param size memory size.
-    */
-    AudioTrackFrame(int size)
-    {
-        this->size = size;
-    }
-
-    /** Constructor.
-     * 
-     *  @param data Pointer to audio samples.
-     *  @param nb_channels Number of channels.
-     *  @param mem_size Data memory size in bytes.
-     *  @param nb_samples Number of samples.
-     *  @param sampleRate Sample rate.
-    */
-    explicit AudioTrackFrame(uint8_t **data, int nb_channels, int mem_size, int nb_samples, int sampleRate)
-    {
-        // Copy audio data
-        this->size = nb_channels * mem_size;
-        this->data = (float*)malloc(size);
-        memcpy(this->data, data[0], size);
-
-        // Save sample rate
-        this->sampleRate = sampleRate;
-    }
-
-    /**
-     * Destructor.
-     */
-    ~AudioTrackFrame()
-    {
-        // Free any existing data
-        if (data)
-            free(data);
-    }
-};
-
-
-/** Describes FFPEG media file context. Can read samples from media file.*/
+/**
+ *  Describes FFPEG media file context. Can read samples from media file.
+*/
 class AudioTrackContext
 {
-    /** Media file path.*/
+    // Media file path
     QString filepath;
-    /** Media file format context.*/
+    // Media file format context
     AVFormatContext *format_ctx = nullptr;
-    /** Media file codec.*/
+    // Media file codec
     const AVCodec *decoder = nullptr;
-    /** Media file codec contex.*/
+    // Media file codec contex
     AVCodecContext *decoder_ctx = nullptr;
-    /** Media file packet.*/
+    // Media file packet
     AVPacket *packet = nullptr;
-    /** Media file frame.*/
+    // Media file frame
     AVFrame *frame = nullptr;
-    /** Media resampling context.*/
+    // Media resampling context
     SwrContext *swr_ctx = nullptr;
-    /** Media data desired channel.*/
+    // Media data desired channel
     AVChannelLayout ch_layout = AV_CHANNEL_LAYOUT_STEREO;
-    /** Media data desired sample format.*/
+    // Media data desired sample format
     AVSampleFormat sample_format = AV_SAMPLE_FMT_FLT;
-    /** This vars are filled when track starts playing.*/
-    int audio_stream_index, swr_nb_samples = 1024, swr_bufsize, swr_linesize;
-    /** Next data sample to play.*/
+    // Set fixed sample count for converter
+    int swr_nb_samples = 1024;
+    // Audio stream index and converter data size
+    int audio_stream_index, swr_linesize;
+    // Audio data
     uint8_t **swr_data = nullptr;
 
 public:
 
-    /** Constructor.
+    /**
+     *  Constructor.
      * 
-     *  @param filepath Media file path.
+     *  @param filepath media file path.
     */
     explicit AudioTrackContext(QString filepath)
     {
@@ -105,7 +61,7 @@ public:
 
     /** 
      * Destructor.
-     */
+    */
     ~AudioTrackContext()
     {
         close();
@@ -113,22 +69,31 @@ public:
 
     /**
      * @return audio track sample rate.
-     */
+    */
     int getSampleRate() const
     {
         return (decoder_ctx) ? decoder_ctx->sample_rate : 0;
     }
+
     /**
-     * @return audio track channel count.
-     */
+     * @return audio track number of channels.
+    */
     int getChannelCount() const
     {
         return (decoder_ctx) ? decoder_ctx->ch_layout.nb_channels : 0;
     }
 
     /**
-     * Opens track.
-     */
+     * @return audio data.
+    */
+    uint8_t** getAudioData() const
+    {
+        return swr_data;
+    }
+
+    /**
+     * Opens track and prepares necessary structures to read samples.
+    */
     void open()
     {
         // Open file and get info about media streams in file
@@ -220,54 +185,11 @@ public:
     }
 
     /**
-     * Closes track.
-     */
-    void close()
-    {
-        // Free frame
-        if (frame)
-        {
-            av_frame_free(&frame);
-            frame = nullptr;
-        }
-        // Free packet
-        if (packet)
-        {
-            av_packet_free(&packet);
-            packet = nullptr;
-        }
-        // Free data sample
-        if (swr_data)
-        {
-            av_freep(&swr_data[0]);
-            av_freep(&swr_data);
-            swr_data = nullptr;
-        }
-        // Free resampling complex
-        if (swr_ctx)
-        {
-            swr_free(&swr_ctx);
-            swr_ctx = nullptr;
-        }
-        // Free codec contex
-        if (decoder_ctx)
-        {
-            avcodec_free_context(&decoder_ctx);
-            decoder_ctx = nullptr;
-        }
-        // Close format contex (as well as file stream)
-        if (format_ctx)
-        {
-            avformat_close_input(&format_ctx);
-            format_ctx = nullptr;
-        }
-    }
-
-    /** Get next audio frame.
+     *  Reads next audio frame.
      * 
-     *  @return Audio samples read from media file.
+     *  @return number of read frames.
     */
-    AudioTrackFrame readSample()
+    int read()
     {
         // Try to find new frame
         while(1)
@@ -348,7 +270,7 @@ public:
             if (av_samples_alloc(swr_data, &swr_linesize, ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
             {
                 close();
-                throw std::runtime_error("Error allocating converted samples");
+                throw std::runtime_error("Error allocating memory for converted samples");
             }
             swr_nb_samples = frame->nb_samples;
         }
@@ -358,21 +280,58 @@ public:
         if (samples_per_channel < 0)
         {
             close();
-            throw std::runtime_error("Error while converting");
-        }
-        // Get resulting buffer size
-        swr_bufsize = av_samples_get_buffer_size(&swr_linesize, ch_layout.nb_channels, samples_per_channel, sample_format, 1);
-        if (swr_bufsize < 0)
-        {
-            close();
-            throw std::runtime_error("Could not get sample buffer size");
+            throw std::runtime_error("Error while converting samples");
         }
 
         // Do not forget to dispose processed frame
         av_frame_unref(frame);
 
         // Return finalized data
-        return AudioTrackFrame(swr_data, ch_layout.nb_channels, swr_bufsize, swr_nb_samples, decoder_ctx->sample_rate);
+        return samples_per_channel;
+    }
+
+    /**
+     * Closes reader.
+    */
+    void close()
+    {
+        // Free frame
+        if (frame)
+        {
+            av_frame_free(&frame);
+            frame = nullptr;
+        }
+        // Free packet
+        if (packet)
+        {
+            av_packet_free(&packet);
+            packet = nullptr;
+        }
+        // Free data sample
+        if (swr_data)
+        {
+            av_freep(&swr_data[0]);
+            av_freep(&swr_data);
+            swr_data = nullptr;
+        }
+        // Free resampling complex
+        if (swr_ctx)
+        {
+            swr_free(&swr_ctx);
+            swr_ctx = nullptr;
+        }
+        // Free codec contex
+        if (decoder_ctx)
+        {
+            avcodec_free_context(&decoder_ctx);
+            decoder_ctx = nullptr;
+        }
+        // Close format contex (as well as file stream)
+        if (format_ctx)
+        {
+            avformat_close_input(&format_ctx);
+            format_ctx = nullptr;
+        }
     }
 };
 

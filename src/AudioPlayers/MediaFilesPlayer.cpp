@@ -53,18 +53,19 @@ void MediaFilesPlayer::run()
 
             if (state == PLAYING)
             {
-                // Read new frame
-                AudioTrackFrame frame = track->readSample();
+                // Read samples
+                int samplesCount = track->read();
 
-                if (frame.size > 0)
+                // If sample count is positive
+                if (samplesCount > 0)
                 {
-                    // Convert frame
-                    QByteArray sound = QByteArray((char*)frame.data, frame.size/track->getChannelCount());
+                    // Calculate size in bytes
+                    int sizeInBytes = samplesCount * track->getChannelCount() * sizeof(float);
 
                     // Wait for availiable space and write data
-                    while ((audioVCableSink->bytesFree() < frame.size) || (audioSink->bytesFree() < frame.size)) {}
-                    audioVCableSinkIO->write(sound);
-                    audioSinkIO->write(sound);
+                    while (audioVCableSink->bytesFree() < sizeInBytes || audioSink->bytesFree() < sizeInBytes) {}
+                    audioVCableSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
+                    audioSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
                 }
                 else
                 {

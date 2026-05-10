@@ -1,14 +1,16 @@
 #pragma once
 
-// Qt
+
+// Qt core
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QRunnable>
+// Qt widgets
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QTabWidget>
 // QtMultimedia
 #include <QtMultimedia/QAudioSink>
-// Custom
+// Device tab widget
 #include <DeviceTab.hpp>
 
 

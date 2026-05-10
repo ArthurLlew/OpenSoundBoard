@@ -4,7 +4,7 @@
 
 // Qt core
 #include <QtCore/Qt>
-// Qt message box
+// Qt widgets
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QGridLayout>

@@ -1,31 +1,33 @@
 #pragma once
 
-// Qt core (defines Q_OS_WIN among other things)
+
+// Qt core
 #include <QtCore/Qt>
-// Qt
 #include <QtCore/QRect>
 #include <QtCore/QString>
-#include <QtCore/QThreadPool>
+// Qt GUI
 #include <QtGui/QScreen>
 #include <QtGui/QAction>
 #include <QtGui/QMouseEvent>
+// Qt widgets
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QAbstractItemView>
-#include <QtWidgets/QHeaderView>
-#include <QtWidgets/QPushButton>
+#include <QtWidgets/QWidget>
 #include <QtWidgets/QTabWidget>
-// Custom
+// Message boxes
 #include <WidgetMessageBoxing/WidgetWarning.cpp>
+// Device tab widget
 #include <DeviceTab.hpp>
+// Audio track widget
 #include <AudioTrack.hpp>
+// Microphone rerouter widget
 #include <AudioPlayerWidgets/MicrophonePlayerWidget.hpp>
+// Media files player widget
 #include <AudioPlayerWidgets/MediaFilesPlayerWidget.hpp>
 
 

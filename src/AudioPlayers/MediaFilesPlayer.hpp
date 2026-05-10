@@ -1,14 +1,9 @@
 #pragma once
 
-// Qt
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtCore/QRunnable>
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QTabWidget>
-// Custom
-#include <DeviceTab.hpp>
+
+// Audio player
 #include <AudioPlayers/AudioPlayer.hpp>
+// FFMPEG media files reader
 #include <AudioPlayers/AudioTrackReader.cpp>
 
 

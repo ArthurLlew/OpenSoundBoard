@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
                 "#define EMBEDED_FILES\n"
                 "\n"
                 "// In order to use uint8_t\n"
-                "#include <stdint.h>\n"
+                "#include <cstdint>\n"
                 "\n";
 
         // Iterate over files to embed

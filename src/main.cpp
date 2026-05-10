@@ -1,5 +1,7 @@
-#include <MainWindow.hpp>
+// App embedded resources
 #include "embedded.h"
+// Main window widget
+#include <MainWindow.hpp>
 
 
 int main(int argc, char *argv[])

@@ -1,11 +1,14 @@
 #pragma once
 
-// Qt
+
+// Qt core
 #include <QtCore/QPoint>
 #include <QtCore/QMimeData>
 #include <QtCore/QString>
+// Qt GUI
 #include <QtGui/QMouseEvent>
 #include <QtGui/QDrag>
+// Qt widgets
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QHBoxLayout>

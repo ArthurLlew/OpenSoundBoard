@@ -1,21 +1,12 @@
 #pragma once
 
-// Qt
-#include <QtCore/QObject>
-#include <QtCore/QMimeData>
-#include <QtCore/QString>
-#include <QtCore/QThreadPool>
-#include <QtCore/QRunnable>
-#include <QtGui/QPainter>
-#include <QtGui/QDragEnterEvent>
-#include <QtGui/QDropEvent>
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QVBoxLayout>
+
+// Qt widgets
 #include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QProgressbar>
-// Custom
+#include <QtWidgets/QPushButton>
+// Audio player widget
 #include <AudioPlayerWidgets/AudioPlayerWidget.hpp>
+// Microphone rerouter
 #include <AudioPlayers/MicrophonePlayer.hpp>
 
 

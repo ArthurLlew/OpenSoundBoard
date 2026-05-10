@@ -1,17 +1,15 @@
 #pragma once
 
-// Qt
+
+// Qt core
 #include <QtCore/Qt>
-#include <QtCore/QRect>
 #include <QtCore/QString>
+// Qt GUI
 #include <QtGui/QPainter>
+// Qt widgets
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QComboBox>
-#include <QtWidgets/QAbstractItemView>
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QSizePolicy>
 // Qt Multimedia
 #include <QtMultimedia/QMediaDevices>
 #include <QtMultimedia/QAudioDevice>

@@ -19,7 +19,7 @@ extern "C"
 
 /**
  *  Describes FFPEG media file context. Can read samples from media file.
-*/
+ */
 class AudioTrackContext
 {
     // Media file path
@@ -40,12 +40,16 @@ class AudioTrackContext
     int swr_nb_samples = 1024;
     // Audio data
     uint8_t **swr_data = nullptr;
+    // How many samples are located in swr_data
+    int swr_data_samples_count = 0;
     // Temporary converter buffer size variable
     int swr_linesize;
     // Media file packet
     AVPacket *packet = nullptr;
     // Media file frame
     AVFrame *frame = nullptr;
+    // Frame timestamp in seconds
+    double frame_time = 0;
 
 public:
 
@@ -53,15 +57,16 @@ public:
      *  Constructor.
      * 
      *  @param filepath media file path.
-    */
+     */
     explicit AudioTrackContext(QString filepath)
     {
+        // Save file path
         this->filepath = filepath;
     }
 
     /** 
      * Destructor.
-    */
+     */
     ~AudioTrackContext()
     {
         close();
@@ -69,7 +74,7 @@ public:
 
     /**
      * @return audio track sample rate.
-    */
+     */
     int getSampleRate() const
     {
         return (decoder_ctx) ? decoder_ctx->sample_rate : 0;
@@ -77,24 +82,85 @@ public:
 
     /**
      * @return audio track number of channels.
-    */
+     */
     int getChannelCount() const
     {
         return (decoder_ctx) ? decoder_ctx->ch_layout.nb_channels : 0;
     }
 
     /**
+     * @return audio track total duration in seconda.
+     */
+    double getDuration()
+    {
+        // Itit format context id needed
+        if (!format_ctx)
+            initFormatContext();
+
+        // Convert ticks (first multiplier) to seconds
+        double duration = format_ctx->streams[audio_stream_index]->duration * av_q2d(format_ctx->streams[audio_stream_index]->time_base);
+
+        // Close format context id needed
+        if (format_ctx)
+            freeFormatContext();
+
+        return duration;
+    }
+
+    /**
+     * @return current audio track timestamp in seconds.
+     */
+    double getTime()
+    {
+        return frame_time;
+    }
+
+    /**
+     * Set audio track time (will update reading of samples).
+     * 
+     * @param seconds time in seconds.
+     */
+    void setTime(double seconds)
+    {
+        // If has active context
+        if (format_ctx && decoder_ctx)
+        {
+            // Convert seconds to audio format ticks
+            int64_t target_pts = av_rescale_q(seconds * AV_TIME_BASE, AV_TIME_BASE_Q, format_ctx->streams[audio_stream_index]->time_base);
+            // Try to seek in stream
+            if (avformat_seek_file(format_ctx, audio_stream_index, INT64_MIN, target_pts, target_pts, 0) >= 0) {
+                // Flush decoder
+                avcodec_flush_buffers(decoder_ctx);
+
+                // Flush frame and packet
+                if (frame)
+                    av_frame_unref(frame);
+                if (packet)
+                    av_packet_unref(packet);
+            }
+        }
+    }
+
+    /**
+     * @return audio data samples count.
+     */
+    int getAudioDataSapmplesCount() const
+    {
+        return swr_data_samples_count;
+    }
+
+    /**
      * @return audio data.
-    */
+     */
     uint8_t** getAudioData() const
     {
         return swr_data;
     }
 
     /**
-     * Opens track and prepares necessary structures to read samples.
-    */
-    void open()
+     * Opens format context (aslo opens file reader).
+     */
+    void initFormatContext()
     {
         // Open file and get info about media streams in file
         const char* f = filepath.toStdString().c_str();
@@ -116,6 +182,15 @@ public:
             close();
             throw std::runtime_error("Unable to find an audio stream");
         }
+    }
+
+    /**
+     * Opens track and prepares necessary structures to read samples.
+     */
+    void open()
+    {
+        // Init format context
+        initFormatContext();
 
         // Init decoding context
         decoder_ctx = avcodec_alloc_context3(decoder);
@@ -188,8 +263,8 @@ public:
      *  Reads next audio frame.
      * 
      *  @return number of read frames.
-    */
-    int read()
+     */
+    void read()
     {
         // Try to find new frame
         while(1)
@@ -209,7 +284,8 @@ public:
                 if (av_read_frame(format_ctx, packet) < 0)
                 {
                     // End of file
-                    return 0;
+                    swr_data_samples_count = 0;
+                    return;
                 }
 
                 // Check packet stream id (packet can represent video)
@@ -262,6 +338,9 @@ public:
             }
         }
 
+        // Set current timestamp
+        frame_time = frame->pts * av_q2d(format_ctx->streams[audio_stream_index]->time_base);
+
         // Some reallocation might be required
         if (swr_nb_samples != frame->nb_samples)
         {
@@ -276,8 +355,8 @@ public:
         }
 
         // Convert samples
-        int samples_per_channel = swr_convert(swr_ctx, swr_data, swr_nb_samples, (const uint8_t **)frame->extended_data, frame->nb_samples);
-        if (samples_per_channel < 0)
+        swr_data_samples_count = swr_convert(swr_ctx, swr_data, swr_nb_samples, (const uint8_t **)frame->extended_data, frame->nb_samples);
+        if (swr_data_samples_count < 0)
         {
             close();
             throw std::runtime_error("Error while converting samples");
@@ -287,12 +366,23 @@ public:
         av_frame_unref(frame);
 
         // Return finalized data
-        return samples_per_channel;
+        return;
+    }
+
+    /**
+     * Disposes active format context (also closes file stream).
+     */
+    void freeFormatContext()
+    {
+        if (format_ctx)
+        {
+            avformat_close_input(&format_ctx);
+        }
     }
 
     /**
      * Closes reader.
-    */
+     */
     void close()
     {
         // Free frame
@@ -300,6 +390,8 @@ public:
         {
             av_frame_free(&frame);
             frame = nullptr;
+            // Reset frame timestamp
+            frame_time = 0;
         }
         // Free packet
         if (packet)
@@ -307,12 +399,14 @@ public:
             av_packet_free(&packet);
             packet = nullptr;
         }
-        // Free data sample
+        // Free audio data
         if (swr_data)
         {
             av_freep(&swr_data[0]);
             av_freep(&swr_data);
             swr_data = nullptr;
+            // Reset samples count
+            swr_data_samples_count = 0;
         }
         // Free resampling complex
         if (swr_ctx)
@@ -326,12 +420,8 @@ public:
             avcodec_free_context(&decoder_ctx);
             decoder_ctx = nullptr;
         }
-        // Close format contex (as well as file stream)
-        if (format_ctx)
-        {
-            avformat_close_input(&format_ctx);
-            format_ctx = nullptr;
-        }
+        // Free format contex
+        freeFormatContext();
     }
 };
 

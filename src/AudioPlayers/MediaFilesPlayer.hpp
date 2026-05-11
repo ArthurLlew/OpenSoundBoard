@@ -18,7 +18,7 @@ class  MediaFilesPlayer : public AudioPlayer
 public:
 
     /**
-     * Describes track state.
+     * Describes player state.
      */
     enum State{
         STOPPED,
@@ -30,10 +30,13 @@ private:
 
     // Current track.
     AudioTrackContext *track = nullptr;
-    // Current track state.
+    // Current state.
     State state = STOPPED;
-    // Requested track state.
-    State nextTrackState = STOPPED;
+    // Requested state.
+    State scheduledState = STOPPED;
+
+    // Whether player should read next samples
+    bool shouldReadSamples = true;
 
     // Audio volume.
     float volume = 0.5;
@@ -56,6 +59,13 @@ public:
      */
     State getState() { return track == nullptr ? STOPPED : state; }
 
+private:
+    /**
+     * @param state new player state
+     */
+    void setState(State state);
+public:
+
     /**
      * Player cycle.
      */
@@ -66,25 +76,34 @@ public:
      */
     void setTrack(QString filepath);
 
+private:
     /**
-     * Sets audio track volume
+     * Flushes current audio track info.
+     */
+    void removeTrack();
+public:
+
+    /**
+     * Sets audio track volume.
      */
     void setVolume(qreal volume);
 
-private:
     /**
-     * @param state new track state
+     * @param state planned player state
      */
-    void setState(State state);
-public:
-    /**
-     * @param state planned track state
-     */
-    void setPlannedState(State state);
+    void scheduleState(State state);
     
 signals:
     /**
-     * Signals to update audio track state
+     * Signals to update player state.
      */
     void signalState(State state);
+    /**
+     * Signals to update duration of time slider.
+     */
+    void signalDuration(double seconds);
+    /**
+     * Signals to update time slider.
+     */
+    void signalTime(double seconds);
 };

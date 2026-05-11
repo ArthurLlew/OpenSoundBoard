@@ -12,7 +12,7 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     connect(this, &MediaFilesPlayerWidget::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioDevices);
     connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalState, this, &MediaFilesPlayerWidget::onTrackStateChanged);
     connect(this, &MediaFilesPlayerWidget::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrack);
-    connect(this, &MediaFilesPlayerWidget::askNewState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setPlannedState);
+    connect(this, &MediaFilesPlayerWidget::askNewState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::scheduleState);
     connect(this, &MediaFilesPlayerWidget::askNewVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setVolume);
 
     /*

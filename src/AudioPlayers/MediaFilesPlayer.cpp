@@ -9,6 +9,30 @@ MediaFilesPlayer::~MediaFilesPlayer()
 }
 
 
+void MediaFilesPlayer::setState(State state)
+{
+    if (track)
+    {
+        // Close track if set to stop
+        if (this->state == PLAYING || this->state == PAUSED && state == STOPPED)
+        {
+            track->close();
+        }
+        // Start track if was stopped
+        if (this->state == STOPPED && state == PLAYING || state == PAUSED)
+        {
+            track->open();
+        }
+
+        // Update state
+        this->state = state;
+        scheduledState = state;
+
+        emit signalState(this->state);
+    }
+}
+
+
 void MediaFilesPlayer::run()
 {
     // No track ==>> no playing
@@ -46,42 +70,51 @@ void MediaFilesPlayer::run()
                 throw std::runtime_error("Audio output suddenly stopped");
 
             // Set scheduled track state
-            if (state != nextTrackState)
+            if (state != scheduledState)
             {
-                setState(nextTrackState);
+                setState(scheduledState);
             }
 
             if (state == PLAYING)
             {
                 // Read samples
-                int samplesCount = track->read();
+                if (shouldReadSamples)
+                {
+                    track->read();
+                    emit signalTime(track->getTime());
+                    shouldReadSamples = false;
+                }
 
                 // If sample count is positive
-                if (samplesCount > 0)
+                if (track->getAudioDataSapmplesCount() > 0)
                 {
                     // Calculate size in bytes
-                    int sizeInBytes = samplesCount * track->getChannelCount() * sizeof(float);
+                    int sizeInBytes = track->getAudioDataSapmplesCount() * track->getChannelCount() * sizeof(float);
 
                     // Wait for availiable space and write data
-                    while (audioVCableSink->bytesFree() < sizeInBytes || audioSink->bytesFree() < sizeInBytes) {}
-                    audioVCableSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
-                    audioSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
+                    if (audioVCableSink->bytesFree() >= sizeInBytes && audioSink->bytesFree() >= sizeInBytes)
+                    {
+                        audioVCableSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
+                        audioSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
+                        shouldReadSamples = true;
+                    }
                 }
                 else
                 {
-                    // Wait for the track to finish
-                    while (audioVCableSink->bufferSize() != audioVCableSink->bytesFree()
-                           || audioSink->bufferSize() != audioSink->bytesFree()) {}
-
-                    // Track has ended: update state
-                    setState(STOPPED);
+                    // If all previous data was consumed by IOs
+                    if (audioVCableSink->bufferSize() == audioVCableSink->bytesFree()
+                        && audioSink->bufferSize() == audioSink->bytesFree())
+                    {
+                        // Set state to stopped
+                        setState(STOPPED);
+                    }
                 }
             }
         }
     }
     catch(const std::exception& e)
     {
-        // Error: update track state
+        // Error: update track state and notify
         setState(STOPPED);
         emit signalError(e.what());
     }
@@ -89,22 +122,43 @@ void MediaFilesPlayer::run()
     // Stop streams
     stopAudioStream(&audioVCableSink);
     stopAudioStream(&audioSink);
-    // Raise update flag
+    // Raise update flags
     mustUpdateDevices = true;
+    shouldReadSamples = true;
 }
 
 
 void MediaFilesPlayer::setTrack(QString filepath)
 {
-    // Manage old track
-    if (track != nullptr)
+    // Flush old track
+    removeTrack();
+
+    // Try to open media file
+    try
+    {
+        // Create new track context
+        track = new AudioTrackContext(filepath);
+
+        // Update time slider
+        emit signalTime(track->getTime());
+        emit signalDuration(track->getDuration());
+    }
+    catch(const std::exception& e)
+    {
+        // Error: clear track and notify
+        removeTrack();
+        emit signalError(e.what());
+    }
+}
+
+
+void MediaFilesPlayer::removeTrack()
+{
+    if (track)
     {
         delete track;
         track = nullptr;
     }
-
-    // Create new track context
-    track = new AudioTrackContext(filepath);
 }
 
 
@@ -118,32 +172,8 @@ void MediaFilesPlayer::setVolume(qreal volume)
         audioSink->setVolume(volume);
 }
 
-
-void MediaFilesPlayer::setState(State state)
+void MediaFilesPlayer::scheduleState(State state)
 {
-    if (track != nullptr)
-    {
-        // Close track if set to stop
-        if (this->state == PLAYING || this->state == PAUSED && state == STOPPED)
-        {
-            track->close();
-        }
-        // Start track if was stopped
-        if (this->state == STOPPED && state == PLAYING || state == PAUSED)
-        {
-            track->open();
-        }
-
-        // Update state
-        this->state = state;
-        nextTrackState = state;
-
-        emit signalState(this->state);
-    }
-}
-
-void MediaFilesPlayer::setPlannedState(State state)
-{
-    if (track != nullptr)
-        nextTrackState = state;
+    if (track)
+        scheduledState = state;
 }

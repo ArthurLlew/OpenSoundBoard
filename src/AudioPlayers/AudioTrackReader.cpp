@@ -44,15 +44,13 @@ class AudioTrackContext
     uint8_t **swr_data = nullptr;
     // How many samples are located in swr_data
     int swr_data_samples_count = 0;
-    // Temporary converter buffer size variable
-    int swr_linesize;
     // Media file packet
     AVPacket *packet = nullptr;
     // Media file frame
     AVFrame *frame = nullptr;
-    // Frame timestamp in seconds
+    // Last frame timestamp in seconds
     double frame_time = 0;
-    // Targeted (by seek) timestamp in ticks
+    // Target timestamp in ticks. Only frames with timestamp greater than it are considered valid.
     int64_t target_pts = 0;
 
 public:
@@ -97,14 +95,14 @@ public:
      */
     double getDuration()
     {
-        // Itit format context id needed
+        // Itit format context if needed
         if (!format_ctx)
             initFormatContext();
 
         // Convert ticks (first multiplier) to seconds
         double duration = format_ctx->streams[audio_stream_index]->duration * av_q2d(format_ctx->streams[audio_stream_index]->time_base);
 
-        // Close format context id needed
+        // Close format context if needed
         if (format_ctx)
             freeFormatContext();
 
@@ -245,11 +243,11 @@ public:
             close();
             throw std::runtime_error("Unable to allocate resampler context");
         }
-        // Set resampler input samples parameters
+        // Set resampler input parameters
         av_opt_set_chlayout(swr_ctx,   "in_chlayout",    &decoder_ctx->ch_layout, 0);
         av_opt_set_int(swr_ctx,        "in_sample_rate", decoder_ctx->sample_rate, 0);
         av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt",  decoder_ctx->sample_fmt, 0);
-        // Set resampler output samples parameters
+        // Set resampler output parameters
         av_opt_set_chlayout(swr_ctx,   "out_chlayout",    &decoder_ctx->ch_layout, 0);
         av_opt_set_int(swr_ctx,        "out_sample_rate", decoder_ctx->sample_rate, 0);
         av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt",  sample_format, 0);
@@ -260,7 +258,8 @@ public:
             throw std::runtime_error("Unable to init resampling context");
         }
 
-        // Buffer will be used as it is, no alignment
+        // Allocate resempler buffer (will be used wiyh no alignment)
+        int swr_linesize;
         if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
         {
             close();
@@ -357,6 +356,7 @@ public:
         {
             // Realloc
             av_freep(&swr_data[0]);
+            int swr_linesize;
             if (av_samples_alloc(swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
             {
                 close();
@@ -401,10 +401,6 @@ public:
         {
             av_frame_free(&frame);
             frame = nullptr;
-            // Reset frame timestamp
-            frame_time = 0;
-            // Reset time pts
-            target_pts = 0;
         }
         // Free packet
         if (packet)
@@ -435,6 +431,11 @@ public:
         }
         // Free format contex
         freeFormatContext();
+
+        // Reset frame timestamp
+        frame_time = 0;
+        // Reset time pts
+        target_pts = 0;
     }
 };
 

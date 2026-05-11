@@ -11,10 +11,12 @@ extern "C"
 #include <libswresample/swresample.h>
 #define __STDC_CONSTANT_MACROS
 }
-// Qt
-#include <QtCore/QString>
+// Min/max
+#include <algorithm>
 // Exceptions
 #include <stdexcept>
+// Qt core
+#include <QtCore/QString>
 
 
 /**
@@ -50,6 +52,8 @@ class AudioTrackContext
     AVFrame *frame = nullptr;
     // Frame timestamp in seconds
     double frame_time = 0;
+    // Targeted (by seek) timestamp in ticks
+    int64_t target_pts = 0;
 
 public:
 
@@ -125,10 +129,13 @@ public:
         // If has active context
         if (format_ctx && decoder_ctx)
         {
+            // Minimun timestamp is 1 second before requested and always > 0
+            int64_t min_pts = std::min(int64_t(0),
+                                       av_rescale_q((seconds - 1) * AV_TIME_BASE, AV_TIME_BASE_Q, format_ctx->streams[audio_stream_index]->time_base));
             // Convert seconds to audio format ticks
-            int64_t target_pts = av_rescale_q(seconds * AV_TIME_BASE, AV_TIME_BASE_Q, format_ctx->streams[audio_stream_index]->time_base);
+            target_pts = av_rescale_q(seconds * AV_TIME_BASE, AV_TIME_BASE_Q, format_ctx->streams[audio_stream_index]->time_base);
             // Try to seek in stream
-            if (avformat_seek_file(format_ctx, audio_stream_index, INT64_MIN, target_pts, target_pts, 0) >= 0) {
+            if (avformat_seek_file(format_ctx, audio_stream_index, min_pts, target_pts, target_pts, 0) >= 0) {
                 // Flush decoder
                 avcodec_flush_buffers(decoder_ctx);
 
@@ -144,7 +151,7 @@ public:
     /**
      * @return audio data samples count.
      */
-    int getAudioDataSapmplesCount() const
+    int getAudioDataSamplesCount() const
     {
         return swr_data_samples_count;
     }
@@ -209,10 +216,12 @@ public:
         }
 
         // DEBUG
+        printf("============ Track info ============\n");
         printf("%s\n", decoder->name);
         printf("channels: %d\n", decoder_ctx->ch_layout.nb_channels);
         printf("sample format: %d\n", decoder_ctx->sample_fmt);
         printf("sample rate: %d\n", decoder_ctx->sample_rate);
+        printf("====================================\n");
 
         // Allocate media data packet
         packet = av_packet_alloc();
@@ -328,7 +337,9 @@ public:
             // Success
             else if (res == 0)
             {
-                break;
+                // If frame has correct timestamp
+                if (frame->pts >= target_pts)
+                    break;
             }
             // Other errors
             else
@@ -392,6 +403,8 @@ public:
             frame = nullptr;
             // Reset frame timestamp
             frame_time = 0;
+            // Reset time pts
+            target_pts = 0;
         }
         // Free packet
         if (packet)

@@ -10,10 +10,13 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
 
     // Connect signals to player
     connect(this, &MediaFilesPlayerWidget::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioDevices);
-    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalState, this, &MediaFilesPlayerWidget::onTrackStateChanged);
     connect(this, &MediaFilesPlayerWidget::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrack);
-    connect(this, &MediaFilesPlayerWidget::askNewState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::scheduleState);
     connect(this, &MediaFilesPlayerWidget::askNewVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setVolume);
+    connect(this, &MediaFilesPlayerWidget::askNewState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::scheduleState);
+    connect(this, &MediaFilesPlayerWidget::askNewTime, (MediaFilesPlayer*)this->player, &MediaFilesPlayer::scheduleTime);
+    connect((MediaFilesPlayer*)this->player, MediaFilesPlayer::signalState, this, &MediaFilesPlayerWidget::onStateChanged);
+    connect((MediaFilesPlayer*)this->player, &MediaFilesPlayer::signalDuration, this, &MediaFilesPlayerWidget::onDurationChanged);
+    connect((MediaFilesPlayer*)this->player, &MediaFilesPlayer::signalTime, this, &MediaFilesPlayerWidget::onTimeChanged);
 
     /*
     // Header label:
@@ -55,6 +58,14 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     volume_slider->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
     box_layout3->addWidget(volume_slider);
     box_layout3->addWidget(volumeLabel);
+    // Time slider
+    time_slider = new QSlider(Qt::Horizontal);
+    time_slider->setTracking(false);            // Only fire valueChanged event after releasing slider
+    time_slider->setRange(0, 0);                // Will be updated when audio is loaded
+    connect(time_slider, &QSlider::sliderPressed, this, &MediaFilesPlayerWidget::pauseOnTimeChange);        // pause player when slider was pressed
+    connect(time_slider, &QSlider::sliderReleased, this, &MediaFilesPlayerWidget::resumeAfterTimeChange);   // resume player after slider was released
+    connect(time_slider, &QSlider::valueChanged, this, &MediaFilesPlayerWidget::setTime);                   // set new time on value change
+    layout->addWidget(time_slider);
 }
 
 
@@ -96,14 +107,49 @@ void MediaFilesPlayerWidget::setVolume(int value)
 }
 
 
+void MediaFilesPlayerWidget::setTime(int value)
+{
+    // Ask player to change time
+    emit askNewTime(static_cast<double>(value) / VOLUME_SLIDER_SCALE);
+}
+
+
+void MediaFilesPlayerWidget::pauseOnTimeChange()
+{
+    // Pause player only if it is playing
+    if (((MediaFilesPlayer*)player)->getState() == MediaFilesPlayer::PLAYING)
+    {
+        // Pause player
+        emit askNewState(MediaFilesPlayer::PAUSED);
+        // Save our messing around with player
+        wasPausedByTimeSlider = true;
+    }
+}
+
+
+void MediaFilesPlayerWidget::resumeAfterTimeChange()
+{
+    // Resume player only if it was paused by pressing slider
+    if (wasPausedByTimeSlider && ((MediaFilesPlayer*)player)->getState() == MediaFilesPlayer::PAUSED)
+    {
+        // Resume player
+        emit askNewState(MediaFilesPlayer::PLAYING);
+        // Release flag
+        wasPausedByTimeSlider = false;
+    }
+}
+
+
 void MediaFilesPlayerWidget::stop()
 {
     // Kill player only if it is working
     if (((MediaFilesPlayer*)player)->getState() != MediaFilesPlayer::STOPPED)
     {
-        // Stop track
+        // Stop player
         emit askNewState(MediaFilesPlayer::STOPPED);
         threadpool->waitForDone(-1);
+        // Update this flag on stopping player
+        wasPausedByTimeSlider = false;
     }
 }
 
@@ -117,6 +163,7 @@ void MediaFilesPlayerWidget::startStop()
         case MediaFilesPlayer::STOPPED:
             threadpool->waitForDone(-1);
             threadpool->start(player);
+            break;
         // Set playing
         case MediaFilesPlayer::PAUSED:
             emit askNewState(MediaFilesPlayer::PLAYING);
@@ -129,7 +176,7 @@ void MediaFilesPlayerWidget::startStop()
 }
 
 
-void MediaFilesPlayerWidget::onTrackStateChanged(MediaFilesPlayer::State state)
+void MediaFilesPlayerWidget::onStateChanged(MediaFilesPlayer::State state)
 {
     switch (state)
     {
@@ -142,5 +189,23 @@ void MediaFilesPlayerWidget::onTrackStateChanged(MediaFilesPlayer::State state)
         case MediaFilesPlayer::PLAYING:
             buttonPlay->setText("Pause");
             break;
+    }
+}
+
+
+void MediaFilesPlayerWidget::onDurationChanged(double seconds)
+{
+    time_slider->setMaximum(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
+}
+
+
+void MediaFilesPlayerWidget::onTimeChanged(double seconds)
+{
+    // Updtae only if user is not holding slider
+    if (!time_slider->isSliderDown())
+    {
+        time_slider->blockSignals(true);
+        time_slider->setValue(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
+        time_slider->blockSignals(false);
     }
 }

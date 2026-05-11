@@ -11,6 +11,9 @@
 #include <AudioPlayers/MediaFilesPlayer.hpp>
 
 
+#define VOLUME_SLIDER_SCALE 10
+
+
 /**
  * Media files player widget.
  */
@@ -25,6 +28,10 @@ class MediaFilesPlayerWidget : public AudioPlayerWidget
     QPushButton *buttonPlay = nullptr;
     // Volume label.
     QLabel *volumeLabel = nullptr;
+    // Time slider.
+    QSlider *time_slider = nullptr;
+    // Whether player was paused by time slider.
+    bool wasPausedByTimeSlider = false;
 
 public:
 
@@ -52,11 +59,28 @@ private:
     void dropEvent(QDropEvent *event);
 
     /**
-     * Display player error.
+     * Sets player volume.
      * 
      * @param value volume value. int[0..100] is converted to float[0..1]
      */
     void setVolume(int value);
+
+    /**
+     * Sets player time.
+     * 
+     * @param value slider position in its ticks
+     */
+    void setTime(int value);
+
+    /**
+     * Pauses player when timestamp is changed by user.
+     */
+    void pauseOnTimeChange();
+
+    /**
+     * Resume player after timestamp was changed by user.
+     */
+    void resumeAfterTimeChange();
 
     /**
      * Start/Stop player.
@@ -71,9 +95,23 @@ public:
     void stop() override;
     
     /**
-     * Handler for track state update signal.
+     * Handler for player state update signal.
      */
-    void onTrackStateChanged(MediaFilesPlayer::State state);
+    void onStateChanged(MediaFilesPlayer::State state);
+    
+    /**
+     * Handler for player duration update signal.
+     * 
+     * @param seconds duration in seconds
+     */
+    void onDurationChanged(double seconds);
+    
+    /**
+     * Handler for player time update signal.
+     * 
+     * @param seconds time in seconds
+     */
+    void onTimeChanged(double seconds);
 
 signals:
     /**
@@ -88,9 +126,16 @@ signals:
      * @param state new state
      */
     void askNewState(MediaFilesPlayer::State state);
-    /** Ask player to change volume.
+    /**
+     * Ask player to change volume.
      * 
-     *  @param volume volume value
+     * @param volume volume value
      */
     void askNewVolume(qreal volume);
+    /**
+     * Ask player to change time.
+     * 
+     * @param seconds time in seconds
+     */
+    void askNewTime(double seconds);
 };

@@ -14,12 +14,12 @@ void MediaFilesPlayer::setState(State state)
     if (track)
     {
         // Close track if set to stop
-        if (this->state == PLAYING || this->state == PAUSED && state == STOPPED)
+        if (((this->state == PLAYING) || (this->state == PAUSED)) && (state == STOPPED))
         {
             track->close();
         }
         // Start track if was stopped
-        if (this->state == STOPPED && state == PLAYING || state == PAUSED)
+        if ((this->state == STOPPED) && ((state == PLAYING) || (state == PAUSED)))
         {
             track->open();
         }
@@ -28,6 +28,7 @@ void MediaFilesPlayer::setState(State state)
         this->state = state;
         scheduledState = state;
 
+        // Notify
         emit signalState(this->state);
     }
 }
@@ -69,10 +70,18 @@ void MediaFilesPlayer::run()
             if (audioSink->state() == QtAudio::StoppedState)
                 throw std::runtime_error("Audio output suddenly stopped");
 
-            // Set scheduled track state
+            // Set scheduled state
             if (state != scheduledState)
             {
                 setState(scheduledState);
+            }
+
+            // Set scheduled timestamp
+            if (scheduledTime >= 0)
+            {
+                track->setTime(scheduledTime);
+                scheduledTime = -1;
+                shouldReadSamples = true;
             }
 
             if (state == PLAYING)
@@ -86,13 +95,13 @@ void MediaFilesPlayer::run()
                 }
 
                 // If sample count is positive
-                if (track->getAudioDataSapmplesCount() > 0)
+                if (track->getAudioDataSamplesCount() > 0)
                 {
                     // Calculate size in bytes
-                    int sizeInBytes = track->getAudioDataSapmplesCount() * track->getChannelCount() * sizeof(float);
+                    int sizeInBytes = track->getAudioDataSamplesCount() * track->getChannelCount() * sizeof(float);
 
                     // Wait for availiable space and write data
-                    if (audioVCableSink->bytesFree() >= sizeInBytes && audioSink->bytesFree() >= sizeInBytes)
+                    if ((audioVCableSink->bytesFree() >= sizeInBytes) && (audioSink->bytesFree() >= sizeInBytes))
                     {
                         audioVCableSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
                         audioSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
@@ -102,8 +111,7 @@ void MediaFilesPlayer::run()
                 else
                 {
                     // If all previous data was consumed by IOs
-                    if (audioVCableSink->bufferSize() == audioVCableSink->bytesFree()
-                        && audioSink->bufferSize() == audioSink->bytesFree())
+                    if ((audioVCableSink->bufferSize() == audioVCableSink->bytesFree()) && (audioSink->bufferSize() == audioSink->bytesFree()))
                     {
                         // Set state to stopped
                         setState(STOPPED);
@@ -118,6 +126,9 @@ void MediaFilesPlayer::run()
         setState(STOPPED);
         emit signalError(e.what());
     }
+
+    // Update track timestamp
+    emit signalTime(0);
 
     // Stop streams
     stopAudioStream(&audioVCableSink);
@@ -176,4 +187,10 @@ void MediaFilesPlayer::scheduleState(State state)
 {
     if (track)
         scheduledState = state;
+}
+
+void MediaFilesPlayer::scheduleTime(double seconds)
+{
+    if (track)
+        scheduledTime = seconds;
 }

@@ -33,7 +33,10 @@ private:
     // Current state.
     State state = STOPPED;
     // Requested state.
-    State scheduledState = STOPPED;
+    State scheduledState = state;
+
+    // Requested timestamp.
+    double scheduledTime = -1;
 
     // Whether player should read next samples
     bool shouldReadSamples = true;
@@ -92,6 +95,11 @@ public:
      * @param state planned player state
      */
     void scheduleState(State state);
+
+    /**
+     * @param seconds time in seconds (must be < duration)
+     */
+    void scheduleTime(double seconds);
     
 signals:
     /**

@@ -26,26 +26,26 @@ class AudioTrackContext
     QString filepath;
     // Media file format context
     AVFormatContext *format_ctx = nullptr;
+    // Audio stream index
+    int audio_stream_index;
     // Media file codec
     const AVCodec *decoder = nullptr;
     // Media file codec contex
     AVCodecContext *decoder_ctx = nullptr;
+    // Media resampling context
+    SwrContext *swr_ctx = nullptr;
+    // Media data desired sample format
+    AVSampleFormat sample_format = AV_SAMPLE_FMT_FLT;
+    // Initial sample count for converter
+    int swr_nb_samples = 1024;
+    // Audio data
+    uint8_t **swr_data = nullptr;
+    // Temporary converter buffer size variable
+    int swr_linesize;
     // Media file packet
     AVPacket *packet = nullptr;
     // Media file frame
     AVFrame *frame = nullptr;
-    // Media resampling context
-    SwrContext *swr_ctx = nullptr;
-    // Media data desired channel
-    AVChannelLayout ch_layout = AV_CHANNEL_LAYOUT_STEREO;
-    // Media data desired sample format
-    AVSampleFormat sample_format = AV_SAMPLE_FMT_FLT;
-    // Set fixed sample count for converter
-    int swr_nb_samples = 1024;
-    // Audio stream index and converter data size
-    int audio_stream_index, swr_linesize;
-    // Audio data
-    uint8_t **swr_data = nullptr;
 
 public:
 
@@ -166,7 +166,7 @@ public:
         av_opt_set_int(swr_ctx,        "in_sample_rate", decoder_ctx->sample_rate, 0);
         av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt",  decoder_ctx->sample_fmt, 0);
         // Set resampler output samples parameters
-        av_opt_set_chlayout(swr_ctx,   "out_chlayout",    &ch_layout, 0);
+        av_opt_set_chlayout(swr_ctx,   "out_chlayout",    &decoder_ctx->ch_layout, 0);
         av_opt_set_int(swr_ctx,        "out_sample_rate", decoder_ctx->sample_rate, 0);
         av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt",  sample_format, 0);
         // Init resampler context
@@ -177,7 +177,7 @@ public:
         }
 
         // Buffer will be used as it is, no alignment
-        if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
+        if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
         {
             close();
             throw std::runtime_error("Could not allocate destination samples");
@@ -267,7 +267,7 @@ public:
         {
             // Realloc
             av_freep(&swr_data[0]);
-            if (av_samples_alloc(swr_data, &swr_linesize, ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
+            if (av_samples_alloc(swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
             {
                 close();
                 throw std::runtime_error("Error allocating memory for converted samples");

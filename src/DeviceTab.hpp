@@ -10,9 +10,6 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QComboBox>
-// Qt Multimedia
-#include <QtMultimedia/QMediaDevices>
-#include <QtMultimedia/QAudioDevice>
 // SDL3 devices list
 #include <SDL/DevicesList.cpp>
 

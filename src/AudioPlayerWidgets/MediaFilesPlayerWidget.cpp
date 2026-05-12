@@ -52,7 +52,7 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     volumeLabel = new QLabel(QString::number(volume_slider->value()));
     connect(volume_slider, &QSlider::valueChanged, this, &MediaFilesPlayerWidget::setVolume);
     volume_slider->setRange(0,100);
-    volume_slider->setValue(30);
+    volume_slider->setValue(50);
     QRect screeanGeometry = static_cast<QApplication*>(QApplication::instance())->primaryScreen()->availableGeometry();
     volume_slider->setMinimumWidth(screeanGeometry.width()/14);
     volume_slider->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);

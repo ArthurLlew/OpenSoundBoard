@@ -214,12 +214,14 @@ public:
         }
 
         // DEBUG
-        printf("============ Track info ============\n");
-        printf("%s\n", decoder->name);
-        printf("channels: %d\n", decoder_ctx->ch_layout.nb_channels);
-        printf("sample format: %d\n", decoder_ctx->sample_fmt);
-        printf("sample rate: %d\n", decoder_ctx->sample_rate);
-        printf("====================================\n");
+        #ifdef DEBUG
+            printf("============ Track info ============\n");
+            printf("%s\n", decoder->name);
+            printf("channels: %d\n", decoder_ctx->ch_layout.nb_channels);
+            printf("sample format: %d\n", decoder_ctx->sample_fmt);
+            printf("sample rate: %d\n", decoder_ctx->sample_rate);
+            printf("====================================\n");
+        #endif
 
         // Allocate media data packet
         packet = av_packet_alloc();

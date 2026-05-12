@@ -87,6 +87,17 @@ target_include_directories(OpenSoundBoard_debug PRIVATE ${CMAKE_CURRENT_SOURCE_D
 # Libraries linking
 target_link_libraries(OpenSoundBoard PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
 target_link_libraries(OpenSoundBoard_debug PRIVATE ${LIBS} $<LIST:TRANSFORM,${LIBS_QT6},PREPEND,Qt6::>)
+# Compiler options
+set(COMMON_COMPILER_OPTIONS 
+    -Wall 
+    -Wextra 
+    -Werror
+)
+target_compile_options(OpenSoundBoard PRIVATE ${MY_COMMON_WARNINGS} -O3)
+target_compile_options(OpenSoundBoard_debug PRIVATE ${MY_COMMON_WARNINGS}
+    -O1         # less optimized
+    -DDEBUG     # adds extra define
+)
 # Resulting executable should depend on header with resources (so header file is generated before them)
 add_dependencies(OpenSoundBoard resources app_icon)
 add_dependencies(OpenSoundBoard_debug resources app_icon)

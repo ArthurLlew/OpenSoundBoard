@@ -4,7 +4,7 @@
 // Audio player
 #include <AudioPlayers/AudioPlayer.hpp>
 // FFMPEG media files reader
-#include <AudioPlayers/AudioTrackReader.cpp>
+#include <FFMPEG/AudioTrackReader.cpp>
 
 
 /**

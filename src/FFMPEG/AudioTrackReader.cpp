@@ -2,6 +2,12 @@
 #define AUDIO_TRACK_CONTEXT
 
 
+// Strings
+#include <string>
+// Min/max
+#include <algorithm>
+// Exceptions
+#include <stdexcept>
 // FFMPEG
 extern "C"
 {
@@ -11,12 +17,7 @@ extern "C"
 #include <libswresample/swresample.h>
 #define __STDC_CONSTANT_MACROS
 }
-// Min/max
-#include <algorithm>
-// Exceptions
-#include <stdexcept>
-// Qt core
-#include <QtCore/QString>
+
 
 
 /**
@@ -25,15 +26,22 @@ extern "C"
 class AudioTrackContext
 {
     // Media file path
-    QString filepath;
+    std::string filepath;
+
     // Media file format context
     AVFormatContext *format_ctx = nullptr;
     // Audio stream index
     int audio_stream_index;
     // Media file codec
     const AVCodec *decoder = nullptr;
+
     // Media file codec contex
     AVCodecContext *decoder_ctx = nullptr;
+    // Media file packet
+    AVPacket *packet = nullptr;
+    // Media file frame
+    AVFrame *frame = nullptr;
+
     // Media resampling context
     SwrContext *swr_ctx = nullptr;
     // Media data desired sample format
@@ -44,15 +52,13 @@ class AudioTrackContext
     uint8_t **swr_data = nullptr;
     // How many samples are located in swr_data
     int swr_data_samples_count = 0;
-    // Media file packet
-    AVPacket *packet = nullptr;
-    // Media file frame
-    AVFrame *frame = nullptr;
+
     // Last frame timestamp in seconds
     double frame_time = 0;
     // Target timestamp in ticks. Only frames with timestamp greater than it are considered valid.
     int64_t target_pts = 0;
 
+    
 public:
 
     /**
@@ -60,11 +66,12 @@ public:
      * 
      *  @param filepath media file path.
      */
-    explicit AudioTrackContext(QString filepath)
+    explicit AudioTrackContext(std::string filepath)
     {
         // Save file path
         this->filepath = filepath;
     }
+
 
     /** 
      * Destructor.
@@ -74,6 +81,7 @@ public:
         close();
     }
 
+
     /**
      * @return audio track sample rate.
      */
@@ -82,6 +90,7 @@ public:
         return (decoder_ctx) ? decoder_ctx->sample_rate : 0;
     }
 
+
     /**
      * @return audio track number of channels.
      */
@@ -89,6 +98,7 @@ public:
     {
         return (decoder_ctx) ? decoder_ctx->ch_layout.nb_channels : 0;
     }
+
 
     /**
      * @return audio track total duration in seconda.
@@ -104,10 +114,29 @@ public:
 
         // Close format context if needed
         if (format_ctx)
-            freeFormatContext();
+            closeFormatContext();
 
         return duration;
     }
+
+
+    /**
+     * @return audio data samples count.
+     */
+    int getAudioDataSamplesCount() const
+    {
+        return swr_data_samples_count;
+    }
+
+
+    /**
+     * @return audio data.
+     */
+    uint8_t** getAudioData() const
+    {
+        return swr_data;
+    }
+
 
     /**
      * @return current audio track timestamp in seconds.
@@ -116,6 +145,7 @@ public:
     {
         return frame_time;
     }
+
 
     /**
      * Set audio track time (will update reading of samples).
@@ -146,133 +176,243 @@ public:
         }
     }
 
-    /**
-     * @return audio data samples count.
-     */
-    int getAudioDataSamplesCount() const
-    {
-        return swr_data_samples_count;
-    }
+
+private:
 
     /**
-     * @return audio data.
-     */
-    uint8_t** getAudioData() const
-    {
-        return swr_data;
-    }
-
-    /**
-     * Opens format context (aslo opens file reader).
+     * Creates FFMPEG format context.
      */
     void initFormatContext()
     {
-        // Open file and get info about media streams in file
-        const char* f = filepath.toStdString().c_str();
-        if (avformat_open_input(&format_ctx, f, nullptr, nullptr) < 0)
+        try
         {
-            close();
-            throw std::runtime_error("Unable to open input file");
-        }
-        if (avformat_find_stream_info(format_ctx, nullptr) < 0)
-        {
-            close();
-            throw std::runtime_error("Unable to find file streams info");
-        }
+            // Open file
+            if (avformat_open_input(&format_ctx, filepath.c_str(), NULL, NULL) < 0)
+            {
+                throw std::runtime_error("Unable to open media file");
+            }
+            
+            // Get info about media streams in file
+            if (avformat_find_stream_info(format_ctx, NULL) < 0)
+            {
+                throw std::runtime_error("Unable to find media streams in file");
+            }
 
-        // Find index of the audio stream
-        audio_stream_index = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &decoder, 0);
-        if (audio_stream_index < 0)
+            // Find index of the audio stream
+            audio_stream_index = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &decoder, 0);
+            if (audio_stream_index < 0)
+            {
+                throw std::runtime_error("Unable to find an audio stream in file");
+            }
+        }
+        catch(const std::exception& e)
         {
+            // Clear data on exception and rethrow
             close();
-            throw std::runtime_error("Unable to find an audio stream");
+            throw;
         }
     }
 
+
     /**
-     * Opens track and prepares necessary structures to read samples.
+     * Disposes FFMPEG format context.
      */
-    void open()
+    void closeFormatContext()
     {
-        // Init format context
-        initFormatContext();
-
-        // Init decoding context
-        decoder_ctx = avcodec_alloc_context3(decoder);
-        if (!decoder_ctx)
+        if (format_ctx)
         {
-            close();
-            throw std::runtime_error("Unable to open create decoding context");
-        }
-        avcodec_parameters_to_context(decoder_ctx, format_ctx->streams[audio_stream_index]->codecpar);
-
-        // Init audio decoder
-        if (avcodec_open2(decoder_ctx, decoder, nullptr) < 0)
-        {
-            close();
-            throw std::runtime_error("Unable to open audio decoder");
-        }
-
-        // DEBUG
-        #ifdef DEBUG
-            printf("============ Track info ============\n");
-            printf("%s\n", decoder->name);
-            printf("channels: %d\n", decoder_ctx->ch_layout.nb_channels);
-            printf("sample format: %d\n", decoder_ctx->sample_fmt);
-            printf("sample rate: %d\n", decoder_ctx->sample_rate);
-            printf("====================================\n");
-        #endif
-
-        // Allocate media data packet
-        packet = av_packet_alloc();
-        if (!packet)
-        {
-            close();
-            throw std::runtime_error("Unable to allocate data packet");
-        }
-        // Allocate media data frame
-        frame = av_frame_alloc();
-        if (!frame)
-        {
-            close();
-            throw std::runtime_error("Unable to allocate data frame");
-        }
-
-        // Allocate resampler context
-        swr_ctx = swr_alloc();
-        if (!swr_ctx)
-        {
-            close();
-            throw std::runtime_error("Unable to allocate resampler context");
-        }
-        // Set resampler input parameters
-        av_opt_set_chlayout(swr_ctx,   "in_chlayout",    &decoder_ctx->ch_layout, 0);
-        av_opt_set_int(swr_ctx,        "in_sample_rate", decoder_ctx->sample_rate, 0);
-        av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt",  decoder_ctx->sample_fmt, 0);
-        // Set resampler output parameters
-        av_opt_set_chlayout(swr_ctx,   "out_chlayout",    &decoder_ctx->ch_layout, 0);
-        av_opt_set_int(swr_ctx,        "out_sample_rate", decoder_ctx->sample_rate, 0);
-        av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt",  sample_format, 0);
-        // Init resampler context
-        if (swr_init(swr_ctx) < 0)
-        {
-            close();
-            throw std::runtime_error("Unable to init resampling context");
-        }
-
-        // Allocate resempler buffer (will be used wiyh no alignment)
-        int swr_linesize;
-        if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
-        {
-            close();
-            throw std::runtime_error("Could not allocate destination samples");
+            avformat_close_input(&format_ctx);
+            format_ctx = nullptr;
         }
     }
 
+
     /**
-     *  Reads next audio frame.
-     * 
-     *  @return number of read frames.
+     * Creates FFMPEG decoder context.
+     */
+    void initDecoderContext()
+    {
+        try
+        {
+            // Allocate decoder context
+            decoder_ctx = avcodec_alloc_context3(decoder);
+            if (!decoder_ctx)
+            {
+                throw std::runtime_error("Unable to create audio decoder context");
+            }
+
+            // Init decoder context
+            if (avcodec_parameters_to_context(decoder_ctx, format_ctx->streams[audio_stream_index]->codecpar))
+            {
+                throw std::runtime_error("Unable to init audio decoder context");
+            }
+
+            // Open file with decoder context
+            if (avcodec_open2(decoder_ctx, decoder, NULL) < 0)
+            {
+                throw std::runtime_error("Unable to open file with decoder context");
+            }
+
+            // DEBUG
+            #ifdef DEBUG
+                printf("============ Track info ============\n");
+                printf("%s\n", decoder->name);
+                printf("channels: %d\n", decoder_ctx->ch_layout.nb_channels);
+                printf("sample format: %d\n", decoder_ctx->sample_fmt);
+                printf("sample rate: %d\n", decoder_ctx->sample_rate);
+                printf("====================================\n");
+            #endif
+
+            // Allocate media data packet
+            packet = av_packet_alloc();
+            if (!packet)
+            {
+                throw std::runtime_error("Unable to allocate media data packet");
+            }
+
+            // Allocate media data frame
+            frame = av_frame_alloc();
+            if (!frame)
+            {
+                throw std::runtime_error("Unable to allocate media data frame");
+            }
+        }
+        catch(const std::exception& e)
+        {
+            // Clear data on exception and rethrow
+            close();
+            throw;
+        }
+    }
+
+
+    /**
+     * Disposes FFMPEG decoder context.
+     */
+    void closeDecoderContext()
+    {
+        // Free frame
+        if (frame)
+        {
+            av_frame_free(&frame);
+            frame = nullptr;
+        }
+        // Free packet
+        if (packet)
+        {
+            av_packet_free(&packet);
+            packet = nullptr;
+        }
+        // Free codec contex
+        if (decoder_ctx)
+        {
+            avcodec_free_context(&decoder_ctx);
+            decoder_ctx = nullptr;
+        }
+    }
+
+
+    /**
+     * Creates FFMPEG audio resampler.
+     */
+    void initResamplerContext()
+    {
+        try
+        {
+            // Allocate resampler context
+            swr_ctx = swr_alloc();
+            if (!swr_ctx)
+            {
+                throw std::runtime_error("Unable to allocate resampler context");
+            }
+
+            // Set resampler input parameters
+            av_opt_set_chlayout(swr_ctx,   "in_chlayout",    &decoder_ctx->ch_layout, 0);
+            av_opt_set_int(swr_ctx,        "in_sample_rate", decoder_ctx->sample_rate, 0);
+            av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt",  decoder_ctx->sample_fmt, 0);
+            // Set resampler output parameters
+            av_opt_set_chlayout(swr_ctx,   "out_chlayout",    &decoder_ctx->ch_layout, 0);
+            av_opt_set_int(swr_ctx,        "out_sample_rate", decoder_ctx->sample_rate, 0);
+            av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt",  sample_format, 0);
+
+            // Init resampler context
+            if (swr_init(swr_ctx) < 0)
+            {
+                throw std::runtime_error("Unable to init resampling context");
+            }
+
+            // Allocate resempler buffer (will be used wiyh no alignment)
+            int swr_linesize;
+            if (av_samples_alloc_array_and_samples(&swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, swr_nb_samples, sample_format, 0) < 0)
+            {
+                throw std::runtime_error("Could not allocate destination samples");
+            }
+        }
+        catch(const std::exception& e)
+        {
+            // Clear data on exception and rethrow
+            close();
+            throw;
+        }
+    }
+
+
+    /**
+     * Disposes FFMPEG audio resampler.
+     */
+    void closeResamplerContext()
+    {
+        // Free audio data
+        if (swr_data)
+        {
+            av_freep(&swr_data[0]);
+            av_freep(&swr_data);
+            swr_data = nullptr;
+            // Reset samples count
+            swr_data_samples_count = 0;
+        }
+        // Free resampling complex
+        if (swr_ctx)
+        {
+            swr_free(&swr_ctx);
+            swr_ctx = nullptr;
+        }
+    }
+
+
+public:
+
+    /**
+     * Creates FFMPEG context.
+     */
+    void init()
+    {
+        // Init format, decoder and resampler contexts
+        initFormatContext();
+        initDecoderContext();
+        initResamplerContext();
+    }
+
+
+    /**
+     * Disposes FFMPEG context.
+     */
+    void close()
+    {
+        // Free contexs
+        closeResamplerContext();
+        closeDecoderContext();
+        closeFormatContext();
+
+        // Reset frame timestamp
+        frame_time = 0;
+        // Reset time pts
+        target_pts = 0;
+    }
+
+
+    /**
+     *  Reads next audio data samples.
      */
     void read()
     {
@@ -353,7 +493,7 @@ public:
         // Set current timestamp
         frame_time = frame->pts * av_q2d(format_ctx->streams[audio_stream_index]->time_base);
 
-        // Some reallocation might be required
+        // Some reallocation might be required for resampler
         if (swr_nb_samples != frame->nb_samples)
         {
             // Realloc
@@ -362,7 +502,7 @@ public:
             if (av_samples_alloc(swr_data, &swr_linesize, decoder_ctx->ch_layout.nb_channels, frame->nb_samples, sample_format, 1) < 0)
             {
                 close();
-                throw std::runtime_error("Error allocating memory for converted samples");
+                throw std::runtime_error("Error reallocating memory for converted samples");
             }
             swr_nb_samples = frame->nb_samples;
         }
@@ -377,67 +517,6 @@ public:
 
         // Do not forget to dispose processed frame
         av_frame_unref(frame);
-
-        // Return finalized data
-        return;
-    }
-
-    /**
-     * Disposes active format context (also closes file stream).
-     */
-    void freeFormatContext()
-    {
-        if (format_ctx)
-        {
-            avformat_close_input(&format_ctx);
-        }
-    }
-
-    /**
-     * Closes reader.
-     */
-    void close()
-    {
-        // Free frame
-        if (frame)
-        {
-            av_frame_free(&frame);
-            frame = nullptr;
-        }
-        // Free packet
-        if (packet)
-        {
-            av_packet_free(&packet);
-            packet = nullptr;
-        }
-        // Free audio data
-        if (swr_data)
-        {
-            av_freep(&swr_data[0]);
-            av_freep(&swr_data);
-            swr_data = nullptr;
-            // Reset samples count
-            swr_data_samples_count = 0;
-        }
-        // Free resampling complex
-        if (swr_ctx)
-        {
-            swr_free(&swr_ctx);
-            swr_ctx = nullptr;
-        }
-        // Free codec contex
-        if (decoder_ctx)
-        {
-            avcodec_free_context(&decoder_ctx);
-            decoder_ctx = nullptr;
-        }
-        // Free format contex
-        freeFormatContext();
-
-        // Reset frame timestamp
-        frame_time = 0;
-        // Reset time pts
-        target_pts = 0;
     }
 };
 

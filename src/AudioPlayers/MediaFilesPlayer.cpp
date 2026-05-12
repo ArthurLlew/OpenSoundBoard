@@ -22,7 +22,7 @@ void MediaFilesPlayer::setState(State state)
         // Start track if was stopped
         if ((this->state == STOPPED) && ((state == PLAYING) || (state == PAUSED)))
         {
-            track->open();
+            track->init();
         }
 
         // Update state
@@ -149,7 +149,7 @@ void MediaFilesPlayer::setTrack(QString filepath)
     try
     {
         // Create new track context
-        track = new AudioTrackContext(filepath);
+        track = new AudioTrackContext(filepath.toStdString());
 
         // Update time slider
         emit signalTime(track->getTime());

@@ -38,10 +38,12 @@ add_custom_target(resources ALL DEPENDS ${RESOURCES_HEADER})
 
 # List of source files (.c/.cpp)
 set(SOURCES src/main.cpp src/MainWindow.cpp src/WidgetMessageBoxing/WidgetWarning.cpp src/DeviceTab.cpp src/AudioTrack.cpp
-            src/AudioPlayerWidgets/AudioPlayerWidget.cpp src/AudioPlayerWidgets/MicrophonePlayerWidget.cpp
+            src/AudioPlayerWidgets/AudioPlayerWidget.cpp
+            src/AudioPlayerWidgets/MicrophonePlayerWidget.cpp
             src/AudioPlayerWidgets/MediaFilesPlayerWidget.cpp
             src/AudioPlayers/AudioPlayer.cpp src/AudioPlayers/MicrophonePlayer.cpp src/AudioPlayers/MediaFilesPlayer.cpp
-            src/AudioPlayers/AudioTrackReader.cpp)
+            src/FFMPEG/AudioTrackReader.cpp
+            src/SDL/DevicesList.cpp src/SDL/DeviceStream.cpp)
 
 # Define names of static libraries
 set(LIBS dwmapi avutil avcodec avformat swresample SDL3)

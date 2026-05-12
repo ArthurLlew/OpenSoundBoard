@@ -13,6 +13,8 @@
 // Qt Multimedia
 #include <QtMultimedia/QMediaDevices>
 #include <QtMultimedia/QAudioDevice>
+// SDL3 devices list
+#include <SDL/DevicesList.cpp>
 
 
 /**
@@ -24,30 +26,19 @@ class DeviceTab: public QWidget
     Q_OBJECT
 
     // Stores info about devices, available for this tab.
-    QList<QAudioDevice> devices;
-
-public:
-
+    DevicesList *devices;
     // Combobox with devices.
     QComboBox *combobox_devices = nullptr;
-    /**
-     * Describes audio device type.
-     */ 
-    enum DeviceType
-    {
-        INPUT,
-        OUTPUT
-    };
-    // Device type.
-    DeviceType type;
+
+public:
 
     /**
      * Constructor.
      * 
-     * @param type device type (input/output)
+     * @param device_type device type (input/output)
      * @param combobox_devices combobox with devices
      */
-    explicit DeviceTab(DeviceType type, QComboBox *combobox_devices, QWidget *parent = nullptr);
+    explicit DeviceTab(DevicesList::DeviceType device_type, QComboBox *combobox_devices, QWidget *parent = nullptr);
     /**
      * Destructor.
      */
@@ -64,7 +55,7 @@ public:
     void refreshDevices();
     
     /**
-     * @return info of selected audio device.
+     * @return id of selected audio device.
      */
-    QAudioDevice getDevice() const;
+    SDL_AudioDeviceID getDevice() const;
 };

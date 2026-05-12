@@ -1,10 +1,14 @@
 #include <DeviceTab.hpp>
 
 
-DeviceTab::DeviceTab(DeviceType type, QComboBox *combobox_devices, QWidget *parent) : QWidget(parent)
+// Exceptions
+#include <stdexcept>
+
+
+DeviceTab::DeviceTab(DevicesList::DeviceType device_type, QComboBox *combobox_devices, QWidget *parent) : QWidget(parent)
 {
-    // Save device type
-    this->type = type;
+    // Init devices list
+    devices = new DevicesList(device_type);
 
     // Widget layout
     QVBoxLayout *layout = new QVBoxLayout();
@@ -24,7 +28,7 @@ DeviceTab::DeviceTab(DeviceType type, QComboBox *combobox_devices, QWidget *pare
 DeviceTab::~DeviceTab()
 {
     // Clear devices list
-    devices.clear();
+    delete devices;
 }
 
 
@@ -37,42 +41,33 @@ void DeviceTab::paintEvent(QPaintEvent *)
 }
 
 
-QAudioDevice DeviceTab::getDevice() const
+SDL_AudioDeviceID DeviceTab::getDevice() const
 {
-    // Return audio device info corresponding to selected device in combobox (empty device if there are no devices)
-    return combobox_devices->count() != 0 ? devices[combobox_devices->currentIndex()] : QAudioDevice();
+    // Throw exception if there are no devices
+    if (devices->count() < 1)
+        throw std::runtime_error("Audio devices: nothing is avaliable");
+
+    // Return audio device ID corresponding to selected device in combobox
+    return devices->get(combobox_devices->currentIndex());
 }
 
 
 void DeviceTab::refreshDevices()
 {
-    // Block any signals from combobox since it is now being edited
+    // Block any signals from combobox (editing combobox will not cause any updates)
     combobox_devices->blockSignals(true);
 
-    // Clear combobox list if needed
+    // Clear combobox
     if (combobox_devices->count() != 0)
     {
         combobox_devices->clear();
-        devices.clear();
     }
-
-    // Create new list and fill in combobox
-    switch (type)
+    // Refresh devices list
+    devices->refresh();
+    // Fill combobox
+    for (int i=0; i < devices->count(); i++)
     {
-        case INPUT:
-        {
-            devices = QMediaDevices::audioInputs();
-            break;
-        }
-        case OUTPUT:
-        {
-            devices = QMediaDevices::audioOutputs();
-            break;
-        }
-    }
-    for (int i=0; i < devices.count(); i++)
-    {
-        combobox_devices->addItem(devices[i].description());
+        combobox_devices->addItem(SDL_GetAudioDeviceName(devices->get(i)));
     }
 
     // Release combobox

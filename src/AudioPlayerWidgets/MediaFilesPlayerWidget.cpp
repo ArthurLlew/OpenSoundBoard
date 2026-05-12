@@ -98,10 +98,19 @@ void MediaFilesPlayerWidget::dropEvent(QDropEvent *event)
 }
 
 
+double convertLogToLinear(float value) {
+    // Avoid non-zero from log
+    if (value <= 0.0) return 0.0;
+
+    // 10^(2 * (value - 1))
+    return std::pow(10.0, 2.0 * (value - 1.0));
+}
+
+
 void MediaFilesPlayerWidget::setVolume(int value)
 {
     // Ask player to change volume
-    emit askNewVolume(QtAudio::convertVolume(value / qreal(100.0), QtAudio::LogarithmicVolumeScale, QtAudio::LinearVolumeScale));
+    emit askNewVolume(convertLogToLinear(value / 100.0));
     // Update volume label
     volumeLabel->setText(QString::number(value));
 }

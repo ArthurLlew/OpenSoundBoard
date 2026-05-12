@@ -1,6 +1,12 @@
 #include <MainWindow.hpp>
 
 
+// SDL3
+#include <SDL3/SDL.h>
+// Strings
+#include <string>
+
+
 // Constructor
 MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
@@ -13,6 +19,14 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     setMinimumSize(screeanGeometry.width()/1.5, screeanGeometry.height()/1.5);
     setGeometry(screeanGeometry.width()/10, screeanGeometry.height()/8,
                 screeanGeometry.width()/1.5, screeanGeometry.height()/1.5);
+
+    // Init SDL3
+    if (!SDL_Init(SDL_INIT_AUDIO)) {
+        // Display warning about error
+        std::string message = "SDL3 inti error: ";
+        std::string sdl_error = SDL_GetError();
+        displayWarning((message + sdl_error).c_str());
+    }
 
     /*
     // Central widget:
@@ -75,16 +89,16 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
     /* Input device */
     QComboBox *combobox_devices = new QComboBox();
     void (QComboBox:: *indexChangedSignal)(int) = &QComboBox::currentIndexChanged;
-    devices->addTab(new DeviceTab(DeviceTab::INPUT, combobox_devices), "Input Device");
+    devices->addTab(new DeviceTab(DevicesList::INPUT, combobox_devices), "Input Device");
     // Connect after device tab creation to ensure MainWindow::restartPlayers won't be called inside constructor (causing crash)
     connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
     /* Virtual Output Cable */
     combobox_devices = new QComboBox();
-    devices->addTab(new DeviceTab(DeviceTab::OUTPUT, combobox_devices), "Virtual Output Cable");
+    devices->addTab(new DeviceTab(DevicesList::OUTPUT, combobox_devices), "Virtual Output Cable");
     connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
     /* Output Device */
     combobox_devices = new QComboBox();
-    devices->addTab(new DeviceTab(DeviceTab::OUTPUT, combobox_devices), "Output Device");
+    devices->addTab(new DeviceTab(DevicesList::OUTPUT, combobox_devices), "Output Device");
     connect(combobox_devices, indexChangedSignal, this, &MainWindow::updateDevices);
 
     /*
@@ -104,6 +118,8 @@ MainWindow::MainWindow(const QApplication *app, QWidget *parent, Qt::WindowFlags
 // Destructor
 MainWindow::~MainWindow()
 {
+    // Free SDL resources
+    SDL_Quit();
 }
 
 

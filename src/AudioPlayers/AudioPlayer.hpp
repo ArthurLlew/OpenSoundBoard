@@ -8,10 +8,10 @@
 // Qt widgets
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QTabWidget>
-// QtMultimedia
-#include <QtMultimedia/QAudioSink>
-// Device tab widget
+// Audio device tab widget
 #include <DeviceTab.hpp>
+// Audio device stream
+#include <SDL/DeviceStream.cpp>
 
 
 /**
@@ -27,17 +27,15 @@ protected:
     // Tab widget that describes available devices.
     QTabWidget const *devices = nullptr;
 
+    // Audio output (virtual cable).
+    DeviceStream *audioVCableSink = nullptr;
+
     // Whether devices should be updated (always update at startup).
     bool mustUpdateDevices = true;
-
-    // Audio output (virtual cable).
-    QAudioSink *audioVCableSink = nullptr;
-    // Audio output IO (virtual cable).
-    QIODevice *audioVCableSinkIO = nullptr;
-    // Audio output.
-    QAudioSink *audioSink = nullptr;
-    // Audio output IO.
-    QIODevice *audioSinkIO = nullptr;
+    // Whether player should read next samples (always read on startup)
+    bool shouldReadSamples = true;
+    // Whether stream has to be flushed for correct track ending
+    bool shouldFlush = true;
 
 public:
 
@@ -53,28 +51,33 @@ protected:
     /**
      * Stops given audio stream.
      */
-    template<typename QAudioStream>
-    void stopAudioStream(QAudioStream **audioStream)
-    {
-        // Stop and delete previous audio stream
-        if (*audioStream != nullptr)
-        {
-            (*audioStream)->stop();
-            delete *audioStream;
-            *audioStream = nullptr;
-        }
-    }
+    void stopAudioStream(DeviceStream **audioStream);
 
     /**
-     * Restarts given audio sink.
+     * Restarts given audio stream.
      * 
-     * @param audioSink Audio sink to restart
-     * @param deviceTab Device tab with audio device info
-     * @param format Audio format to use when opening audio sink
+     * @param audioSink audio stream to close
+     * @param deviceTab device tab with audio device info
+     * @param format audio format
      * 
-     * @return IO device of restarted audio sink
+     * @return new audio stream
      */
-    virtual QIODevice* restartAudioSink(QAudioSink **audioSink, DeviceTab *deviceTab, const QAudioFormat &format);
+    DeviceStream* restartAudioStream(DeviceStream **audioSink, DeviceTab *deviceTab, const SDL_AudioSpec &format);
+
+    /**
+     * Restarts given audio stream with native format.
+     * 
+     * @param audioSink audio stream to close
+     * @param deviceTab device tab with audio device info
+     * 
+     * @return new audio stream
+     */
+    DeviceStream* restartAudioStream(DeviceStream **audioSink, DeviceTab *deviceTab);
+
+    /**
+     * Resets player variables.
+     */
+    void reset();
 
 public:
 

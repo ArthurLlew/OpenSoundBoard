@@ -1,8 +1,6 @@
 #pragma once
 
 
-// QtMultimedia
-#include <QtMultimedia/QAudioSource>
 // Audio player
 #include <AudioPlayers/AudioPlayer.hpp>
 
@@ -19,9 +17,7 @@ class MicrophonePlayer : public AudioPlayer
     bool isRunning = false;
 
     // Audio input.
-    QAudioSource *audioSource = nullptr;
-    // Audio input IO.
-    QIODevice *audioSourceIO = nullptr;
+    DeviceStream *audioSource = nullptr;
 
 public:
 
@@ -36,20 +32,6 @@ public:
      * @return player state
      */
     bool getState() { return isRunning; }
-
-private:
-
-    /**
-     * Restarts given audio source.
-     * 
-     * @param audioSink audio source to restart
-     * @param deviceTab device tab with audio device info
-     * 
-     * @return IO device of restarted audio source
-     */
-    virtual QIODevice* restartAudioSource(QAudioSource **audioSource, DeviceTab *deviceTab);
-
-public:
 
     /**
      * Player cycle.

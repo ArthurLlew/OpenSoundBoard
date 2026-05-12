@@ -16,23 +16,41 @@ void AudioPlayer::updateAudioDevices()
 }
 
 
-QIODevice* AudioPlayer::restartAudioSink(QAudioSink **audioSink, DeviceTab *deviceTab, const QAudioFormat &format)
+void AudioPlayer::stopAudioStream(DeviceStream **audioStream)
+{
+    // Stop and delete previous audio stream
+    if (*audioStream)
+    {
+        delete *audioStream;
+        *audioStream = nullptr;
+    }
+}
+
+
+DeviceStream* AudioPlayer::restartAudioStream(DeviceStream **audioSink, DeviceTab *deviceTab, const SDL_AudioSpec &format)
 {
     // Stop audio sink
     stopAudioStream(audioSink);
 
-    // Get currrently selected device
-    QAudioDevice audio_device = deviceTab->getDevice();
+    // Init and start new audio
+    return new DeviceStream(deviceTab->getDevice(), format);
+}
 
-    // Check if any device is avaliable
-    if (audio_device.isNull())
-        throw std::runtime_error("Audio output: No devices avaliable");
 
-    // Check if audio format is supported
-    if (!audio_device.isFormatSupported(format))
-        throw std::runtime_error("Audio output: Audio format is not supported");
+DeviceStream* AudioPlayer::restartAudioStream(DeviceStream **audioSink, DeviceTab *deviceTab)
+{
+    // Stop audio sink
+    stopAudioStream(audioSink);
 
-    // Init and start audio sink
-    *audioSink = new QAudioSink(audio_device, format);
-    return (*audioSink)->start();
+    // Init and start new audio
+    return new DeviceStream(deviceTab->getDevice());
+}
+
+
+void AudioPlayer::reset()
+{
+    // Raise update flags
+    mustUpdateDevices = true;
+    shouldReadSamples = true;
+    shouldFlush = true;
 }

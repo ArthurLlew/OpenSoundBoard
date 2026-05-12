@@ -44,7 +44,7 @@ set(SOURCES src/main.cpp src/MainWindow.cpp src/WidgetMessageBoxing/WidgetWarnin
             src/AudioPlayers/AudioTrackReader.cpp)
 
 # Define names of static libraries
-set(LIBS dwmapi avutil avcodec avformat swresample)
+set(LIBS dwmapi avutil avcodec avformat swresample SDL3)
 # Add static libraries
 foreach(LIB IN LISTS ${LIBS})
     add_library(LIB STATIC IMPORTED)
@@ -57,7 +57,7 @@ foreach(LIB IN LISTS ${LIBS})
 endforeach()
 
 # Define and find Qt packages
-set(LIBS_QT6 Core Widgets Gui Multimedia)
+set(LIBS_QT6 Core Widgets Gui)
 find_package(Qt6 REQUIRED COMPONENTS ${LIBS_QT6})
 
 # AUTOMOC properties

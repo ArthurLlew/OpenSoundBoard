@@ -4,28 +4,6 @@
 MicrophonePlayer::MicrophonePlayer(QTabWidget const* devices) : AudioPlayer(devices) {}
 
 
-QIODevice* MicrophonePlayer::restartAudioSource(QAudioSource **audioSource, DeviceTab *deviceTab)
-{
-    // Stop audio source
-    stopAudioStream(audioSource);
-
-    // Get currrently selected device
-    QAudioDevice audio_device = deviceTab->getDevice();
-
-    // Check if any device is avaliable
-    if (audio_device.isNull())
-        throw std::runtime_error("Audio input: No devices avaliable");
-
-    // Get and modify preffered format
-    QAudioFormat format = audio_device.preferredFormat();
-    format.setChannelCount(2);
-
-    // Init and start audio source
-    *audioSource = new QAudioSource(audio_device, format);
-    return (*audioSource)->start();
-}
-
-
 void MicrophonePlayer::run()
 {
     isRunning = true;
@@ -38,28 +16,41 @@ void MicrophonePlayer::run()
             // Update streams if needed
             if (mustUpdateDevices)
             {
-                audioSourceIO = restartAudioSource(&audioSource, (DeviceTab*)devices->widget(0));
-                audioVCableSinkIO = restartAudioSink(&audioVCableSink, (DeviceTab*)devices->widget(1), audioSource->format());
+                audioSource = restartAudioStream(&audioSource, (DeviceTab*)devices->widget(0));
+                audioVCableSink = restartAudioStream(&audioVCableSink, (DeviceTab*)devices->widget(1), audioSource->format());
                 mustUpdateDevices = false;
             }
 
-            // Check streams
-            if (audioSource->state() == QtAudio::StoppedState)
-                throw std::runtime_error("Audio input suddenly stopped");
-            if (audioVCableSink->state() == QtAudio::StoppedState)
-                throw std::runtime_error("Audio Virtual cable output suddenly stopped");
-
-            #define AUDIO_BYTE_SIZE 1024 
+            #define AUDIO_BUFFER_SIZE 1024 
 
             // Read microphone input
-            QByteArray audio = audioSourceIO->read(AUDIO_BYTE_SIZE);
+            float buffer[AUDIO_BUFFER_SIZE * SDL_AUDIO_FRAMESIZE(audioSource->format())];
+            // Read samples
+            if (shouldReadSamples)
+            {
+                audioSource->read(buffer, AUDIO_BUFFER_SIZE);
+                shouldReadSamples = false;
+            }
 
-            // Wait for availiable space and write data
-            while (audioVCableSink->bytesFree() < AUDIO_BYTE_SIZE) {}
-            audioVCableSinkIO->write(audio);
+            // Write data if enough space is available
+            if (!shouldReadSamples && audioVCableSink->isReadyForWrite(AUDIO_BUFFER_SIZE))
+            {
+                audioVCableSink->write(buffer, AUDIO_BUFFER_SIZE);
+                shouldReadSamples = true;
+            }
 
-            #undef AUDIO_BYTE_SIZE
+            #undef AUDIO_BUFFER_SIZE
         }
+
+        // Flush for correct audio ending
+        if (shouldFlush)
+        {
+            audioVCableSink->flush();
+            shouldFlush = false;
+        }
+
+        // Wait for audio data to end
+        while(!audioVCableSink->isEmpty()) {}
     }
     catch(const std::exception& e)
     {
@@ -68,9 +59,10 @@ void MicrophonePlayer::run()
 
     // Stop streams
     stopAudioStream(&audioSource);
-    stopAudioStream(&audioSink);
-    // Raise update flag
-    mustUpdateDevices = true;
+    stopAudioStream(&audioVCableSink);
+    
+    // Reset player
+    reset();
 }
 
 

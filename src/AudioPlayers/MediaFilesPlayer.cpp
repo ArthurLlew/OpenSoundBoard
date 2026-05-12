@@ -1,5 +1,6 @@
 #include <AudioPlayers/MediaFilesPlayer.hpp>
 
+
 MediaFilesPlayer::MediaFilesPlayer(QTabWidget const *devices) : AudioPlayer(devices) {}
 
 
@@ -45,30 +46,24 @@ void MediaFilesPlayer::run()
         // Start playing track
         setState(PLAYING);
 
-        // Audio track format
-        QAudioFormat format;
-        format.setSampleRate(track->getSampleRate());
-        format.setChannelCount(track->getChannelCount());
-        format.setSampleFormat(QAudioFormat::Float);
+        // Audio stream format
+        SDL_AudioSpec format;
+        format.format = SDL_AUDIO_F32;
+        format.channels = track->getChannelCount();
+        format.freq = track->getSampleRate();
 
         // Player cycle
         while (state != STOPPED)
         {
-            // Update streams if needed
+            // Update audio streams if needed
             if (mustUpdateDevices)
             {
-                audioVCableSinkIO = restartAudioSink(&audioVCableSink, (DeviceTab*)devices->widget(1), format);
-                audioVCableSink->setVolume(volume);
-                audioSinkIO = restartAudioSink(&audioSink, (DeviceTab*)devices->widget(2), format);
-                audioSink->setVolume(volume);
+                audioVCableSink = restartAudioStream(&audioVCableSink, (DeviceTab*)devices->widget(1), format);
+                audioVCableSink->volume(volume);
+                audioSink = restartAudioStream(&audioSink, (DeviceTab*)devices->widget(2), format);
+                audioSink->volume(volume);
                 mustUpdateDevices = false;
             }
-
-            // Check streams
-            if (audioVCableSink->state() == QtAudio::StoppedState)
-                throw std::runtime_error("Audio Virtual cable output suddenly stopped");
-            if (audioSink->state() == QtAudio::StoppedState)
-                throw std::runtime_error("Audio output suddenly stopped");
 
             // Set scheduled state
             if (state != scheduledState)
@@ -97,21 +92,27 @@ void MediaFilesPlayer::run()
                 // If sample count is positive
                 if (track->getAudioDataSamplesCount() > 0)
                 {
-                    // Calculate size in bytes
-                    int sizeInBytes = track->getAudioDataSamplesCount() * track->getChannelCount() * sizeof(float);
-
-                    // Wait for availiable space and write data
-                    if ((audioVCableSink->bytesFree() >= sizeInBytes) && (audioSink->bytesFree() >= sizeInBytes))
+                    // Write data if enough space is available
+                    if (audioVCableSink->isReadyForWrite(track->getAudioDataSamplesCount())
+                        && audioSink->isReadyForWrite(track->getAudioDataSamplesCount()))
                     {
-                        audioVCableSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
-                        audioSinkIO->write((const char*)track->getAudioData()[0], sizeInBytes);
+                        audioVCableSink->write(track->getAudioData()[0], track->getAudioDataSamplesCount());
+                        audioSink->write(track->getAudioData()[0], track->getAudioDataSamplesCount());
                         shouldReadSamples = true;
                     }
                 }
                 else
                 {
-                    // If all previous data was consumed by IOs
-                    if ((audioVCableSink->bufferSize() == audioVCableSink->bytesFree()) && (audioSink->bufferSize() == audioSink->bytesFree()))
+                    // Flush for correct audio ending
+                    if (shouldFlush)
+                    {
+                        audioVCableSink->flush();
+                        audioSink->flush();
+                        shouldFlush = false;
+                    }
+
+                    // If all previous data was consumed by all streams
+                    if (audioVCableSink->isEmpty() && audioSink->isEmpty())
                     {
                         // Set state to stopped
                         setState(STOPPED);
@@ -133,9 +134,9 @@ void MediaFilesPlayer::run()
     // Stop streams
     stopAudioStream(&audioVCableSink);
     stopAudioStream(&audioSink);
-    // Raise update flags
-    mustUpdateDevices = true;
-    shouldReadSamples = true;
+    
+    // Reset player
+    reset();
 }
 
 
@@ -173,14 +174,14 @@ void MediaFilesPlayer::removeTrack()
 }
 
 
-void MediaFilesPlayer::setVolume(qreal volume)
+void MediaFilesPlayer::setVolume(float volume)
 {
     this->volume = volume;
-    // Update volume in any opened audio sink
+    // Update volume in all opened audio streams
     if (audioVCableSink)
-        audioVCableSink->setVolume(volume);
+        audioVCableSink->volume(volume);
     if (audioSink)
-        audioSink->setVolume(volume);
+       audioSink->volume(volume);
 }
 
 void MediaFilesPlayer::scheduleState(State state)

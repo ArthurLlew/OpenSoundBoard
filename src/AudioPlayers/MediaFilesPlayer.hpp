@@ -28,6 +28,9 @@ public:
 
 private:
 
+    // Audio output.
+    DeviceStream *audioSink = nullptr;
+
     // Current track.
     AudioTrackContext *track = nullptr;
     // Current state.
@@ -37,9 +40,6 @@ private:
 
     // Requested timestamp.
     double scheduledTime = -1;
-
-    // Whether player should read next samples
-    bool shouldReadSamples = true;
 
     // Audio volume.
     float volume = 0.5;
@@ -89,7 +89,7 @@ public:
     /**
      * Sets audio track volume.
      */
-    void setVolume(qreal volume);
+    void setVolume(float volume);
 
     /**
      * @param state planned player state

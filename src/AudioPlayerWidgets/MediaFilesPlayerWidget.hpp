@@ -131,7 +131,7 @@ signals:
      * 
      * @param volume volume value
      */
-    void askNewVolume(qreal volume);
+    void askNewVolume(float volume);
     /**
      * Ask player to change time.
      * 

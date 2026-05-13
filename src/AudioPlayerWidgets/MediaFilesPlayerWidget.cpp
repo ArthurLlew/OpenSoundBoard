@@ -1,15 +1,6 @@
 #include <AudioPlayerWidgets/MediaFilesPlayerWidget.hpp>
 
 
-// Strings
-#include <string>
-#include <sstream>
-// For pairs
-#include <iomanip>
-// For time utilities
-#include <chrono>
-
-
 // Scaling of volume slider for better time control
 #define VOLUME_SLIDER_SCALE 10
 // Default labels values
@@ -27,6 +18,7 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     // Connect signals to player
     connect(this, &MediaFilesPlayerWidget::askToUpdateDevices, (MediaFilesPlayer*)this->player, MediaFilesPlayer::updateAudioDevices);
     connect(this, &MediaFilesPlayerWidget::askNewTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setTrack);
+    connect(this, &MediaFilesPlayerWidget::askRemoveTrack, (MediaFilesPlayer*)this->player, MediaFilesPlayer::removeTrack);
     connect(this, &MediaFilesPlayerWidget::askNewVolume, (MediaFilesPlayer*)this->player, MediaFilesPlayer::setVolume);
     connect(this, &MediaFilesPlayerWidget::askNewState, (MediaFilesPlayer*)this->player, MediaFilesPlayer::scheduleState);
     connect(this, &MediaFilesPlayerWidget::askNewTime, (MediaFilesPlayer*)this->player, &MediaFilesPlayer::scheduleTime);
@@ -115,6 +107,28 @@ void MediaFilesPlayerWidget::dropEvent(QDropEvent *event)
 
     // Exit event
     event->acceptProposedAction();
+}
+
+
+void MediaFilesPlayerWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    // Init menu
+    QMenu menu(this);
+    
+    // Add remove track action
+    QAction *removeAction = menu.addAction("Remove track");
+    connect(removeAction, &QAction::triggered, this, [this]()
+    {
+        // Stop player and remove track
+        this->stop();
+        emit this->askRemoveTrack();
+        // Update labels
+        this->trackName->setText(NO_TRACK_STR);
+        this->trackDuration->setText(NO_DURATION_STR);
+    });
+
+    // Place menu at correct position (of cursor)
+    menu.exec(event->globalPos());
 }
 
 

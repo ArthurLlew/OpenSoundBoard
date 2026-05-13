@@ -1,10 +1,18 @@
 #pragma once
 
 
+// Strings
+#include <string>
+#include <sstream>
+// For pairs
+#include <iomanip>
+// For time utilities
+#include <chrono>
 // Qt widgets
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QMenu>
 // Audio player widget
 #include <AudioPlayerWidgets/AudioPlayerWidget.hpp>
 // Media files player
@@ -51,11 +59,15 @@ private:
     /**
      * Handles entering drag event.
      */
-    void dragEnterEvent(QDragEnterEvent *event);
+    void dragEnterEvent(QDragEnterEvent *event) override;
     /**
      * Handles items (with appropriate type) dropped on this widget.
      */
-    void dropEvent(QDropEvent *event);
+    void dropEvent(QDropEvent *event) override;
+    /**
+     * Handles context menu event.
+     */
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
     /**
      * Converts sound volume for better human perception
@@ -101,7 +113,7 @@ public:
      * Handler for player state update signal.
      */
     void onStateChanged(MediaFilesPlayer::State state);
-    
+
 private:
 
     /**
@@ -138,6 +150,10 @@ signals:
      * @param filepath media file path
      */
     void askNewTrack(QString filepath);
+    /**
+     * Ask player to remove track.
+     */
+    void askRemoveTrack();
     /**
      * Ask player to change state.
      * 

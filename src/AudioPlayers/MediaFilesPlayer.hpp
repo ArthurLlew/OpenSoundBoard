@@ -79,12 +79,10 @@ public:
      */
     void setTrack(QString filepath);
 
-private:
     /**
-     * Flushes current audio track info.
+     * Removes current audio track.
      */
     void removeTrack();
-public:
 
     /**
      * Sets audio track volume.

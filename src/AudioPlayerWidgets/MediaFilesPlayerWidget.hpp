@@ -11,9 +11,6 @@
 #include <AudioPlayers/MediaFilesPlayer.hpp>
 
 
-#define VOLUME_SLIDER_SCALE 10
-
-
 /**
  * Media files player widget.
  */
@@ -24,6 +21,8 @@ class MediaFilesPlayerWidget : public AudioPlayerWidget
 
     // Track name label.
     QLabel *trackName = nullptr;
+    // Track duration label.
+    QLabel *trackDuration = nullptr;
     // Play button.
     QPushButton *buttonPlay = nullptr;
     // Volume label.
@@ -58,6 +57,10 @@ private:
      */
     void dropEvent(QDropEvent *event);
 
+    /**
+     * Converts sound volume for better human perception
+     */
+    double convertLogToLinear(float value);
     /**
      * Sets player volume.
      * 
@@ -99,6 +102,21 @@ public:
      */
     void onStateChanged(MediaFilesPlayer::State state);
     
+private:
+
+    /**
+     * Constructs time string from seconds.
+     * 
+     * @param seconds time on slider (was multiplied by VOLUME_SLIDER_SCALE and thus will be devided by it)
+     */
+    std::string formatTime(int seconds);
+    /**
+     * Constructs duration label from slider values.
+     */
+    QString getDurationLabel(int value, int maximum);
+
+public:
+
     /**
      * Handler for player duration update signal.
      * 

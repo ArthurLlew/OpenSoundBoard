@@ -1,6 +1,22 @@
 #include <AudioPlayerWidgets/MediaFilesPlayerWidget.hpp>
 
 
+// Strings
+#include <string>
+#include <sstream>
+// For pairs
+#include <iomanip>
+// For time utilities
+#include <chrono>
+
+
+// Scaling of volume slider for better time control
+#define VOLUME_SLIDER_SCALE 10
+// Default labels values
+#define NO_TRACK_STR "<No track>"
+#define NO_DURATION_STR "0:00:00/0:00:00"
+
+
 MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QString name, QWidget *parent)
 // Init of the player happens here
 : AudioPlayerWidget(new MediaFilesPlayer(devices), name, parent)
@@ -37,8 +53,12 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     // Other widgets:
     */
     // Track name
-    trackName = new QLabel("<No track>");
+    trackName = new QLabel(NO_TRACK_STR);
     box_layout1->addWidget(trackName);
+    // Track duration
+    trackDuration = new QLabel(NO_DURATION_STR);
+    trackDuration->setAlignment(Qt::AlignRight);           // snap to the right
+    box_layout1->addWidget(trackDuration);
     // Play/Pause button
     buttonPlay = new QPushButton("Play");
     connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerWidget::startStop);
@@ -98,7 +118,7 @@ void MediaFilesPlayerWidget::dropEvent(QDropEvent *event)
 }
 
 
-double convertLogToLinear(float value) {
+double MediaFilesPlayerWidget::convertLogToLinear(float value) {
     // Avoid non-zero from log
     if (value <= 0.0) return 0.0;
 
@@ -202,9 +222,36 @@ void MediaFilesPlayerWidget::onStateChanged(MediaFilesPlayer::State state)
 }
 
 
+std::string MediaFilesPlayerWidget::formatTime(int seconds) {
+    // Convert from slider value
+    seconds /= VOLUME_SLIDER_SCALE;
+
+    // Compute time components
+    std::chrono::seconds s{seconds};
+    std::chrono::hours h = std::chrono::duration_cast<std::chrono::hours>(s);
+    s -= h;
+    std::chrono::minutes m = std::chrono::duration_cast<std::chrono::minutes>(s);
+    s -= m;
+
+    // Construct and return time string
+    std::ostringstream time_str;
+    time_str << h.count() << ":" 
+             << std::setfill('0') << std::setw(2) << m.count() << ":" 
+             << std::setfill('0') << std::setw(2) << s.count();
+    return time_str.str();
+}
+
+
+QString MediaFilesPlayerWidget::getDurationLabel(int value, int maximum)
+{
+    return QString::fromStdString(formatTime(value) + '/' + formatTime(maximum));
+}
+
+
 void MediaFilesPlayerWidget::onDurationChanged(double seconds)
 {
     time_slider->setMaximum(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
+    trackDuration->setText(getDurationLabel(time_slider->value(), time_slider->maximum()));
 }
 
 
@@ -215,6 +262,7 @@ void MediaFilesPlayerWidget::onTimeChanged(double seconds)
     {
         time_slider->blockSignals(true);
         time_slider->setValue(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
+        trackDuration->setText(getDurationLabel(time_slider->value(), time_slider->maximum()));
         time_slider->blockSignals(false);
     }
 }

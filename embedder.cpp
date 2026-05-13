@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
         }
 
         // Put header ending
-        header << "\n#endif";
+        header << "\n#endif // EMBEDED_FILES";
 
         // Close file
         header.close();

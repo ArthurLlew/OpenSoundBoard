@@ -36,7 +36,7 @@ class MediaFilesPlayerWidget : public AudioPlayerWidget
     // Volume label.
     QLabel *volumeLabel = nullptr;
     // Time slider.
-    QSlider *time_slider = nullptr;
+    QSlider *timeSlider = nullptr;
     // Whether player was paused by time slider.
     bool wasPausedByTimeSlider = false;
 
@@ -55,6 +55,14 @@ public:
     ~MediaFilesPlayerWidget();
 
 private:
+
+    /**
+     * Sets button default, hover and pressed icons.
+     * 
+     * @param button button to configure
+     * @param icon_name icon name in Qt emdedded resources
+     */
+    void setButtonIcon(QPushButton *button, std::string icon_name);
 
     /**
      * Handles entering drag event.

@@ -36,8 +36,8 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     */
     QHBoxLayout *box_layout1 = new QHBoxLayout();
     layout->addLayout(box_layout1);
-    //QHBoxLayout *box_layout2 = new QHBoxLayout();
-    //layout->addLayout(box_layout2);
+    QHBoxLayout *box_layout2 = new QHBoxLayout();
+    layout->addLayout(box_layout2);
     QHBoxLayout *box_layout3 = new QHBoxLayout();
     box_layout3->setAlignment(Qt::AlignLeft);
     layout->addLayout(box_layout3);
@@ -49,14 +49,28 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     box_layout1->addWidget(trackName);
     // Track duration
     trackDuration = new QLabel(NO_DURATION_STR);
-    trackDuration->setAlignment(Qt::AlignRight);           // snap to the right
+    trackDuration->setAlignment(Qt::AlignRight);  // snap to the right
     box_layout1->addWidget(trackDuration);
+
+    // Time slider
+    timeSlider = new QSlider(Qt::Horizontal);
+    timeSlider->setTracking(false);            // Only fire valueChanged event after releasing slider
+    timeSlider->setRange(0, 0);                // Will be updated when audio is loaded
+    connect(timeSlider, &QSlider::sliderPressed, this, &MediaFilesPlayerWidget::pauseOnTimeChange);        // pause player when slider was pressed
+    connect(timeSlider, &QSlider::sliderReleased, this, &MediaFilesPlayerWidget::resumeAfterTimeChange);   // resume player after slider was released
+    connect(timeSlider, &QSlider::valueChanged, this, &MediaFilesPlayerWidget::setTime);                   // set new time on value change
+    box_layout2->addWidget(timeSlider);
+
     // Play/Pause button
-    buttonPlay = new QPushButton("Play");
+    buttonPlay = new QPushButton();
+    buttonPlay->setFixedSize(28, 28); 
+    setButtonIcon(buttonPlay, "player_play");
     connect(buttonPlay, &QPushButton::pressed, this, &MediaFilesPlayerWidget::startStop);
     box_layout3->addWidget(buttonPlay);
     // Stop buttom
-    QPushButton *button_stop = new QPushButton("Stop");
+    QPushButton *button_stop = new QPushButton();
+    button_stop->setFixedSize(28, 28); 
+    setButtonIcon(button_stop, "player_stop");
     connect(button_stop, &QPushButton::pressed, this, &MediaFilesPlayerWidget::stop);
     box_layout3->addWidget(button_stop);
     // Volume slider and label
@@ -70,20 +84,31 @@ MediaFilesPlayerWidget::MediaFilesPlayerWidget(QTabWidget const *devices, QStrin
     volume_slider->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
     box_layout3->addWidget(volume_slider);
     box_layout3->addWidget(volumeLabel);
-    // Time slider
-    time_slider = new QSlider(Qt::Horizontal);
-    time_slider->setTracking(false);            // Only fire valueChanged event after releasing slider
-    time_slider->setRange(0, 0);                // Will be updated when audio is loaded
-    connect(time_slider, &QSlider::sliderPressed, this, &MediaFilesPlayerWidget::pauseOnTimeChange);        // pause player when slider was pressed
-    connect(time_slider, &QSlider::sliderReleased, this, &MediaFilesPlayerWidget::resumeAfterTimeChange);   // resume player after slider was released
-    connect(time_slider, &QSlider::valueChanged, this, &MediaFilesPlayerWidget::setTime);                   // set new time on value change
-    layout->addWidget(time_slider);
 }
 
 
 MediaFilesPlayerWidget::~MediaFilesPlayerWidget()
 {
     stop();
+}
+
+
+void MediaFilesPlayerWidget::setButtonIcon(QPushButton *button, std::string icon_name)
+{
+    button->setStyleSheet(QString::fromStdString(
+    "QPushButton {"
+    "   background: transparent;"
+    "   background-repeat: no-repeat; background-position: center;"
+    "   background-image: url(:/resources/buttons/" + icon_name + ".png);"
+    "   padding: 2px 2px 2px 2px;"
+    "}"
+    "QPushButton:hover {"
+    "   background-image: url(:/resources/buttons/" + icon_name + "_hover.png);"
+    "}"
+    "QPushButton:pressed {"
+    "   background-image: url(:/resources/buttons/" + icon_name + "_pressed.png);"
+    "}"
+    ));
 }
 
 
@@ -221,17 +246,22 @@ void MediaFilesPlayerWidget::startStop()
 
 void MediaFilesPlayerWidget::onStateChanged(MediaFilesPlayer::State state)
 {
-    switch (state)
+    // Avoid button changes when moving time slider
+    if (!wasPausedByTimeSlider)
     {
-        // Stopped and paused state
-        case MediaFilesPlayer::STOPPED:
-        case MediaFilesPlayer::PAUSED:
-            buttonPlay->setText("Play");
-            break;
-        // Playing state
-        case MediaFilesPlayer::PLAYING:
-            buttonPlay->setText("Pause");
-            break;
+        switch (state)
+        {
+            // Stopped and paused state
+            case MediaFilesPlayer::STOPPED:
+            case MediaFilesPlayer::PAUSED:
+                setButtonIcon(buttonPlay, "player_play");
+                break;
+            // Playing state
+            case MediaFilesPlayer::PLAYING:
+                buttonPlay->setIcon(QIcon(":/resources/button_pause.png"));
+                setButtonIcon(buttonPlay, "player_pause");
+                break;
+        }
     }
 }
 
@@ -264,19 +294,19 @@ QString MediaFilesPlayerWidget::getDurationLabel(int value, int maximum)
 
 void MediaFilesPlayerWidget::onDurationChanged(double seconds)
 {
-    time_slider->setMaximum(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
-    trackDuration->setText(getDurationLabel(time_slider->value(), time_slider->maximum()));
+    timeSlider->setMaximum(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
+    trackDuration->setText(getDurationLabel(timeSlider->value(), timeSlider->maximum()));
 }
 
 
 void MediaFilesPlayerWidget::onTimeChanged(double seconds)
 {
     // Updtae only if user is not holding slider
-    if (!time_slider->isSliderDown())
+    if (!timeSlider->isSliderDown())
     {
-        time_slider->blockSignals(true);
-        time_slider->setValue(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
-        trackDuration->setText(getDurationLabel(time_slider->value(), time_slider->maximum()));
-        time_slider->blockSignals(false);
+        timeSlider->blockSignals(true);
+        timeSlider->setValue(static_cast<int>(seconds * VOLUME_SLIDER_SCALE));
+        trackDuration->setText(getDurationLabel(timeSlider->value(), timeSlider->maximum()));
+        timeSlider->blockSignals(false);
     }
 }

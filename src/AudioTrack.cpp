@@ -41,8 +41,7 @@ void AudioTrack::mouseMoveEvent(QMouseEvent *event)
     QMimeData *mimeData = new QMimeData;
     mimeData->setData("filepath&name", (filepath + "?" + name).toUtf8());
     drag->setMimeData(mimeData);
-    QPixmap pixmap(":/resources/dragged_track.png");
-    drag->setPixmap(pixmap);
+    drag->setPixmap(QPixmap(":/resources/dragged_track.png"));
 
     // Invoke drag action
     Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
